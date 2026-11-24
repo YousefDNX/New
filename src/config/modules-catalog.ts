@@ -313,7 +313,7 @@ export const CANONICAL_MODULES: CanonicalModule[] = [
     descriptionAr:
       "واحة الثقافات العالمية، جسور التبادل الطلابي، تحديات الجغرافيا والمعالم، الجولات الافتراضية، ورؤى طلاب العالم.",
     category: "explore",
-    to: "/app/circle?tab=global",
+    to: "/app/study",
     icon: Globe,
     guideId: "global-culture",
     badge: "Culture",
@@ -326,29 +326,7 @@ export const CANONICAL_MODULES: CanonicalModule[] = [
       "Global Traditions",
     ],
   },
-  {
-    id: "knowledge-circle",
-    number: "11",
-    name: "Knowledge Circle",
-    nameAr: "دوائر المعرفة والتعاون",
-    description:
-      "Collaborative student study rooms, peer review, shared study materials, discussion boards, and safe moderation.",
-    descriptionAr:
-      "غرف دراسية تعاونية، مراجعة الأقران، خزائن الملفات والملخصات المشتركة، حوارات أكاديمية، وإشراف آمن للطلاب.",
-    category: "connect_contribute",
-    to: "/app/circle?tab=feed",
-    icon: Users,
-    guideId: "study-circles",
-    badge: "Community",
-    color: "oklch(0.7 0.15 200)",
-    capabilities: [
-      "Study Rooms",
-      "Resource Vaults",
-      "Peer Reviews",
-      "Collaborative Tasks",
-      "Safe Student Guard",
-    ],
-  },
+
   {
     id: "opportunity-radar",
     number: "12",

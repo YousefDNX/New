@@ -209,9 +209,17 @@ const CORNER_RADIUS_BY_KEY = {
   soft: "1.125rem",
 } as const;
 
-export function PreferencesProvider({ children }: { children: ReactNode }) {
-  // SSR renders English/dark; stored preferences apply cleanly after hydration.
-  const [lang, setLangState] = useState<Lang>("en");
+export function PreferencesProvider({
+  children,
+  initialLang,
+}: {
+  children: ReactNode;
+  initialLang?: Lang;
+}) {
+  // SSR renders English/dark unless initialLang is explicitly provided; stored preferences apply cleanly after hydration.
+  const [lang, setLangState] = useState<Lang>(() =>
+    initialLang ? normalizeLang(initialLang) : "en",
+  );
   const [theme, setThemeState] = useState<ThemeMode>("dark");
   const [systemTheme, setSystemTheme] = useState<Theme>("dark");
   const [a11y, setA11yState] = useState<A11yFull>(defaultA11yFull);

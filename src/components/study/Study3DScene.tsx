@@ -410,13 +410,24 @@ export function Study3DScene() {
 
     const { group, animatedOrbits, geometries, materials } = buildStemSceneGroup(activeSceneId);
 
+    const nav = navigator as Navigator & {
+      deviceMemory?: number;
+      connection?: { saveData?: boolean };
+    };
+    const isConstrainedDevice =
+      (typeof nav.deviceMemory === "number" && nav.deviceMemory <= 2) ||
+      Boolean(nav.connection?.saveData);
+
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+      renderer = new THREE.WebGLRenderer({
+        antialias: !isConstrainedDevice,
+        powerPreference: isConstrainedDevice ? "low-power" : "high-performance",
+      });
       const gl = renderer.getContext();
       const debugExt = gl.getExtension("WEBGL_debug_renderer_info");
       const gpuName = debugExt ? String(gl.getParameter(debugExt.UNMASKED_RENDERER_WEBGL)) : "";
       const isSoftwareGl = /SwiftShader|llvmpipe|Software/i.test(gpuName);
-      if (isSoftwareGl) {
+      if (isSoftwareGl || isConstrainedDevice) {
         renderer.setPixelRatio(1);
       } else {
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));

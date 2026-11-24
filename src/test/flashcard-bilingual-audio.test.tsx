@@ -215,34 +215,33 @@ describe("Vocabulary Flashcards — Conditional 'استمع بالعربية' Ar
     expect(screen.queryByRole("button", { name: /استمع بالعربية/ })).toBeNull();
   });
 
-  it("StudyWorkspace SM-2 Flashcard review: reveals 'استمع بالعربية' only on flip and speaks Arabic translation", () => {
+  it("StudyWorkspace Flashcard review: reveals 'استمع بالعربية' only on flip and speaks Arabic translation", () => {
     renderWithProviders(<StudyWorkspace />);
 
-    // Switch to Flashcards tab, then enter review mode
-    fireEvent.click(screen.getByRole("tab", { name: /Flashcards/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Start Revision Session/i }));
+    // Open Unit 3 flashcards from the Grade 9 Study & Vocabulary hub
+    fireEvent.click(screen.getByRole("button", { name: /Open Food, Culture & Healthy Living/i }));
 
-    // Front: "Apple" + Pronounce button, NO "استمع بالعربية" button
-    expect(screen.getAllByText("Apple").length).toBeGreaterThanOrEqual(1);
+    // Front: "reflect" + Listen (British English) button, NO "استمع بالعربية" button
+    expect(screen.getByText("reflect")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /استمع بالعربية/ })).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: /^Pronounce$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Listen \(British English\)/i }));
     expect(spokenUtterances).toHaveLength(1);
-    expect(spokenUtterances[0]!.text).toBe("Apple");
+    expect(spokenUtterances[0]!.text).toBe("reflect");
     expect(spokenUtterances[0]!.lang).toBe("en-GB");
 
-    // Flip card
-    fireEvent.click(screen.getByRole("button", { name: /Reveal Answer/i }));
+    // Reveal Arabic Meaning
+    fireEvent.click(screen.getByRole("button", { name: /Reveal Arabic Meaning/i }));
 
     // Back: shows original English word, Arabic translation, and "استمع بالعربية"
-    expect(screen.getAllByText("Apple").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/تفاحة/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("reflect")).toBeInTheDocument();
+    expect(screen.getByText("يعكس / يتأمّل ويفكّر بعمق")).toBeInTheDocument();
     const arabicBtn = screen.getByRole("button", { name: /استمع بالعربية/ });
     expect(arabicBtn).toBeInTheDocument();
 
     fireEvent.click(arabicBtn);
     expect(spokenUtterances).toHaveLength(2);
-    expect(spokenUtterances[1]!.text).toBe("تفاحة");
+    expect(spokenUtterances[1]!.text).toBe("يعكس، أو يتأمّل ويفكّر بعمق");
     expect(spokenUtterances[1]!.lang).toBe("ar-SA");
   });
 });

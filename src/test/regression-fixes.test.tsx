@@ -100,7 +100,9 @@ describe("Regression fixes: AI UI sanitization & Unit 3 Context Scenario Mode 8"
     );
 
     const inputEl = screen.getByPlaceholderText(/Ask a study question/i);
-    fireEvent.change(inputEl, { target: { value: "Explain hypothesis from Unit 9" } });
+    fireEvent.change(inputEl, {
+      target: { value: "Explain hypothesis from Important Vocabulary" },
+    });
     fireEvent.submit(inputEl.closest("form")!);
 
     await waitFor(() => {

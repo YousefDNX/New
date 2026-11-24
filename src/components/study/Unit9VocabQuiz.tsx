@@ -169,7 +169,7 @@ export function Unit9VocabQuiz({ onBackToFlashcards }: { onBackToFlashcards?: ()
             <div className="inline-flex items-center gap-1.5 rounded-md bg-primary/15 px-2.5 py-1 text-xs font-bold text-primary">
               <Sparkles className="size-3.5" />
               <span>
-                {isAr ? "اختبار الوحدة التاسعة التفاعلي" : "Unit 9 Interactive Vocabulary Quiz"}
+                {isAr ? "اختبار المفردات المهمة التفاعلي" : "Important Vocabulary Interactive Quiz"}
               </span>
             </div>
             <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
@@ -192,7 +192,7 @@ export function Unit9VocabQuiz({ onBackToFlashcards }: { onBackToFlashcards?: ()
               onClick={onBackToFlashcards}
               className="text-xs font-semibold cursor-pointer"
             >
-              {isAr ? "عرض بطاقات الوحدة ٩" : "View Unit 9 Flashcards"}
+              {isAr ? "عرض بطاقات المفردات المهمة" : "View Important Vocabulary Flashcards"}
             </Button>
           )}
         </div>
@@ -426,7 +426,7 @@ export function Unit9VocabQuiz({ onBackToFlashcards }: { onBackToFlashcards?: ()
 
           <div className="space-y-2">
             <h3 className="font-display text-2xl font-extrabold text-foreground">
-              {isAr ? "اكتمل اختبار الوحدة التاسعة!" : "Unit 9 Quiz Complete!"}
+              {isAr ? "اكتمل اختبار المفردات المهمة!" : "Important Vocabulary Quiz Complete!"}
             </h3>
             <p className="text-sm text-muted-foreground">
               {isAr

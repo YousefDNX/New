@@ -1,6 +1,6 @@
 /**
- * Grade 9 Unit 9 English Vocabulary Library
- * Unit Theme: Science, Technology & Future Innovations
+ * Grade 9 Important Vocabulary — Science, Technology & Future Innovations
+ * Theme: Science, Technology & Future Innovations
  * Preserves British spelling conventions (e.g. analyse, optimise, programme, centre).
  */
 
@@ -616,10 +616,10 @@ export const UNIT_9_INTERACTIVE_QUIZ_QUESTIONS: Unit9QuizQuestionItem[] = [
 export const UNIT_9_QUIZZES: Unit3QuizTier[] = [
   {
     id: "beginner",
-    titleEn: "Unit 9 Foundations: Core Tech & Science",
-    titleAr: "اختبار أساسي: تكنولوجيا وعلوم الوحدة التاسعة",
-    descriptionEn: "Check your grasp of essential Unit 9 scientific and computing vocabulary.",
-    descriptionAr: "اختبر استيعابك للمصطلحات العلمية والتقنية الأساسية للوحدة التاسعة.",
+    titleEn: "Important Vocabulary Foundations: Core Tech & Science",
+    titleAr: "اختبار أساسي: المفردات المهمة للعلوم والتكنولوجيا",
+    descriptionEn: "Check your grasp of important scientific and computing vocabulary.",
+    descriptionAr: "اختبر استيعابك للمفردات المهمة في العلوم والتكنولوجيا.",
     xpReward: 50,
     questions: UNIT_9_INTERACTIVE_QUIZ_QUESTIONS.slice(0, 8).map((q) => ({
       id: q.id,
@@ -634,8 +634,8 @@ export const UNIT_9_QUIZZES: Unit3QuizTier[] = [
   },
   {
     id: "final",
-    titleEn: "Unit 9 Mastery Exam: Innovation & Research",
-    titleAr: "اختبار الإتقان الشامل للوحدة التاسعة",
+    titleEn: "Important Vocabulary Mastery Exam: Innovation & Research",
+    titleAr: "اختبار الإتقان الشامل للمفردات المهمة",
     descriptionEn:
       "Comprehensive assessment covering breakthroughs, prototypes, precision, cybersecurity, and research.",
     descriptionAr:

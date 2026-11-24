@@ -396,7 +396,7 @@ export function Unit3VocabWorkspace() {
               <GraduationCap className="size-4" />
               <span>
                 {selectedUnit === 9
-                  ? "GRADE 9 — UNIT 9 VOCABULARY & SCIENCE LIBRARY"
+                  ? "GRADE 9 — IMPORTANT VOCABULARY & SCIENCE LIBRARY"
                   : "GRADE 9 — UNIT 3 VOCABULARY LIBRARY"}
               </span>
             </div>
@@ -407,13 +407,13 @@ export function Unit3VocabWorkspace() {
             </h1>
             <p className="text-xs md:text-sm text-muted-foreground max-w-2xl leading-relaxed">
               {selectedUnit === 9
-                ? "Master Unit 9 scientific terms, algorithms, sustainable systems, and innovation vocabulary with interactive quizzes and practice tests."
+                ? "Master important scientific terms, algorithms, sustainable systems, and innovation vocabulary with interactive quizzes and practice tests."
                 : "Master all 24 official British vocabulary words with accurate Arabic definitions, audio pronunciation, practice modes, and quizzes."}
             </p>
 
-            {/* Unit Switcher */}
+            {/* Topic Switcher */}
             <div className="flex flex-wrap items-center gap-2 pt-2">
-              <span className="text-xs font-semibold text-muted-foreground">Select Unit:</span>
+              <span className="text-xs font-semibold text-muted-foreground">Select Deck:</span>
               <Button
                 type="button"
                 size="sm"
@@ -440,7 +440,7 @@ export function Unit3VocabWorkspace() {
                 }}
                 className="h-7 text-xs font-bold cursor-pointer"
               >
-                Unit 9 — Science &amp; Tech (24 Words &amp; Tests)
+                Important Vocabulary — Science &amp; Tech (24 Words &amp; Tests)
               </Button>
             </div>
           </div>

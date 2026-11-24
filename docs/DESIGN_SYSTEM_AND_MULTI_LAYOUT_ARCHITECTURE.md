@@ -1,6 +1,7 @@
 # Multi-Layout & Multi-Experience Design System Architecture
 
 ## 1. Tech Stack & Codebase Overview
+
 - **Framework**: React 19 + TanStack Router / TanStack Start + Vite + TypeScript
 - **Styling**: Tailwind CSS v4 + CSS custom properties (`--background`, `--surface`, `--primary`, etc.) + scoped shell selectors (`[data-ux-shell]`, `[data-ux-paradigm]`)
 - **State & Persistence**:
@@ -32,29 +33,31 @@ src/
 ```
 
 ## 3. Global UI State Manager (`useExperienceMode`)
+
 Exported from `src/lib/experience-mode.tsx` and mounted in `src/routes/__root.tsx`:
 
-| Property / Action | Type | Responsibility |
-| --- | --- | --- |
-| `mode` | `UiExperienceId` | Active experience (`classic`, `editorial_atelier`, `command_os`, `focus_deck`) |
-| `paradigm` | `"editorial" \| "command" \| "spatial"` | Structural UI/UX paradigm (`Mode A`, `Mode B`, `Mode C`) |
-| `setMode(next)` | `(id) => void` | Switches active shell & structural variants immediately |
-| `sidebarCollapsed` / `toggleSidebar()` | `boolean` / `() => void` | Collapses/expands Mode B workspace rail (`w-60` <-> `w-16`), persisted in `localStorage` |
-| `radialMenuOpen` / `toggleRadialMenu()` | `boolean` / `() => void` | Controls Mode C radial quick-launcher menu |
-| `spatialDrawer` / `openSpatialDrawer()` / `closeSpatialDrawer()` | State + actions | Slide-over inspector drawer with backdrop & `Escape` dismissal |
-| `selectedRecordId` / `setSelectedRecordId()` | `string \| null` | Active item selection shared by Mode C Master-Detail views |
-| `applyThemeUxPreset(preset)` | `(preset) => void` | Atomically applies coupled Mode + Theme + Accent + Surface styling |
+| Property / Action                                                | Type                                    | Responsibility                                                                           |
+| ---------------------------------------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `mode`                                                           | `UiExperienceId`                        | Active experience (`classic`, `editorial_atelier`, `command_os`, `focus_deck`)           |
+| `paradigm`                                                       | `"editorial" \| "command" \| "spatial"` | Structural UI/UX paradigm (`Mode A`, `Mode B`, `Mode C`)                                 |
+| `setMode(next)`                                                  | `(id) => void`                          | Switches active shell & structural variants immediately                                  |
+| `sidebarCollapsed` / `toggleSidebar()`                           | `boolean` / `() => void`                | Collapses/expands Mode B workspace rail (`w-60` <-> `w-16`), persisted in `localStorage` |
+| `radialMenuOpen` / `toggleRadialMenu()`                          | `boolean` / `() => void`                | Controls Mode C radial quick-launcher menu                                               |
+| `spatialDrawer` / `openSpatialDrawer()` / `closeSpatialDrawer()` | State + actions                         | Slide-over inspector drawer with backdrop & `Escape` dismissal                           |
+| `selectedRecordId` / `setSelectedRecordId()`                     | `string \| null`                        | Active item selection shared by Mode C Master-Detail views                               |
+| `applyThemeUxPreset(preset)`                                     | `(preset) => void`                      | Atomically applies coupled Mode + Theme + Accent + Surface styling                       |
 
 ## 4. Structural Paradigm Comparison
 
-| Feature Area | Mode A: Classic / Editorial | Mode B: Command Center (`command_os`) | Mode C: Spatial / Interactive (`focus_deck`) |
-| --- | --- | --- | --- |
-| **Root Viewport** | Standard vertical document scroll (`min-h-dvh`) | Fixed desktop app viewport (`md:h-dvh md:overflow-hidden`) with internal scrolling panels | Progressive vertical stage with horizontal snap carousels |
-| **Navigation Chrome** | Classic left sidebar or top editorial masthead with chapter dropdowns | Collapsible left-hand workspace rail + top breadcrumb/action strip + `Cmd+K` Spotlight | Minimal top compass ribbon + floating bottom glass dock + radial quick-menu arc |
-| **Dashboard Grid** | Standard cards or 2-column Editorial Briefing | 12-column Bento-Box grid with scrollable task, goal, and activity panes | Swipeable Stage Carousel + 1-2-3 Guided Flow + Live Drawer preview |
-| **Data Lists** | Structured list (`classic`) or Semantic HTML `<table>` (`editorial_atelier`) | 3-Column Kanban Action Board (`todo`, `in_progress`, `done`) | Split-Screen Master-Detail Inspector + Slide-Over Drawer |
-| **Forms** | Vertical stacked form sections | Compact 2-column split workspace form | Interactive Multi-Step Wizard (`Step 1 -> Step 2`) preserving field state across live mode switches |
-| **Modules Showcase** | 3-column responsive grid | Internal-scroll 4-column workspace app panel | Horizontal `snap-x` swipeable carousel with Drawer Inspector |
+| Feature Area          | Mode A: Classic / Editorial                                                  | Mode B: Command Center (`command_os`)                                                     | Mode C: Spatial / Interactive (`focus_deck`)                                                        |
+| --------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Root Viewport**     | Standard vertical document scroll (`min-h-dvh`)                              | Fixed desktop app viewport (`md:h-dvh md:overflow-hidden`) with internal scrolling panels | Progressive vertical stage with horizontal snap carousels                                           |
+| **Navigation Chrome** | Classic left sidebar or top editorial masthead with chapter dropdowns        | Collapsible left-hand workspace rail + top breadcrumb/action strip + `Cmd+K` Spotlight    | Minimal top compass ribbon + floating bottom glass dock + radial quick-menu arc                     |
+| **Dashboard Grid**    | Standard cards or 2-column Editorial Briefing                                | 12-column Bento-Box grid with scrollable task, goal, and activity panes                   | Swipeable Stage Carousel + 1-2-3 Guided Flow + Live Drawer preview                                  |
+| **Data Lists**        | Structured list (`classic`) or Semantic HTML `<table>` (`editorial_atelier`) | 3-Column Kanban Action Board (`todo`, `in_progress`, `done`)                              | Split-Screen Master-Detail Inspector + Slide-Over Drawer                                            |
+| **Forms**             | Vertical stacked form sections                                               | Compact 2-column split workspace form                                                     | Interactive Multi-Step Wizard (`Step 1 -> Step 2`) preserving field state across live mode switches |
+| **Modules Showcase**  | 3-column responsive grid                                                     | Internal-scroll 4-column workspace app panel                                              | Horizontal `snap-x` swipeable carousel with Drawer Inspector                                        |
 
 ## 5. Accessibility & RTL Guarantee
+
 - All interactive shells preserve semantic landmarks (`<header>`, `<nav>`, `<main id="main-content">`, `role="dialog"`), `40px–44px` minimum touch targets, `Escape` closing for overlays/drawers, and logical RTL CSS properties (`ms-*`, `me-*`, `ps-*`, `pe-*`, `start-*`, `rtl-flip`) so Arabic (`dir="rtl"`) adapts symmetrically across all three structural paradigms.

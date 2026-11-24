@@ -211,7 +211,8 @@ export const ACADEMIC_STUDENT_VOCABULARY: ExpandedVocabItem[] = [
     phonetic: "/ˈfiː.zə.bəl/",
     definitionEn: "Possible to do easily or conveniently; workable.",
     meaningAr: "ممكن التطبيق / قابل للتنفيذ والتحقيق",
-    exampleEn: "The solar energy proposal is both environmentally friendly and economically feasible.",
+    exampleEn:
+      "The solar energy proposal is both environmentally friendly and economically feasible.",
     exampleAr: "اقتراح الطاقة الشمسية صديق للبيئة وقابل للتنفيذ اقتصادياً.",
     collocations: ["economically feasible", "technically feasible", "feasible solution"],
     synonyms: ["practicable", "viable", "workable"],
@@ -277,7 +278,8 @@ export const CONFUSING_WORDS_DECKS: ExpandedVocabItem[] = [
     word: "principal vs principle",
     partOfSpeech: "phrase",
     phonetic: "/ˈprɪn.sə.pəl/",
-    definitionEn: "Principal is a school head or primary; Principle is a moral rule or fundamental truth.",
+    definitionEn:
+      "Principal is a school head or primary; Principle is a moral rule or fundamental truth.",
     meaningAr: "Principal ناظر المدرسة أو رئيسي · Principle مبدأ أو قاعدة أخلاقية",
     exampleEn: "The principal (head) explained the fundamental principle of honesty.",
     exampleAr: "شرح ناظر المدرسة (المبدأ) الأساسي للصدق والأمانة.",
@@ -290,7 +292,8 @@ export const CONFUSING_WORDS_DECKS: ExpandedVocabItem[] = [
     word: "stationary vs stationery",
     partOfSpeech: "phrase",
     phonetic: "/ˈsteɪ.ʃən.ər.i/",
-    definitionEn: "Stationary (with an 'a') means not moving; Stationery (with an 'e') means paper and pens.",
+    definitionEn:
+      "Stationary (with an 'a') means not moving; Stationery (with an 'e') means paper and pens.",
     meaningAr: "Stationary (بالـ a) ثابت لا يتحرك · Stationery (بالـ e) أدوات مكتبية وقرطاسية",
     exampleEn: "The car remained stationary while I bought stationery from the bookstore.",
     exampleAr: "ظلت السيارة ثابتة لا تتحرك بينما اشتريت أدوات قرطاسية من المكتبة.",
@@ -303,7 +306,8 @@ export const CONFUSING_WORDS_DECKS: ExpandedVocabItem[] = [
     word: "loose vs lose",
     partOfSpeech: "phrase",
     phonetic: "/luːs/ vs /luːz/",
-    definitionEn: "Loose (double 'o') means not tight; Lose (single 'o') means to misplace or suffer defeat.",
+    definitionEn:
+      "Loose (double 'o') means not tight; Lose (single 'o') means to misplace or suffer defeat.",
     meaningAr: "Loose فضفاض وغير محكم · Lose يخسر أو يضيّع الشيء",
     exampleEn: "If your belt is loose, you might lose your trousers!",
     exampleAr: "إذا كان حزامك فضفاضاً ومرتخياً، فقد تضيع بنطالك!",
@@ -316,9 +320,11 @@ export const CONFUSING_WORDS_DECKS: ExpandedVocabItem[] = [
     word: "compliment vs complement",
     partOfSpeech: "phrase",
     phonetic: "/ˈkɒm.plɪ.mənt/",
-    definitionEn: "Compliment (with 'i') is praise; Complement (with 'e') makes something complete.",
+    definitionEn:
+      "Compliment (with 'i') is praise; Complement (with 'e') makes something complete.",
     meaningAr: "Compliment مجاملة ومدح · Complement يكمل أو مكمل للشيء",
-    exampleEn: "She paid him a compliment (praise) on how well his tie complemented (completed) his suit.",
+    exampleEn:
+      "She paid him a compliment (praise) on how well his tie complemented (completed) his suit.",
     exampleAr: "وجهت له إطراءً ومدحاً حول مدى تناسق وتكامل ربطة عنقه مع بدلته.",
     category: "confusing",
     tipsEn: "I love Compliments (has 'i'); ComplEment makes it complEte.",
@@ -331,7 +337,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
     id: "suite-quick-10",
     titleEn: "Quick 10-Question Sprint",
     titleAr: "اختبار السرعة الذكي (١٠ أسئلة)",
-    descriptionEn: "Test core Grade 9 vocabulary across all units with instant corrections and explanations.",
+    descriptionEn:
+      "Test core Grade 9 vocabulary across all units with instant corrections and explanations.",
     descriptionAr: "اختبار سريع وشامل يغطي مفردات الوحدات مع تصحيح فوري وشروحات باللغتين.",
     questionCount: 10,
     durationMinutes: 5,
@@ -351,7 +358,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "To ignore modern technological developments",
         ],
         correctIndex: 0,
-        explanationEn: "Innovate (/ˈɪn.ə.veɪt/) means to introduce new methods or pioneering ideas.",
+        explanationEn:
+          "Innovate (/ˈɪn.ə.veɪt/) means to introduce new methods or pioneering ideas.",
         explanationAr: "Innovate تعني يبتكر أو يجدد في الطرق والتقنيات.",
         targetWord: "innovate",
       },
@@ -380,8 +388,10 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
         promptAr: "أي كلمة تناسب الفراغ: استخدم المهندسون _______ متقدمة للتنبؤ بالطقس؟",
         options: ["algorithms", "superstitions", "hesitations", "distractions"],
         correctIndex: 0,
-        explanationEn: "Algorithms are step-by-step mathematical computational sequences used for forecasting.",
-        explanationAr: "Algorithms (خوارزميات) هي خطوات برمجية حاسوبية تستخدم في التنبؤ ومعالجة البيانات.",
+        explanationEn:
+          "Algorithms are step-by-step mathematical computational sequences used for forecasting.",
+        explanationAr:
+          "Algorithms (خوارزميات) هي خطوات برمجية حاسوبية تستخدم في التنبؤ ومعالجة البيانات.",
         targetWord: "algorithm",
       },
       {
@@ -409,7 +419,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "Lasting for only a few short hours",
         ],
         correctIndex: 0,
-        explanationEn: "Sustainable means capable of being continued long-term without damaging ecological balance.",
+        explanationEn:
+          "Sustainable means capable of being continued long-term without damaging ecological balance.",
         explanationAr: "Sustainable تعني مستدام وقابل للاستمرار دون استنزاف الموارد الطبيعية.",
         targetWord: "sustainable",
       },
@@ -419,12 +430,7 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
         difficulty: "easy",
         promptEn: "What is the Arabic translation of 'crucial'?",
         promptAr: "ما المعنى العربي لكلمة 'crucial'؟",
-        options: [
-          "حاسم / بالغ الأهمية",
-          "ثانوي وغير ضروري",
-          "مؤقت وسهل النسيان",
-          "قديم وتاريخي",
-        ],
+        options: ["حاسم / بالغ الأهمية", "ثانوي وغير ضروري", "مؤقت وسهل النسيان", "قديم وتاريخي"],
         correctIndex: 0,
         explanationEn: "Crucial (/ˈkruː.ʃəl/) means of the greatest importance or decisive.",
         explanationAr: "Crucial تعني حاسم أو ذو أهمية قصوى.",
@@ -475,7 +481,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
         id: "q-sp-10",
         category: "context",
         difficulty: "medium",
-        promptEn: "Self-discipline is an _______ quality for anyone striving for academic excellence.",
+        promptEn:
+          "Self-discipline is an _______ quality for anyone striving for academic excellence.",
         promptAr: "الانضباط الذاتي صفة _______ لأي شخص يسعى للتميز الأكاديمي.",
         options: ["indispensable", "useless", "optional", "distasteful"],
         correctIndex: 0,
@@ -489,8 +496,10 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
     id: "suite-mock-20",
     titleEn: "Grade 9 Vocabulary Mock Exam (20 Questions)",
     titleAr: "الامتحان التجريبي الشامل (٢٠ سؤالاً)",
-    descriptionEn: "Full exam simulation testing vocabulary, grammar forms, and comprehension with performance analysis.",
-    descriptionAr: "محاكاة شاملة للاختبار النهائي تغطي معاني الكلمات وحروف الجر والسياقات مع تقييم تفصيلي.",
+    descriptionEn:
+      "Full exam simulation testing vocabulary, grammar forms, and comprehension with performance analysis.",
+    descriptionAr:
+      "محاكاة شاملة للاختبار النهائي تغطي معاني الكلمات وحروف الجر والسياقات مع تقييم تفصيلي.",
     questionCount: 20,
     durationMinutes: 12,
     badge: "MOCK EXAM",
@@ -509,7 +518,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "Completely magical and imaginary",
         ],
         correctIndex: 0,
-        explanationEn: "Artificial (/ˌɑː.tɪˈfɪʃ.əl/) means made or produced by human beings rather than occurring naturally.",
+        explanationEn:
+          "Artificial (/ˌɑː.tɪˈfɪʃ.əl/) means made or produced by human beings rather than occurring naturally.",
         explanationAr: "Artificial تعني اصطناعي أو من صنع الإنسان.",
         targetWord: "artificial",
       },
@@ -517,11 +527,13 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
         id: "q-mk-2",
         category: "context",
         difficulty: "medium",
-        promptEn: "Kuwait continues to invest heavily in _______ energy, such as solar power stations.",
+        promptEn:
+          "Kuwait continues to invest heavily in _______ energy, such as solar power stations.",
         promptAr: "تواصل دولة الكويت الاستثمار في الطاقة _______ مثل محطات الطاقة الشمسية.",
         options: ["renewable", "exhaustible", "toxic", "obsolete"],
         correctIndex: 0,
-        explanationEn: "Renewable energy comes from natural sources that replenish themselves without running out.",
+        explanationEn:
+          "Renewable energy comes from natural sources that replenish themselves without running out.",
         explanationAr: "Renewable تعني متجددة ومستمرة طبيعياً.",
         targetWord: "renewable",
       },
@@ -538,7 +550,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "برامج تصفح مواقع التواصل الاجتماعي",
         ],
         correctIndex: 0,
-        explanationEn: "Cybersecurity refers to the protection of computer systems and networks from digital attacks.",
+        explanationEn:
+          "Cybersecurity refers to the protection of computer systems and networks from digital attacks.",
         explanationAr: "الأمن السيبراني: تأمين الشبكات والبيانات الرقمية ضد الاختراقات.",
         targetWord: "cybersecurity",
       },
@@ -550,8 +563,10 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
         promptAr: "اختر الكلمة الصحيحة للأدوات المكتبية والأظرف:",
         options: ["stationery (with 'e')", "stationary (with 'a')", "stationerry", "stationaree"],
         correctIndex: 0,
-        explanationEn: "Stationery with 'e' (like Envelope) refers to writing materials and paper goods.",
-        explanationAr: "Stationery بالـ e تعني أدوات مكتبية وقرطاسية؛ أما بالـ a فتعني ساكن أو ثابت.",
+        explanationEn:
+          "Stationery with 'e' (like Envelope) refers to writing materials and paper goods.",
+        explanationAr:
+          "Stationery بالـ e تعني أدوات مكتبية وقرطاسية؛ أما بالـ a فتعني ساكن أو ثابت.",
         targetWord: "stationery",
       },
       {
@@ -567,7 +582,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "Increases its fuel consumption to maximum",
         ],
         correctIndex: 0,
-        explanationEn: "To optimise (British spelling) means to make the best or most effective use of a situation or device.",
+        explanationEn:
+          "To optimise (British spelling) means to make the best or most effective use of a situation or device.",
         explanationAr: "Optimise تعني يحسّن ويرفع الأداء إلى أقصى كفاءة ممكنة.",
         targetWord: "optimise",
       },
@@ -575,11 +591,13 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
         id: "q-mk-6",
         category: "context",
         difficulty: "medium",
-        promptEn: "The company developed a working _______ of the flying car before beginning mass production.",
+        promptEn:
+          "The company developed a working _______ of the flying car before beginning mass production.",
         promptAr: "طوّرت الشركة _______ تجريبياً للسيارة الطائرة قبل بدء الإنتاج الضخم.",
         options: ["prototype", "tradition", "consequence", "hesitation"],
         correctIndex: 0,
-        explanationEn: "A prototype is a preliminary model of something from which other forms are developed.",
+        explanationEn:
+          "A prototype is a preliminary model of something from which other forms are developed.",
         explanationAr: "Prototype: نموذج أولي وتجريبي يُصنع لاختبار الفكرة قبل إنتاجها بالكامل.",
         targetWord: "prototype",
       },
@@ -606,9 +624,15 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
         difficulty: "medium",
         promptEn: "Which word means the same as 'revolutionise'?",
         promptAr: "أي كلمة تعني نفس معنى 'revolutionise'؟",
-        options: ["transform completely", "maintain the status quo", "ignore totally", "slow down gradually"],
+        options: [
+          "transform completely",
+          "maintain the status quo",
+          "ignore totally",
+          "slow down gradually",
+        ],
         correctIndex: 0,
-        explanationEn: "To revolutionise means to change something radically, fundamentally, and completely.",
+        explanationEn:
+          "To revolutionise means to change something radically, fundamentally, and completely.",
         explanationAr: "Revolutionise تعني يُحدث ثورة وتغييراً جذرياً شاملاً.",
         targetWord: "revolutionise",
       },
@@ -620,7 +644,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
         promptAr: "أوصى الطبيب بنظام غذائي غني بالفيتامينات لـ _______ جهازه المناعي.",
         options: ["enhance", "diminish", "interrupt", "threaten"],
         correctIndex: 0,
-        explanationEn: "To enhance means to increase, strengthen, or improve quality and performance.",
+        explanationEn:
+          "To enhance means to increase, strengthen, or improve quality and performance.",
         explanationAr: "Enhance تعني يعزز ويقوي ويرفع من كفاءة الشيء.",
         targetWord: "enhance",
       },
@@ -637,7 +662,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "An underground cable transmitting high-speed fibre internet",
         ],
         correctIndex: 0,
-        explanationEn: "A robotic exoskeleton is an external wearable machine that augments muscular power and endurance.",
+        explanationEn:
+          "A robotic exoskeleton is an external wearable machine that augments muscular power and endurance.",
         explanationAr: "الهيكل الخارجي الروبوتي: جهاز ميكانيكي يُرتدى لتعزيز قوة الجسم الحركية.",
         targetWord: "exoskeleton",
       },
@@ -645,7 +671,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
         id: "q-mk-11",
         category: "distinction",
         difficulty: "medium",
-        promptEn: "Choose the correct word: 'Honesty is a core moral _______ that guides my actions.'",
+        promptEn:
+          "Choose the correct word: 'Honesty is a core moral _______ that guides my actions.'",
         promptAr: "الصدق هو _______ أخلاقي جوهري يوجه أفعالي:",
         options: ["principle (moral rule)", "principal (school head)", "principality", "printable"],
         correctIndex: 0,
@@ -666,7 +693,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "متعطل وغير قابل للتشغيل",
         ],
         correctIndex: 0,
-        explanationEn: "Autonomous means having the freedom to act independently or driving itself without human control.",
+        explanationEn:
+          "Autonomous means having the freedom to act independently or driving itself without human control.",
         explanationAr: "Autonomous: ذاتي القيادة ومستقل في اتخاذ القرارات الحركية.",
         targetWord: "autonomous",
       },
@@ -695,7 +723,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "Printed on heavy white cardboard",
         ],
         correctIndex: 0,
-        explanationEn: "Virtual describes things generated or simulated by software rather than existing physically.",
+        explanationEn:
+          "Virtual describes things generated or simulated by software rather than existing physically.",
         explanationAr: "Virtual: افتراضي، يتم إنشاؤه عبر برمجيات حاسوبية ليحاكي الواقع.",
         targetWord: "virtual",
       },
@@ -753,8 +782,10 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "Training wild animals in national parks",
         ],
         correctIndex: 0,
-        explanationEn: "Nanotechnology works with materials on the nanoscale (1 to 100 nanometres).",
-        explanationAr: "Nanotechnology: تقنية النانو التي تتعامل مع المادة على مقياس الذرات والجزيئات متناهية الصغر.",
+        explanationEn:
+          "Nanotechnology works with materials on the nanoscale (1 to 100 nanometres).",
+        explanationAr:
+          "Nanotechnology: تقنية النانو التي تتعامل مع المادة على مقياس الذرات والجزيئات متناهية الصغر.",
         targetWord: "nanotechnology",
       },
       {
@@ -773,7 +804,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
         id: "q-mk-20",
         category: "context",
         difficulty: "medium",
-        promptEn: "Building solar panel farms across sunny regions is an economically _______ project.",
+        promptEn:
+          "Building solar panel farms across sunny regions is an economically _______ project.",
         promptAr: "إنشاء مزارع الألواح الشمسية في المناطق المشمسة هو مشروع _______ اقتصادياً:",
         options: ["feasible", "impossible", "hopeless", "destructive"],
         correctIndex: 0,
@@ -785,13 +817,15 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
   },
   {
     id: "suite-unit9-mastery",
-    titleEn: "Unit 9 Science & Inventions Master Test",
-    titleAr: "اختبار إتقان الوحدة التاسعة — العلوم والاختراعات",
-    descriptionEn: "Complete 16-question evaluation covering all science, AI, space, and technology terms.",
-    descriptionAr: "تقييم كامل يشمل جميع مفردات الذكاء الاصطناعي والتكنولوجيا الحيوية والفضاء في الوحدة ٩.",
+    titleEn: "Important Vocabulary Science & Inventions Master Test",
+    titleAr: "اختبار إتقان المفردات المهمة — العلوم والاختراعات",
+    descriptionEn:
+      "Complete 16-question evaluation covering all science, AI, space, and technology terms.",
+    descriptionAr:
+      "تقييم كامل يشمل جميع المفردات المهمة في الذكاء الاصطناعي والتكنولوجيا الحيوية والفضاء.",
     questionCount: 16,
     durationMinutes: 10,
-    badge: "UNIT 9 FULL",
+    badge: "IMPORTANT FULL",
     badgeColor: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30",
     questions: [
       {
@@ -807,7 +841,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "Traditional arithmetic tables on paper",
         ],
         correctIndex: 0,
-        explanationEn: "Quantum computing utilizes principles of quantum mechanics to process data at unprecedented speeds.",
+        explanationEn:
+          "Quantum computing utilizes principles of quantum mechanics to process data at unprecedented speeds.",
         explanationAr: "الكمية: فيزياء المادة والطاقة على المستوى دون الذري.",
         targetWord: "quantum",
       },
@@ -819,7 +854,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
         promptAr: "يستخدم العلماء تقنية كريسبر لتعديل وفحص الـ _______ البشري:",
         options: ["genome", "telephone", "calculator", "furniture"],
         correctIndex: 0,
-        explanationEn: "A genome is the complete set of genes or genetic material present in an organism.",
+        explanationEn:
+          "A genome is the complete set of genes or genetic material present in an organism.",
         explanationAr: "Genome (الجينوم): كامل المادة الوراثية والجينات الخاصة بالكائن الحي.",
         targetWord: "genome",
       },
@@ -836,7 +872,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "الطباعة الورقية للكتب المدرسية",
         ],
         correctIndex: 0,
-        explanationEn: "Telecommunication is communication over a distance by cable, telegraph, telephone, or broadcasting.",
+        explanationEn:
+          "Telecommunication is communication over a distance by cable, telegraph, telephone, or broadcasting.",
         explanationAr: "الاتصالات السلكية واللاسلكية عن بُعد.",
         targetWord: "telecommunication",
       },
@@ -853,8 +890,10 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "Built using ancient hand-carved stone tablets",
         ],
         correctIndex: 0,
-        explanationEn: "Neural networks are computational systems inspired by biological neural circuits in human brains.",
-        explanationAr: "الشبكات العصبية الاصطناعية: خوارزميات تحاكي طريقة عمل الخلايا العصبية في الدماغ البشري.",
+        explanationEn:
+          "Neural networks are computational systems inspired by biological neural circuits in human brains.",
+        explanationAr:
+          "الشبكات العصبية الاصطناعية: خوارزميات تحاكي طريقة عمل الخلايا العصبية في الدماغ البشري.",
         targetWord: "neural",
       },
       {
@@ -865,7 +904,8 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
         promptAr: "تعد طاقتا الشمس والرياح حيويتين لتقليل البصمة الـ _______ للبشرية:",
         options: ["carbon", "golden", "wooden", "plastic"],
         correctIndex: 0,
-        explanationEn: "A carbon footprint is the total greenhouse gas emissions caused by human activities.",
+        explanationEn:
+          "A carbon footprint is the total greenhouse gas emissions caused by human activities.",
         explanationAr: "Carbon footprint: البصمة الكربونية ومقدار انبعاثات الغازات الدفيئة.",
         targetWord: "carbon footprint",
       },
@@ -882,8 +922,10 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "تأجيل الرحلة إلى يوم غد",
         ],
         correctIndex: 0,
-        explanationEn: "Simulation is the imitation of the operation of a real-world process or system over time.",
-        explanationAr: "Simulation تعني محاكاة حاسوبية لنمذجة الظروف الحقيقية والتدريب عليها بأمان.",
+        explanationEn:
+          "Simulation is the imitation of the operation of a real-world process or system over time.",
+        explanationAr:
+          "Simulation تعني محاكاة حاسوبية لنمذجة الظروف الحقيقية والتدريب عليها بأمان.",
         targetWord: "simulation",
       },
       {
@@ -899,19 +941,24 @@ export const COMPREHENSIVE_VOCAB_TEST_SUITES: VocabTestSuite[] = [
           "The color of paint applied to a rocket's nose",
         ],
         correctIndex: 0,
-        explanationEn: "Propulsion is the mechanism that generates thrust to move a spacecraft or vehicle forward.",
-        explanationAr: "Propulsion (الدفع الحركي): القوة أو المنظومة الميكانيكية التي تدفع الصاروخ أو المركبة إلى الأمام.",
+        explanationEn:
+          "Propulsion is the mechanism that generates thrust to move a spacecraft or vehicle forward.",
+        explanationAr:
+          "Propulsion (الدفع الحركي): القوة أو المنظومة الميكانيكية التي تدفع الصاروخ أو المركبة إلى الأمام.",
         targetWord: "propulsion",
       },
       {
         id: "u9-m-8",
         category: "context",
         difficulty: "easy",
-        promptEn: "Doctors use smart wearable sensors to continuously _______ heart rate and blood pressure.",
-        promptAr: "يستخدم الأطباء مستشعرات ذكية قابلة للارتداء لـ _______ نبضات القلب وضغط الدم بشكل مستمر:",
+        promptEn:
+          "Doctors use smart wearable sensors to continuously _______ heart rate and blood pressure.",
+        promptAr:
+          "يستخدم الأطباء مستشعرات ذكية قابلة للارتداء لـ _______ نبضات القلب وضغط الدم بشكل مستمر:",
         options: ["monitor", "ignore", "destroy", "cancel"],
         correctIndex: 0,
-        explanationEn: "To monitor means to observe and check the progress or quality of something over a period of time.",
+        explanationEn:
+          "To monitor means to observe and check the progress or quality of something over a period of time.",
         explanationAr: "Monitor تعني يرصد ويراقب الحالة الصحية باستمرار.",
         targetWord: "monitor",
       },

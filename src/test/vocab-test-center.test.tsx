@@ -41,7 +41,9 @@ describe("Expanded Vocabulary & Interactive VocabTestCenter", () => {
     // Verify all 3 test suite cards are rendered
     expect(screen.getByText(/Quick 10-Question Sprint/i)).toBeInTheDocument();
     expect(screen.getByText(/Grade 9 Vocabulary Mock Exam/i)).toBeInTheDocument();
-    expect(screen.getByText(/Unit 9 Science & Inventions Master Test/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Important Vocabulary Science & Inventions Master Test/i),
+    ).toBeInTheDocument();
 
     // Answer Q1 correctly
     const q1Options = within(screen.getByRole("radiogroup")).getAllByRole("button");

@@ -274,11 +274,13 @@ export const VERIFIED_RECITER_SIGNATURES: Record<string, ReciterVocalSignature> 
     reciterId: "al-luhaidan",
     nameAr: "النبرة اللحيدانية",
     nameEn: "Al-Luhaidan Tearful Cadence",
-    descriptionAr: "انتقال حاد ومؤثر نحو الطبقات الصوتية العالية بنبرة باكية شجية تلامس شغاف القلب.",
+    descriptionAr:
+      "انتقال حاد ومؤثر نحو الطبقات الصوتية العالية بنبرة باكية شجية تلامس شغاف القلب.",
     descriptionEn:
       "Distinctive emotional shift toward high-register tearful phrasing with powerful resonance.",
     listenerContextAr: "اشتهر بها في صلوات التراويح والقيام وخاصة في أواخر سورة الفرقان وسورة ق.",
-    listenerContextEn: "Renowned during Tahajjud night prayers, especially in Surah Al-Furqan and Surah Qaf.",
+    listenerContextEn:
+      "Renowned during Tahajjud night prayers, especially in Surah Al-Furqan and Surah Qaf.",
   },
   al_husary_signature: {
     id: "al_husary_signature",
@@ -288,8 +290,10 @@ export const VERIFIED_RECITER_SIGNATURES: Record<string, ReciterVocalSignature> 
     descriptionAr: "تحقيق صوتي فائق الدقة وضبط استثنائي لمخارج الحروف ورنين الغنن وأزمنة المدود.",
     descriptionEn:
       "Unrivaled phonetic accuracy and pristine Tajweed articulation considered global benchmark.",
-    listenerContextAr: "المرجع العالمي الأول لطلاب القراءات وحفظة كتاب الله في مشارق الأرض ومغاربها.",
-    listenerContextEn: "Universal global gold standard for Quran students and memorizers worldwide.",
+    listenerContextAr:
+      "المرجع العالمي الأول لطلاب القراءات وحفظة كتاب الله في مشارق الأرض ومغاربها.",
+    listenerContextEn:
+      "Universal global gold standard for Quran students and memorizers worldwide.",
   },
   al_minshawi_signature: {
     id: "al_minshawi_signature",
@@ -297,9 +301,12 @@ export const VERIFIED_RECITER_SIGNATURES: Record<string, ReciterVocalSignature> 
     nameAr: "الشجن المنشاوي الصافي",
     nameEn: "Al-Minshawi Plaintive Resonance",
     descriptionAr: "صوت باكي رقيق يفيض بالحزن الإيماني العذب والخشوع الشديد دون تكلف.",
-    descriptionEn: "Heartfelt, soulful melancholy delivering scripture with natural piety and intimacy.",
-    listenerContextAr: "عُرف بـ'الصوت الباكي' الذي يخلب الألباب في تلاوته المرتلة والمجودة على السواء.",
-    listenerContextEn: "Famed as 'the weeping voice' touching millions across both Murattal and Mujawwad.",
+    descriptionEn:
+      "Heartfelt, soulful melancholy delivering scripture with natural piety and intimacy.",
+    listenerContextAr:
+      "عُرف بـ'الصوت الباكي' الذي يخلب الألباب في تلاوته المرتلة والمجودة على السواء.",
+    listenerContextEn:
+      "Famed as 'the weeping voice' touching millions across both Murattal and Mujawwad.",
   },
   abdul_basit_signature: {
     id: "abdul_basit_signature",
@@ -307,17 +314,22 @@ export const VERIFIED_RECITER_SIGNATURES: Record<string, ReciterVocalSignature> 
     nameAr: "الحنجرة الذهبية الباسطية",
     nameEn: "Abdul Basit Golden Timbre",
     descriptionAr: "نَفَس أسطوري طويل وطبقات صوتية عالية صافية تحلق في سماء التلاوة المصرية.",
-    descriptionEn: "Legendary expansive breath control and radiant golden high-register projection.",
-    listenerContextAr: "المحافل الجماهيرية التاريخية في شتى بقاع العالم الإسلامي وخاصة سورة يوسف وقصار السور.",
-    listenerContextEn: "Iconic international recitations, famously Surah Yusuf and short Meccan Surahs.",
+    descriptionEn:
+      "Legendary expansive breath control and radiant golden high-register projection.",
+    listenerContextAr:
+      "المحافل الجماهيرية التاريخية في شتى بقاع العالم الإسلامي وخاصة سورة يوسف وقصار السور.",
+    listenerContextEn:
+      "Iconic international recitations, famously Surah Yusuf and short Meccan Surahs.",
   },
   mustafa_ismail_signature: {
     id: "mustafa_ismail_signature",
     reciterId: "mustafa-ismail",
     nameAr: "عبقرية المقامات الإسماعيلية",
     nameEn: "Mustafa Ismail Modal Genius",
-    descriptionAr: "تصوير معجز لمعاني الآيات وتطويع فريد للمقامات الموسيقية العربية في خدمة النص القرآني.",
-    descriptionEn: "Genius modal exposition capturing biblical and Quranic narratives through tonal artistry.",
+    descriptionAr:
+      "تصوير معجز لمعاني الآيات وتطويع فريد للمقامات الموسيقية العربية في خدمة النص القرآني.",
+    descriptionEn:
+      "Genius modal exposition capturing biblical and Quranic narratives through tonal artistry.",
     listenerContextAr: "التلاوات الجماهيرية الخالدة في قصر عابدين والجامع الأزهر والمساجد الكبرى.",
     listenerContextEn: "Historic monumental mosque recitations at Al-Azhar and Abdeen Palace.",
   },
@@ -327,9 +339,11 @@ export const VERIFIED_RECITER_SIGNATURES: Record<string, ReciterVocalSignature> 
     nameAr: "السكينة النفسية الرخيمة",
     nameEn: "Al-Nafis Soothing Serenity",
     descriptionAr: "نبرة رخيمة هادئة تبعث الطمأنينة والسكينة في النفس بأداء كويتي معاصر منضبط.",
-    descriptionEn: "Warm, mellow, soothing delivery inspiring immediate peacefulness and inner calm.",
+    descriptionEn:
+      "Warm, mellow, soothing delivery inspiring immediate peacefulness and inner calm.",
     listenerContextAr: "تلاوات مسجد الدولة الكبير بالكويت وتسجيلات المصحف المرتل المعاصرة.",
-    listenerContextEn: "Contemporary Kuwait Grand Mosque prayers and popular modern studio recordings.",
+    listenerContextEn:
+      "Contemporary Kuwait Grand Mosque prayers and popular modern studio recordings.",
   },
   al_dosari_signature: {
     id: "al_dosari_signature",
@@ -347,7 +361,8 @@ export const VERIFIED_RECITER_SIGNATURES: Record<string, ReciterVocalSignature> 
     nameAr: "البصمة العفاسية الشجية",
     nameEn: "Alafasy Melodic Clarity",
     descriptionAr: "توازن نغمي سلس ونقاء صوتي دافئ محبب للأجيال المعاصرة بإتقان تام للروايات.",
-    descriptionEn: "Melodious, warm, and highly accessible phrasing loved globally by youth and families.",
+    descriptionEn:
+      "Melodious, warm, and highly accessible phrasing loved globally by youth and families.",
     listenerContextAr: "تلاوات المسجد الكبير بالكويت والإصدارات الصوتية العالمية المنتشرة.",
     listenerContextEn: "Pioneering high-fidelity digital releases and international prayer tours.",
   },
@@ -357,9 +372,11 @@ export const VERIFIED_RECITER_SIGNATURES: Record<string, ReciterVocalSignature> 
     nameAr: "الترتيل السديسي الباكي",
     nameEn: "Al-Sudais Tearful Cadence",
     descriptionAr: "نبرة بكائية حثيثة متدفقة ذات طابع حرمي مكي راسخ في وجدان المسلمين منذ عقود.",
-    descriptionEn: "Rapid, emotional, tearful delivery echoing through the Grand Mosque for decades.",
+    descriptionEn:
+      "Rapid, emotional, tearful delivery echoing through the Grand Mosque for decades.",
     listenerContextAr: "صلوات التراويح والتهجد بالحرم المكي ودعاء ختم القرآن الكريم السنوي.",
-    listenerContextEn: "Beloved annual Makkah Ramadan night prayers and Quran completion supplications.",
+    listenerContextEn:
+      "Beloved annual Makkah Ramadan night prayers and Quran completion supplications.",
   },
   al_shuraim_signature: {
     id: "al_shuraim_signature",
@@ -367,29 +384,38 @@ export const VERIFIED_RECITER_SIGNATURES: Record<string, ReciterVocalSignature> 
     nameAr: "الوقار الشريمي الرصين",
     nameEn: "Al-Shuraim Stately Solemnity",
     descriptionAr: "خامة صوتية رخيمة عميقة تتسم بالهيبة والوقار وسرعة متوسطة متقنة.",
-    descriptionEn: "Deep, dignified baritone intonation characterized by stately poise and gravity.",
+    descriptionEn:
+      "Deep, dignified baritone intonation characterized by stately poise and gravity.",
     listenerContextAr: "إمامة المسجد الحرام لعقود وتلاوات صلاة التراويح المتميزة بالخشوع والسكينة.",
-    listenerContextEn: "Decades of Makkah Haram leadership marked by profound contemplative gravity.",
+    listenerContextEn:
+      "Decades of Makkah Haram leadership marked by profound contemplative gravity.",
   },
   ali_jaber_signature: {
     id: "ali_jaber_signature",
     reciterId: "ali-jaber",
     nameAr: "الخشوع الجابري التهجدي",
     nameEn: "Ali Jaber Nocturnal Reverence",
-    descriptionAr: "أداء تهجدي خافت رقيق مفعم بالسكينة والرهبة الإلهية والحنين لصلوات الحرم في الثمانينيات.",
-    descriptionEn: "Intimate, nocturnal, prayerful delivery steeped in humility and nostalgic stillness.",
+    descriptionAr:
+      "أداء تهجدي خافت رقيق مفعم بالسكينة والرهبة الإلهية والحنين لصلوات الحرم في الثمانينيات.",
+    descriptionEn:
+      "Intimate, nocturnal, prayerful delivery steeped in humility and nostalgic stillness.",
     listenerContextAr: "تسجيلات قيام الحرم المكي التاريخية للأعوام ١٤٠١–١٤٠٩هـ.",
-    listenerContextEn: "Iconic 1980s Makkah Tahajjud recordings remembered for timeless spiritual intimacy.",
+    listenerContextEn:
+      "Iconic 1980s Makkah Tahajjud recordings remembered for timeless spiritual intimacy.",
   },
   al_hudhaifi_signature: {
     id: "al_hudhaifi_signature",
     reciterId: "al-hudhaifi",
     nameAr: "التحقيق الحذيفي المدني",
     nameEn: "Al-Hudhaifi Madinah Dignity",
-    descriptionAr: "ترتيل هادئ متأنٍ من محراب المسجد النبوي الشريف يمتاز بالتؤدة وإخراج الحروف من أصولها.",
-    descriptionEn: "Serene, measured, and deliberate pacing rooted in the Prophet's Mosque traditions.",
-    listenerContextAr: "محراب المسجد النبوي بالمدينة المنورة ومصحف مجمع الملك فهد لطباعة المصحف الشريف.",
-    listenerContextEn: "Decades at the Prophet's Mosque mihrab and standard King Fahd Complex audio edition.",
+    descriptionAr:
+      "ترتيل هادئ متأنٍ من محراب المسجد النبوي الشريف يمتاز بالتؤدة وإخراج الحروف من أصولها.",
+    descriptionEn:
+      "Serene, measured, and deliberate pacing rooted in the Prophet's Mosque traditions.",
+    listenerContextAr:
+      "محراب المسجد النبوي بالمدينة المنورة ومصحف مجمع الملك فهد لطباعة المصحف الشريف.",
+    listenerContextEn:
+      "Decades at the Prophet's Mosque mihrab and standard King Fahd Complex audio edition.",
   },
 };
 

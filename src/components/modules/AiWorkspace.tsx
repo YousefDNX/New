@@ -56,8 +56,8 @@ const CHATBOT_ROLES: Array<{
   },
   {
     id: "vocab",
-    labelEn: "Vocab & Unit 9 Coach",
-    labelAr: "مدرّب المفردات والوحدة ٩",
+    labelEn: "Vocab & Important Words Coach",
+    labelAr: "مدرّب المفردات والكلمات المهمة",
     descEn: "Grade 9 meanings, examples & quizzes",
     descAr: "معاني الصف التاسع وأمثلة واختبارات",
     icon: BookOpen,
@@ -91,38 +91,38 @@ const MODEL_TIERS: Array<{
 }> = [
   {
     id: "balanced",
-    modelName: "gemini-4-hydrogen",
-    labelEn: "General (Hydrogen)",
-    labelAr: "عام (Hydrogen)",
-    taskEn: "Everyday Q&A",
-    taskAr: "الأسئلة العامة",
+    modelName: "btc-ai-normal",
+    labelEn: "Normal",
+    labelAr: "عادي",
+    taskEn: "Standard Q&A",
+    taskAr: "أسئلة عامة",
     icon: Sparkles,
   },
   {
     id: "fast",
-    modelName: "gemini-3.1-flash-lite",
-    labelEn: "Fast (Flash Lite)",
-    labelAr: "سريع (Flash Lite)",
+    modelName: "btc-ai-fast",
+    labelEn: "Fast",
+    labelAr: "سريع",
     taskEn: "Quick replies",
     taskAr: "ردود فورية",
     icon: Zap,
   },
   {
     id: "complex",
-    modelName: "gemini-4-neon",
-    labelEn: "Interactive (Neon)",
-    labelAr: "تفاعلي (Neon)",
-    taskEn: "Complex tasks",
-    taskAr: "مهام تفاعلية معقدة",
+    modelName: "btc-ai-pro",
+    labelEn: "Pro",
+    labelAr: "احترافي (Pro)",
+    taskEn: "Detailed reasoning",
+    taskAr: "تفصيل متقدم",
     icon: Cpu,
   },
   {
     id: "deep",
-    modelName: "gemini-4-carbon",
-    labelEn: "Deep Reason (Carbon)",
-    labelAr: "تفكير عميق (Carbon)",
-    taskEn: "Deep reasoning",
-    taskAr: "تحليل واستنتاج عميق",
+    modelName: "btc-ai-research",
+    labelEn: "Research",
+    labelAr: "بحث علمي",
+    taskEn: "Deep research",
+    taskAr: "بحث وتحليل عميق",
     icon: Brain,
   },
 ];
@@ -367,12 +367,12 @@ export function AiWorkspace() {
 
   const samplePrompts = [
     {
-      textAr: "اشرح لي كلمة hypothesis و algorithm من الوحدة التاسعة مع أمثلة",
-      textEn: "Explain 'hypothesis' and 'algorithm' from Unit 9 with examples",
+      textAr: "اشرح لي كلمة hypothesis و algorithm من المفردات المهمة مع أمثلة",
+      textEn: "Explain 'hypothesis' and 'algorithm' from Important Vocabulary with examples",
     },
     {
-      textAr: "اختبرني بسؤال اختيار من متعدد على مفردات الوحدة التاسعة",
-      textEn: "Give me a Unit 9 vocabulary multiple-choice quiz question",
+      textAr: "اختبرني بسؤال اختيار من متعدد على المفردات المهمة",
+      textEn: "Give me an Important Vocabulary multiple-choice quiz question",
     },
     {
       textAr: "ساعدني في مراجعة أهم كلمات التفوّق مثل analyse و persevere",
@@ -525,7 +525,7 @@ export function AiWorkspace() {
               >
                 {isAr
                   ? "مرحباً! أنا BTC الذكي — اسألني عن أي درس أو كلمة إنجليزية"
-                  : "Hello! Ask BTC AI about any study topic, Unit 9 word, or quiz"}
+                  : "Hello! Ask BTC AI about any study topic, Important Vocabulary word, or quiz"}
               </h2>
               <p
                 className={`text-muted-foreground leading-relaxed ${largeText ? "text-base" : "text-xs"}`}
@@ -677,7 +677,7 @@ export function AiWorkspace() {
             placeholder={
               isAr
                 ? "اكتب سؤالك هنا (أو اضغط Enter للإرسال)..."
-                : "Ask a study question, Unit 9 vocabulary, or follow-up..."
+                : "Ask a study question, Important Vocabulary, or follow-up..."
             }
             rows={2}
             className={`w-full resize-none border-0 bg-transparent p-3 focus-visible:ring-0 placeholder:text-muted-foreground ${

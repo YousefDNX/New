@@ -462,7 +462,7 @@ describe("NEXORA Master Empowerment Expansion: Pure Engines, Privacy & UI Worksp
       </PreferencesProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Community Knowledge Library/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Notes & Knowledge Library/i }));
     expect(screen.getByTestId("community-knowledge-library")).toBeInTheDocument();
 
     const titleInput = screen.getByPlaceholderText(/Guide Title/i);

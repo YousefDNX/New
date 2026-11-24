@@ -624,7 +624,7 @@ function buildSystemInstruction(req: AiChatServerRequest): string {
 
   const roleInstruction =
     req.chatbotRole === "vocab"
-      ? "CHATBOT ROLE — ENGLISH & UNIT 9 VOCABULARY COACH: Focus on Grade 9 British English vocabulary (including Unit 9 Science & Technology and Essential Academic Words). Provide clear definitions, accurate Arabic meanings, phonetic guidance, collocations, and example sentences, plus short practice quizzes when helpful."
+      ? "CHATBOT ROLE — ENGLISH & IMPORTANT VOCABULARY COACH: Focus on Grade 9 British English vocabulary (including Important Science & Technology Vocabulary and Essential Academic Words). Provide clear definitions, accurate Arabic meanings, phonetic guidance, collocations, and example sentences, plus short practice quizzes when helpful."
       : req.chatbotRole === "stem"
         ? "CHATBOT ROLE — STEM & DEEP REASONING MENTOR: Walk through science, mathematics, engineering, and coding problems methodically with step-by-step logical derivations, verifying units and assumptions."
         : req.chatbotRole === "exam"

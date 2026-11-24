@@ -78,13 +78,7 @@ import {
 } from "@/lib/quran-recitation-styles";
 
 type DirectoryViewTab =
-  | "countries"
-  | "surahs"
-  | "soundcloud"
-  | "search"
-  | "discover"
-  | "library"
-  | "styles";
+  "countries" | "surahs" | "soundcloud" | "search" | "discover" | "library" | "styles";
 
 interface QuranAudioPlayerProps {
   initialSurahId?: number;
@@ -1941,7 +1935,9 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
             data-testid="surah-recordings-list"
           >
             <div className="flex items-center justify-between text-xs font-bold text-stone-700 dark:text-stone-300">
-              <span>{isAr ? "التسجيلات والروايات المتاحة:" : "Available Recitation Editions:"}</span>
+              <span>
+                {isAr ? "التسجيلات والروايات المتاحة:" : "Available Recitation Editions:"}
+              </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
               {surahRecordings.map((ed) => {
@@ -1988,7 +1984,14 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
                         </button>
                       </div>
                       <div className="text-[11px] text-stone-500 dark:text-stone-400">
-                        {isAr ? ed.riwayahNameAr : ed.riwayahNameEn} · {isAr ? TRADITIONAL_FORMATS_META[ed.format]?.nameAr ?? ed.format : TRADITIONAL_FORMATS_META[ed.format]?.nameEn ?? ed.format}
+                        {isAr ? ed.riwayahAr : ed.riwayahEn} ·{" "}
+                        {(() => {
+                          const formatKey = (cls?.format ??
+                            ed.style.toLowerCase()) as TraditionalRecitationFormat;
+                          return isAr
+                            ? (TRADITIONAL_FORMATS_META[formatKey]?.nameAr ?? ed.style)
+                            : (TRADITIONAL_FORMATS_META[formatKey]?.nameEn ?? ed.style);
+                        })()}
                       </div>
                       {cls && cls.emotionalStyles.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-1 text-[10px]">
@@ -1997,7 +2000,9 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
                               key={s}
                               className="px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-medium"
                             >
-                              {isAr ? EMOTIONAL_STYLES_META[s]?.nameAr : EMOTIONAL_STYLES_META[s]?.nameEn}
+                              {isAr
+                                ? EMOTIONAL_STYLES_META[s]?.nameAr
+                                : EMOTIONAL_STYLES_META[s]?.nameEn}
                             </span>
                           ))}
                         </div>

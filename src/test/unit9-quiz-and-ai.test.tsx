@@ -25,7 +25,7 @@ function renderWithUiProviders(ui: React.ReactNode) {
   );
 }
 
-describe("Unit 9 Interactive Quiz, Expanded Study Vocabulary & Gemini Chatbot Routing", () => {
+describe("Important Vocabulary Interactive Quiz, Expanded Study Vocabulary & Gemini Chatbot Routing", () => {
   afterEach(() => {
     cleanup();
     localStorage.clear();
@@ -33,7 +33,7 @@ describe("Unit 9 Interactive Quiz, Expanded Study Vocabulary & Gemini Chatbot Ro
     vi.restoreAllMocks();
   });
 
-  it("includes 24 Unit 9 words, 16 Unit 9 quiz questions, and 24 Essential student vocabulary words", () => {
+  it("includes 24 Important Vocabulary words, 16 interactive quiz questions, and 24 Essential student vocabulary words", () => {
     expect(GRADE_9_UNIT_9_WORDS).toHaveLength(24);
     expect(UNIT_9_INTERACTIVE_QUIZ_QUESTIONS).toHaveLength(16);
     expect(GRADE_9_ESSENTIAL_WORDS).toHaveLength(24);
@@ -75,7 +75,7 @@ describe("Unit 9 Interactive Quiz, Expanded Study Vocabulary & Gemini Chatbot Ro
     expect(summary.textContent).toContain("7 out of 8");
   });
 
-  it("StudyWorkspace exposes Unit 9 Interactive Quiz and Expanded 141-word Vocabulary Cards", () => {
+  it("StudyWorkspace exposes Important Vocabulary Interactive Quiz and Expanded 141-word Vocabulary Cards", () => {
     renderWithUiProviders(<StudyWorkspace />);
 
     expect(screen.getByText(/Grade 9 Study & Vocabulary/i)).toBeInTheDocument();
@@ -83,8 +83,8 @@ describe("Unit 9 Interactive Quiz, Expanded Study Vocabulary & Gemini Chatbot Ro
       screen.getByText(/Browse All Study Cards & Essential Words \(141\)/i),
     ).toBeInTheDocument();
 
-    // Open Unit 9 Interactive Quiz directly
-    fireEvent.click(screen.getByRole("button", { name: /Unit 9 Interactive Quiz/i }));
+    // Open Important Vocabulary Interactive Quiz directly
+    fireEvent.click(screen.getByRole("button", { name: /Important Vocabulary Interactive Quiz/i }));
     expect(screen.getByTestId("unit9-interactive-quiz")).toBeInTheDocument();
 
     // Go back and browse expanded study cards including Essential Mastery words
@@ -127,7 +127,7 @@ describe("Unit 9 Interactive Quiz, Expanded Study Vocabulary & Gemini Chatbot Ro
     renderWithUiProviders(<AiWorkspace />);
 
     // Select Vocab Coach role and Deep Reasoning (Carbon) model
-    fireEvent.click(screen.getByRole("button", { name: /Vocab & Unit 9 Coach/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Vocab & Important Words Coach/i }));
     fireEvent.click(screen.getByRole("button", { name: /Deep Reason \(Carbon\)/i }));
 
     const input = screen.getByPlaceholderText(/Ask a study question/i);
@@ -158,7 +158,7 @@ describe("Unit 9 Interactive Quiz, Expanded Study Vocabulary & Gemini Chatbot Ro
     ]);
   });
 
-  it("generateStudyAssistantReply handles Unit 9 words and quiz prompts smoothly without error fallbacks", async () => {
+  it("generateStudyAssistantReply handles Important Vocabulary words and quiz prompts smoothly without error fallbacks", async () => {
     const vocabRes = await generateStudyAssistantReply({
       message: "What does algorithm mean?",
       chatbotRole: "vocab",

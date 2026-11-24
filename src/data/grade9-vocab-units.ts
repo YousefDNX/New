@@ -1679,12 +1679,12 @@ export const ALL_STUDY_VOCAB_UNITS: Grade9VocabUnitMeta[] = [
   {
     unit: 9,
     deckId: "vt-g9-unit9",
-    title: "Grade 9 Unit 9: Science, Technology & Future Innovations (24 Words)",
-    titleAr: "مفردات الصف التاسع — الوحدة التاسعة (٢٤ كلمة)",
+    title: "Grade 9 Important Vocabulary: Science, Technology & Future Innovations (24 Words)",
+    titleAr: "المفردات المهمة للصف التاسع — العلوم والتكنولوجيا (٢٤ كلمة)",
     themeEn: "Science, Technology & Future Innovations",
     themeAr: "العلوم والتكنولوجيا وابتكارات المستقبل",
-    badgeLabel: "UNIT 9 + QUIZ",
-    badgeLabelAr: "الوحدة ٩ + اختبار",
+    badgeLabel: "IMPORTANT + QUIZ",
+    badgeLabelAr: "مفردات مهمة + اختبار",
     words: GRADE_9_UNIT_9_WORDS,
     quizzes: UNIT_9_INTERACTIVE_QUIZ_QUESTIONS.map((q) => ({
       id: q.id,

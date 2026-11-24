@@ -53,19 +53,17 @@ const CORE_WORKSPACES: Array<{
   icon: typeof Sparkles;
   nameKey: DictKey;
   descKey: DictKey;
-  to: "/app/ai" | "/app/study" | "/app/tasks" | "/app/quran" | "/app/circle";
+  to: "/app/ai" | "/app/study" | "/app/tasks" | "/app/quran";
 }> = [
   { icon: Sparkles, nameKey: "mod.ai.name", descKey: "mod.ai.d", to: "/app/ai" },
   { icon: BookOpen, nameKey: "mod.study.name", descKey: "mod.study.d", to: "/app/study" },
   { icon: CheckSquare, nameKey: "nav.tasks", descKey: "mod.tasks.d", to: "/app/tasks" },
-  { icon: Users, nameKey: "mod.circle.name", descKey: "mod.circle.d", to: "/app/circle" },
   { icon: BookOpenCheck, nameKey: "nav.quran", descKey: "mod.quran.hub", to: "/app/quran" },
 ];
 
-const EXTRA_BREADTH: Array<{ icon: typeof Users; nameKey: DictKey }> = [
+const EXTRA_BREADTH: Array<{ icon: typeof Accessibility; nameKey: DictKey }> = [
   { icon: Accessibility, nameKey: "mod.access.name" },
   { icon: Languages, nameKey: "mod.global.name" },
-  { icon: Users, nameKey: "mod.circle.name" },
 ];
 
 function Landing() {

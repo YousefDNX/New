@@ -7,7 +7,7 @@
 export interface Unit3VocabItem {
   id: string;
   word: string;
-  partOfSpeech: "noun" | "verb" | "adjective" | "adverb";
+  partOfSpeech: "noun" | "verb" | "adjective" | "adverb" | "phrase";
   phonetic: string;
   definitionEn: string;
   meaningAr: string;

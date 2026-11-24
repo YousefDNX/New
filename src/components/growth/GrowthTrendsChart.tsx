@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { TrendingUp, Activity, CheckCircle2, Clock, Zap } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -23,7 +23,7 @@ interface LocalizedTrendPoint extends WeeklyTrendPoint {
   highlight: string;
 }
 
-export function GrowthTrendsChart() {
+function GrowthTrendsChartBase() {
   const { lang, dir, t } = usePrefs();
   const { data: events = [] } = useActivityEvents(100);
   const { data: tasks = [] } = useTasks();
@@ -331,6 +331,8 @@ export function GrowthTrendsChart() {
     </div>
   );
 }
+
+export const GrowthTrendsChart = React.memo(GrowthTrendsChartBase);
 
 function CustomTrendTooltip({
   active,

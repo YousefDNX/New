@@ -16,6 +16,7 @@ import {
 } from "@/components/nav/ModernNavigation";
 import { Sidebar } from "@/components/nav/Sidebar";
 import { AppearanceSection } from "@/components/settings/AppearanceSection";
+import { ThemesLayoutsSection } from "@/components/settings/ThemesLayoutsSection";
 import { PreferencesProvider, usePrefs } from "@/lib/preferences";
 
 vi.mock("@tanstack/react-router", async () => {
@@ -151,6 +152,7 @@ describe("BTC Dual Visual Themes, Dual Navigation Layouts, Knowledge Q&A & Unifi
       <QueryClientProvider client={qc}>
         <PreferencesProvider>
           <FeatureGuideProvider>
+            <ThemesLayoutsSection runSave={runSave} />
             <AppearanceSection runSave={runSave} />
             <DualNavHarness />
           </FeatureGuideProvider>

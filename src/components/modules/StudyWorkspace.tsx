@@ -217,7 +217,8 @@ export function StudyWorkspace() {
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get("tab");
     if (tabParam === "unit9_quiz") return "unit9_quiz";
-    if (tabParam === "test_center" || tabParam === "tests" || tabParam === "quiz") return "test_center";
+    if (tabParam === "test_center" || tabParam === "tests" || tabParam === "quiz")
+      return "test_center";
     if (tabParam === "vocabulary" || tabParam === "essential") return "vocabulary_cards";
     return "units";
   });
@@ -410,7 +411,11 @@ export function StudyWorkspace() {
             className="gap-2 text-xs font-semibold cursor-pointer"
           >
             <Layers className="size-4 text-primary" />
-            <span>{isAr ? "بطاقات الوحدة ٩ (٢٤ كلمة)" : "Unit 9 Flashcards (24 Words)"}</span>
+            <span>
+              {isAr
+                ? "بطاقات المفردات المهمة (٢٤ كلمة)"
+                : "Important Vocabulary Flashcards (24 Words)"}
+            </span>
           </Button>
         </div>
 
@@ -443,8 +448,8 @@ export function StudyWorkspace() {
               </h2>
               <p className="text-xs text-muted-foreground">
                 {isAr
-                  ? "تعلّم أهم الكلمات الأكاديمية ومفردات الوحدة التاسعة مع النطق والأمثلة."
-                  : "Learn essential academic words and Unit 9 science vocabulary with audio and examples."}
+                  ? "تعلّم أهم الكلمات الأكاديمية والمفردات المهمة للعلوم والتكنولوجيا مع النطق والأمثلة."
+                  : "Learn essential academic words and important science vocabulary with audio and examples."}
               </p>
             </div>
           </div>
@@ -468,7 +473,7 @@ export function StudyWorkspace() {
               className="gap-1.5 text-xs font-bold cursor-pointer"
             >
               <Trophy className="size-3.5" />
-              <span>{isAr ? "اختبار الوحدة ٩" : "Unit 9 Quiz"}</span>
+              <span>{isAr ? "اختبار المفردات المهمة" : "Important Vocabulary Quiz"}</span>
             </Button>
           </div>
         </div>
@@ -485,8 +490,8 @@ export function StudyWorkspace() {
                 },
                 {
                   id: "unit9",
-                  labelEn: "Unit 9 Science & Tech (24)",
-                  labelAr: "الوحدة التاسعة (٢٤)",
+                  labelEn: "Important Vocabulary (24)",
+                  labelAr: "المفردات المهمة (٢٤)",
                 },
                 {
                   id: "academic",
@@ -535,7 +540,16 @@ export function StudyWorkspace() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className="rounded-md bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-bold text-primary">
-                    {w.unit === 10 ? "ESSENTIAL" : `UNIT ${w.unit}`} · {w.partOfSpeech}
+                    {w.unit === 10
+                      ? "ESSENTIAL"
+                      : w.unit === 9
+                        ? "IMPORTANT"
+                        : w.unit === 11
+                          ? "ACADEMIC"
+                          : w.unit === 12
+                            ? "CONFUSING PAIRS"
+                            : `UNIT ${w.unit}`}{" "}
+                    · {w.partOfSpeech}
                   </span>
                   <button
                     type="button"
@@ -593,8 +607,8 @@ export function StudyWorkspace() {
 
           <p className="mx-auto max-w-2xl text-sm sm:text-base text-muted-foreground leading-relaxed">
             {isAr
-              ? "ادرس وحدات الصف التاسع، اختبر مستواك فوراً في اختبار الوحدة التاسعة التفاعلي، وتعلّم كلمات التفوق الأكاديمي الأساسية."
-              : "Master Grade 9 vocabulary units, test yourself with immediate feedback in the Unit 9 Interactive Quiz, and learn essential words every student needs."}
+              ? "ادرس وحدات الصف التاسع، اختبر مستواك فوراً في اختبار المفردات المهمة التفاعلي، وتعلّم كلمات التفوق الأكاديمي الأساسية."
+              : "Master Grade 9 vocabulary units, test yourself with immediate feedback in the Important Vocabulary Interactive Quiz, and learn essential words every student needs."}
           </p>
 
           {/* Direct Action Bar for Test Center, Unit 9 Interactive Quiz & Expanded Vocabulary Cards */}
@@ -624,8 +638,8 @@ export function StudyWorkspace() {
               <Trophy className="size-4 text-primary" />
               <span>
                 {isAr
-                  ? "ابدأ اختبار الوحدة ٩ التفاعلي (تصحيح فوري)"
-                  : "Unit 9 Interactive Quiz (Immediate Feedback)"}
+                  ? "ابدأ اختبار المفردات المهمة التفاعلي (تصحيح فوري)"
+                  : "Important Vocabulary Interactive Quiz (Immediate Feedback)"}
               </span>
             </Button>
 
@@ -670,7 +684,11 @@ export function StudyWorkspace() {
                         ? isAr
                           ? "كلمات التفوّق"
                           : "ESSENTIAL PACK"
-                        : `UNIT ${unitMeta.unit}`}
+                        : isUnit9
+                          ? isAr
+                            ? "المفردات المهمة"
+                            : "IMPORTANT VOCAB"
+                          : `UNIT ${unitMeta.unit}`}
                     </span>
                     <span className="text-xs font-medium text-muted-foreground">
                       {isAr ? `${wordCount} كلمة` : `${wordCount} words`}
@@ -707,7 +725,7 @@ export function StudyWorkspace() {
                         className="h-8 gap-1.5 text-xs font-bold cursor-pointer"
                       >
                         <HelpCircle className="size-3.5" />
-                        <span>{isAr ? "اختبار الوحدة ٩" : "Unit 9 Quiz"}</span>
+                        <span>{isAr ? "اختبار المفردات المهمة" : "Important Vocab Quiz"}</span>
                       </Button>
                     ) : (
                       <button
@@ -760,7 +778,11 @@ export function StudyWorkspace() {
               ? isAr
                 ? "كلمات التفوّق الأساسية"
                 : "ESSENTIAL VOCABULARY"
-              : `UNIT ${selectedUnit.unit}`}
+              : selectedUnit.unit === 9
+                ? isAr
+                  ? "المفردات المهمة — العلوم والتكنولوجيا"
+                  : "IMPORTANT VOCABULARY"
+                : `UNIT ${selectedUnit.unit}`}
           </div>
           <div className="text-xs text-muted-foreground truncate max-w-[220px] sm:max-w-xs">
             {isAr ? selectedUnit.themeAr : selectedUnit.themeEn}

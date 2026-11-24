@@ -19,167 +19,197 @@ export function BodyExplorer3D({ activeSystemId, onSelectSystem }: BodyExplorer3
   const [webglUnsupported, setWebglUnsupported] = useState(false);
   const [forceLoadInLowBw, setForceLoadInLowBw] = useState(false);
 
+  const systemReduced =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const reducedMotion = Boolean(ecosystem.scene3dReducedMotion || systemReduced);
   const shouldRender3D = (!ecosystem.lowBandwidth || forceLoadInLowBw) && !webglUnsupported;
 
   useEffect(() => {
     const container = mountRef.current;
     if (!container || !shouldRender3D) return;
 
-    let renderer: THREE.WebGLRenderer | null = null;
-    try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    } catch {
+    const isJsdom = typeof navigator !== "undefined" && /jsdom/i.test(navigator.userAgent);
+    if (isJsdom || typeof WebGLRenderingContext === "undefined") {
       setWebglUnsupported(true);
       return;
     }
 
-    const width = Math.max(container.clientWidth, 300);
-    const height = Math.max(container.clientHeight, 320);
-
-    const gl = renderer.getContext();
-    const dbg = gl?.getExtension("WEBGL_debug_renderer_info");
-    const glRenderer = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : "";
-    const isSoftware = /swiftshader|llvmpipe|software/i.test(glRenderer);
-    renderer.setPixelRatio(isSoftware ? 1 : Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(width, height);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
-    container.innerHTML = "";
-    container.appendChild(renderer.domElement);
-
-    const scene = new THREE.Scene();
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-
-    const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
-    camera.position.set(0, 0.65, 5.1);
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.07;
-    controls.minDistance = 2.8;
-    controls.maxDistance = 8.5;
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.45));
-    const key = new THREE.DirectionalLight(0xffffff, 1.4);
-    key.position.set(4, 6, 5);
-    scene.add(key);
-
-    // Stylized transparent anatomical torso silhouette (clean educational geometry)
-    const torsoGroup = new THREE.Group();
-    const glassMat = new THREE.MeshPhysicalMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.14,
-      roughness: 0.2,
-      transmission: 0.25,
-      wireframe: false,
-    });
-    const spineMat = new THREE.MeshStandardMaterial({
-      color: 0xcbd5e1,
-      roughness: 0.45,
-      metalness: 0.15,
-    });
-
-    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 24), glassMat);
-    headMesh.position.set(0, 1.72, 0);
-    torsoGroup.add(headMesh);
-
-    const chestMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.62, 1.25, 12, 24), glassMat);
-    chestMesh.position.set(0, 0.45, 0);
-    torsoGroup.add(chestMesh);
-
-    const spineMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 2.35, 14), spineMat);
-    spineMesh.position.set(0, 0.35, -0.18);
-    torsoGroup.add(spineMesh);
-
-    const clickableMeshes: THREE.Mesh[] = [];
-    const nodeRings: THREE.Mesh[] = [];
-
-    BODY_SYSTEMS.forEach((sys) => {
-      const isSelected = sys.id === activeSystemId;
-      const mat = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(sys.color),
-        emissive: new THREE.Color(sys.color),
-        emissiveIntensity: isSelected ? 0.55 : 0.18,
-        roughness: 0.25,
-        metalness: 0.2,
-      });
-      const sphere = new THREE.Mesh(
-        new THREE.SphereGeometry(isSelected ? 0.22 : 0.16, 20, 20),
-        mat,
-      );
-      sphere.position.set(sys.xPos, sys.yPos, 0.26);
-      sphere.userData = { systemId: sys.id };
-      torsoGroup.add(sphere);
-      clickableMeshes.push(sphere);
-
-      if (isSelected) {
-        const ring = new THREE.Mesh(
-          new THREE.TorusGeometry(0.3, 0.025, 10, 32),
-          new THREE.MeshBasicMaterial({ color: new THREE.Color(sys.color) }),
-        );
-        ring.position.copy(sphere.position);
-        torsoGroup.add(ring);
-        nodeRings.push(ring);
-      }
-    });
-
-    scene.add(torsoGroup);
-
-    const raycaster = new THREE.Raycaster();
-    const pointer = new THREE.Vector2();
-    const handlePointerDown = (e: PointerEvent) => {
-      if (!renderer) return;
-      const rect = renderer.domElement.getBoundingClientRect();
-      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      raycaster.setFromCamera(pointer, camera);
-      const hits = raycaster.intersectObjects(clickableMeshes, false);
-      const firstHit = hits[0];
-      if (firstHit) {
-        const sysId = firstHit.object.userData["systemId"] as BodySystemNode["id"] | undefined;
-        if (sysId) onSelectSystem(sysId);
-      }
+    const nav = navigator as Navigator & {
+      deviceMemory?: number;
+      connection?: { saveData?: boolean };
     };
-    renderer.domElement.addEventListener("pointerdown", handlePointerDown);
+    const isConstrainedDevice =
+      (typeof nav.deviceMemory === "number" && nav.deviceMemory <= 2) ||
+      Boolean(nav.connection?.saveData);
 
+    let renderer: THREE.WebGLRenderer | null = null;
+    let pmrem: THREE.PMREMGenerator | null = null;
+    let controls: OrbitControls | null = null;
     let rafId = 0;
-    const clock = new THREE.Clock();
-    const animate = () => {
-      rafId = window.requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
-      if (!ecosystem.scene3dReducedMotion) {
-        torsoGroup.rotation.y = Math.sin(elapsed * 0.35) * 0.22;
-        nodeRings.forEach((r) => {
-          r.rotation.x = elapsed * 1.1;
-          r.rotation.y = elapsed * 0.8;
-        });
-      }
-      controls.update();
-      renderer?.render(scene, camera);
-    };
-    animate();
+    let ro: ResizeObserver | null = null;
+    let handlePointerDown: ((e: PointerEvent) => void) | null = null;
 
-    const ro = new ResizeObserver(() => {
-      if (!container || !renderer) return;
-      const w = Math.max(container.clientWidth, 300);
-      const h = Math.max(container.clientHeight, 320);
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    });
-    ro.observe(container);
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: !isConstrainedDevice,
+        alpha: true,
+        powerPreference: isConstrainedDevice ? "low-power" : "default",
+      });
+
+      const width = Math.max(container.clientWidth, 300);
+      const height = Math.max(container.clientHeight, 320);
+
+      const gl = renderer.getContext();
+      const dbg = gl?.getExtension("WEBGL_debug_renderer_info");
+      const glRenderer = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : "";
+      const isSoftware = /swiftshader|llvmpipe|software/i.test(glRenderer);
+      renderer.setPixelRatio(
+        isSoftware || isConstrainedDevice ? 1 : Math.min(window.devicePixelRatio || 1, 2),
+      );
+      renderer.setSize(width, height);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
+      container.innerHTML = "";
+      container.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+      const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
+      camera.position.set(0, 0.65, 5.1);
+
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.07;
+      controls.minDistance = 2.8;
+      controls.maxDistance = 8.5;
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+      const key = new THREE.DirectionalLight(0xffffff, 1.4);
+      key.position.set(4, 6, 5);
+      scene.add(key);
+
+      // Stylized transparent anatomical torso silhouette (clean educational geometry)
+      const torsoGroup = new THREE.Group();
+      const glassMat = new THREE.MeshPhysicalMaterial({
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0.14,
+        roughness: 0.2,
+        transmission: 0.25,
+        wireframe: false,
+      });
+      const spineMat = new THREE.MeshStandardMaterial({
+        color: 0xcbd5e1,
+        roughness: 0.45,
+        metalness: 0.15,
+      });
+
+      const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 24), glassMat);
+      headMesh.position.set(0, 1.72, 0);
+      torsoGroup.add(headMesh);
+
+      const chestMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.62, 1.25, 12, 24), glassMat);
+      chestMesh.position.set(0, 0.45, 0);
+      torsoGroup.add(chestMesh);
+
+      const spineMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 2.35, 14), spineMat);
+      spineMesh.position.set(0, 0.35, -0.18);
+      torsoGroup.add(spineMesh);
+
+      const clickableMeshes: THREE.Mesh[] = [];
+      const nodeRings: THREE.Mesh[] = [];
+
+      BODY_SYSTEMS.forEach((sys) => {
+        const isSelected = sys.id === activeSystemId;
+        const mat = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(sys.color),
+          emissive: new THREE.Color(sys.color),
+          emissiveIntensity: isSelected ? 0.55 : 0.18,
+          roughness: 0.25,
+          metalness: 0.2,
+        });
+        const sphere = new THREE.Mesh(
+          new THREE.SphereGeometry(isSelected ? 0.22 : 0.16, 20, 20),
+          mat,
+        );
+        sphere.position.set(sys.xPos, sys.yPos, 0.26);
+        sphere.userData = { systemId: sys.id };
+        torsoGroup.add(sphere);
+        clickableMeshes.push(sphere);
+
+        if (isSelected) {
+          const ring = new THREE.Mesh(
+            new THREE.TorusGeometry(0.3, 0.025, 10, 32),
+            new THREE.MeshBasicMaterial({ color: new THREE.Color(sys.color) }),
+          );
+          ring.position.copy(sphere.position);
+          torsoGroup.add(ring);
+          nodeRings.push(ring);
+        }
+      });
+
+      scene.add(torsoGroup);
+
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      handlePointerDown = (e: PointerEvent) => {
+        if (!renderer) return;
+        const rect = renderer.domElement.getBoundingClientRect();
+        pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObjects(clickableMeshes, false);
+        const firstHit = hits[0];
+        if (firstHit) {
+          const sysId = firstHit.object.userData["systemId"] as BodySystemNode["id"] | undefined;
+          if (sysId) onSelectSystem(sysId);
+        }
+      };
+      renderer.domElement.addEventListener("pointerdown", handlePointerDown);
+
+      const clock = new THREE.Clock();
+      const animate = () => {
+        rafId = window.requestAnimationFrame(animate);
+        const elapsed = clock.getElapsedTime();
+        if (!reducedMotion) {
+          torsoGroup.rotation.y = Math.sin(elapsed * 0.35) * 0.22;
+          nodeRings.forEach((r) => {
+            r.rotation.x = elapsed * 1.1;
+            r.rotation.y = elapsed * 0.8;
+          });
+        }
+        controls?.update();
+        renderer?.render(scene, camera);
+      };
+      animate();
+
+      ro = new ResizeObserver(() => {
+        if (!container || !renderer) return;
+        const w = Math.max(container.clientWidth, 300);
+        const h = Math.max(container.clientHeight, 320);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      });
+      ro.observe(container);
+    } catch {
+      setWebglUnsupported(true);
+    }
 
     return () => {
       window.cancelAnimationFrame(rafId);
-      ro.disconnect();
-      renderer?.domElement.removeEventListener("pointerdown", handlePointerDown);
-      controls.dispose();
-      pmrem.dispose();
+      ro?.disconnect();
+      if (handlePointerDown) {
+        renderer?.domElement.removeEventListener("pointerdown", handlePointerDown);
+      }
+      controls?.dispose();
+      pmrem?.dispose();
       renderer?.dispose();
     };
-  }, [activeSystemId, ecosystem.scene3dReducedMotion, onSelectSystem, shouldRender3D]);
+  }, [activeSystemId, onSelectSystem, reducedMotion, shouldRender3D]);
 
   if (!shouldRender3D) {
     return (

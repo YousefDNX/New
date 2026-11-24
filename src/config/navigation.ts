@@ -28,7 +28,6 @@ export type NavTo =
   | "/app/tasks"
   | "/app/level-up"
   | "/app/quran"
-  | "/app/circle"
   | "/app/settings"
   | "/app/help"
   | "/app/support"
@@ -66,10 +65,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     id: "do",
     label: "nav.group.do",
-    items: [
-      { id: "tasks", to: "/app/tasks", label: "nav.tasks", icon: CheckSquare },
-      { id: "circle", to: "/app/circle", label: "nav.circle", icon: Users },
-    ],
+    items: [{ id: "tasks", to: "/app/tasks", label: "nav.tasks", icon: CheckSquare }],
   },
   {
     id: "self",
@@ -97,7 +93,7 @@ export const NAV_ADMIN: NavItem = {
   staffOnly: true,
 };
 
-export const PRIMARY_TOP_NAV_IDS = ["home", "ai", "study", "tasks", "circle", "quran"] as const;
+export const PRIMARY_TOP_NAV_IDS = ["home", "ai", "study", "tasks", "quran"] as const;
 
 export const ALL_NAV_ITEMS: NavItem[] = [
   ...NAV_GROUPS.flatMap((g) => g.items),
@@ -143,12 +139,7 @@ export const ROUTE_META: Record<string, RouteMetaEntry> = {
     labelAr: "مهامي",
     groupLabelKey: "nav.group.do",
   },
-  "/app/circle": {
-    labelKey: "nav.circle",
-    labelEn: "Knowledge Circle",
-    labelAr: "حلقة المعرفة",
-    groupLabelKey: "nav.group.do",
-  },
+
   "/app/quran": {
     labelKey: "nav.quran",
     labelEn: "Quran & Islamic",
@@ -187,7 +178,7 @@ export const NAV_LAYOUT = {
   mobile: {
     style: "floating" as "floating" | "docked",
     /** item ids shown in the bar; others go into the "More" sheet */
-    tabs: ["home", "study", "tasks", "circle", "quran"],
+    tabs: ["home", "study", "tasks", "quran"],
     /** item id for the raised center button (null to disable) */
     centerAction: "ai" as string | null,
     moreColumns: 3,

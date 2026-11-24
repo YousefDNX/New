@@ -40,7 +40,7 @@ export function generateCurriculumAwareReply(params: {
   const isAr = detectArabic(trimmed) || params.langHint === "ar";
   const lower = trimmed.toLowerCase();
 
-  // 1. Vocabulary word lookup across Grade 9 Units 1-4, Unit 9, and Essential Words
+  // 1. Vocabulary word lookup across Grade 9 Units 1-4, Important Vocabulary, and Essential Words
   const vocabHits = findMatchingVocabWords(trimmed);
   if (vocabHits.length > 0) {
     if (isAr) {
@@ -58,14 +58,23 @@ export function generateCurriculumAwareReply(params: {
     return `Here is a clear breakdown from the Grade 9 Study Vocabulary library:\n\n${blocks.join("\n\n")}\n\nWould you like a quick multiple-choice practice question on ${vocabHits[0]!.word}?`;
   }
 
-  // 2. Unit 9 / Science & Tech requests
-  if (lower.includes("unit 9") || lower.includes("الوحدة 9") || lower.includes("الوحدة التاسعة")) {
-    const unit9 = ALL_STUDY_VOCAB_UNITS.find((u) => u.unit === 9);
-    const sampleWords = (unit9?.words ?? []).slice(0, 6);
+  // 2. Important Vocabulary / Science & Tech requests
+  if (
+    lower.includes("important vocab") ||
+    lower.includes("important words") ||
+    lower.includes("science & tech") ||
+    lower.includes("المفردات المهمة") ||
+    lower.includes("الكلمات المهمة") ||
+    lower.includes("unit 9") ||
+    lower.includes("الوحدة 9") ||
+    lower.includes("الوحدة التاسعة")
+  ) {
+    const importantVocab = ALL_STUDY_VOCAB_UNITS.find((u) => u.unit === 9);
+    const sampleWords = (importantVocab?.words ?? []).slice(0, 6);
     if (isAr) {
-      return `تركّز **الوحدة التاسعة (العلوم والتكنولوجيا وابتكارات المستقبل)** على ٢٤ كلمة أساسية، من أهمها:\n${sampleWords.map((w) => `• **${w.word}**: ${w.meaningAr}`).join("\n")}\n\nيمكنك أيضاً الانتقال إلى قسم **الدراسة (Study)** والضغط على **اختبار الوحدة ٩ التفاعلي** للحصول على تصحيح فوري لكل سؤال!`;
+      return `تركّز **المفردات المهمة (العلوم والتكنولوجيا وابتكارات المستقبل)** على ٢٤ كلمة أساسية، من أهمها:\n${sampleWords.map((w) => `• **${w.word}**: ${w.meaningAr}`).join("\n")}\n\nيمكنك أيضاً الانتقال إلى قسم **الدراسة (Study)** والضغط على **اختبار المفردات المهمة التفاعلي** للحصول على تصحيح فوري لكل سؤال!`;
     }
-    return `**Grade 9 Unit 9 (Science, Technology & Future Innovations)** covers 24 core terms, including:\n${sampleWords.map((w) => `• **${w.word}** (${w.phonetic}) — ${w.meaningAr}`).join("\n")}\n\nYou can also open the **Unit 9 Interactive Quiz** in the **Study** module for immediate feedback on every question!`;
+    return `**Grade 9 Important Vocabulary (Science, Technology & Future Innovations)** covers 24 core terms, including:\n${sampleWords.map((w) => `• **${w.word}** (${w.phonetic}) — ${w.meaningAr}`).join("\n")}\n\nYou can also open the **Important Vocabulary Interactive Quiz** in the **Study** module for immediate feedback on every question!`;
   }
 
   // 3. Quiz / Practice request
@@ -76,7 +85,7 @@ export function generateCurriculumAwareReply(params: {
     lower.includes("سؤال")
   ) {
     if (isAr) {
-      return `إليك سؤال تدريب سريع من الوحدة التاسعة:\n\n**السؤال**: ما معنى كلمة **algorithm**؟\nأ) خوارزمية / خطوات برمجية منطقية\nب) لوحة فنية قديمة\nج) تجربة كيميائية عشوائية\n\nاكتب حرف إجابتك وسأصححها لك فوراً مع الشرح!`;
+      return `إليك سؤال تدريب سريع من المفردات المهمة:\n\n**السؤال**: ما معنى كلمة **algorithm**؟\nأ) خوارزمية / خطوات برمجية منطقية\nب) لوحة فنية قديمة\nج) تجربة كيميائية عشوائية\n\nاكتب حرف إجابتك وسأصححها لك فوراً مع الشرح!`;
     }
     return `Here is a quick practice question:\n\n**Question**: Which word means "a proposed explanation tested as a starting point for scientific investigation"?\nA) prototype\nB) hypothesis\nC) network\nD) device\n\nReply with A, B, C, or D and I will check your answer immediately!`;
   }
@@ -106,7 +115,7 @@ export function generateCurriculumAwareReply(params: {
             ? "بصفتي مدرّب الاستعداد للاختبارات"
             : "بصفتي مساعد BTC الدراسي";
 
-    return `أهلاً بك! ${roleHeader}، يسعدني مساعدتك في سؤالك: **"${trimmed}"**.\n\nإليك طريقة واضحة وسريعة لإتقان هذا الموضوع:\n1. **حدّد المفهوم الأساسي**: لخّص الفكرة في جملة واحدة بسيطة بلغتك.\n2. **اربط بمثال عملي**: طبّق القاعدة أو المصطلح في جملة أو مسألة قصيرة.\n3. **اختبر نفسك (Active Recall)**: أعد شرح الفكرة غيباً ثم تحقق من التفاصيل.\n\nاكتب لي اسم أي كلمة أو قاعدة (مثلاً: \`algorithm\` أو \`hypothesis\` أو \`Unit 9\`) وسأشرحها لك فوراً مع مثال وترجمة.`;
+    return `أهلاً بك! ${roleHeader}، يسعدني مساعدتك في سؤالك: **"${trimmed}"**.\n\nإليك طريقة واضحة وسريعة لإتقان هذا الموضوع:\n1. **حدّد المفهوم الأساسي**: لخّص الفكرة في جملة واحدة بسيطة بلغتك.\n2. **اربط بمثال عملي**: طبّق القاعدة أو المصطلح في جملة أو مسألة قصيرة.\n3. **اختبر نفسك (Active Recall)**: أعد شرح الفكرة غيباً ثم تحقق من التفاصيل.\n\nاكتب لي اسم أي كلمة أو قاعدة (مثلاً: \`algorithm\` أو \`hypothesis\` أو \`المفردات المهمة\`) وسأشرحها لك فوراً مع مثال وترجمة.`;
   }
 
   const roleHeader =
@@ -118,5 +127,5 @@ export function generateCurriculumAwareReply(params: {
           ? "As your Exam & Quiz Prep Coach"
           : "As your BTC Study Assistant";
 
-  return `${roleHeader}, here is a structured breakdown for **"${trimmed}"**:\n\n1. **Core Idea**: Start by defining the key term or rule clearly in one sentence.\n2. **Worked Example**: Connect the concept to one concrete example or sentence in context.\n3. **Active Recall Check**: Test yourself without looking at notes, then verify any gaps.\n\nAsk me about any specific vocabulary word (like \`innovate\`, \`sustainable\`, or \`perseverance\`), ask for a **Unit 9 quiz**, or paste a paragraph you want simplified!`;
+  return `${roleHeader}, here is a structured breakdown for **"${trimmed}"**:\n\n1. **Core Idea**: Start by defining the key term or rule clearly in one sentence.\n2. **Worked Example**: Connect the concept to one concrete example or sentence in context.\n3. **Active Recall Check**: Test yourself without looking at notes, then verify any gaps.\n\nAsk me about any specific vocabulary word (like \`innovate\`, \`sustainable\`, or \`perseverance\`), ask for an **Important Vocabulary quiz**, or paste a paragraph you want simplified!`;
 }

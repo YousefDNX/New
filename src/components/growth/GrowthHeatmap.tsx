@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { CalendarDays, CheckCircle2, Clock, Flame, Sparkles, Trophy } from "lucide-react";
 import {
   Cell,
@@ -267,7 +267,7 @@ function HeatmapCellShape({ cx, cy, payload, weeksCount }: HeatmapShapeProps) {
   );
 }
 
-export function GrowthHeatmap() {
+function GrowthHeatmapBase() {
   const { lang, dir, locale, t } = usePrefs();
   const { data: events = [] } = useActivityEvents(200);
   const { data: tasks = [] } = useTasks();
@@ -522,6 +522,8 @@ export function GrowthHeatmap() {
     </section>
   );
 }
+
+export const GrowthHeatmap = React.memo(GrowthHeatmapBase);
 
 function HeatmapTooltipContent({
   active,

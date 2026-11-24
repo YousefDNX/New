@@ -299,6 +299,7 @@ export function ThemesLayoutsSection({
             <Button
               type="button"
               size="sm"
+              data-testid="theme-preset-btc_original"
               variant={effectiveBtcVisualTheme === "btc_original" ? "default" : "outline"}
               onClick={() => {
                 const prev = btcVisualTheme;
@@ -315,6 +316,7 @@ export function ThemesLayoutsSection({
             <Button
               type="button"
               size="sm"
+              data-testid="theme-preset-btc_alternative"
               variant={effectiveBtcVisualTheme === "btc_alternative" ? "default" : "outline"}
               onClick={() => {
                 const prev = btcVisualTheme;
@@ -338,6 +340,7 @@ export function ThemesLayoutsSection({
             <Button
               type="button"
               size="sm"
+              data-testid="layout-nav-classic"
               variant={effectiveBtcNavLayout === "classic" ? "default" : "outline"}
               onClick={() => {
                 const prev = btcNavLayout;
@@ -357,6 +360,7 @@ export function ThemesLayoutsSection({
             <Button
               type="button"
               size="sm"
+              data-testid="layout-nav-modern"
               variant={effectiveBtcNavLayout === "modern" ? "default" : "outline"}
               onClick={() => {
                 const prev = btcNavLayout;

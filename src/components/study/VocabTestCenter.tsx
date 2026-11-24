@@ -80,9 +80,7 @@ export function VocabTestCenter({ onBackToStudy, initialSuiteId }: VocabTestCent
       setCurrentQIndex((i) => i + 1);
     } else {
       // Calculate missed questions
-      const missed = activeQuestions.filter(
-        (q) => selectedAnswers[q.id] !== q.correctIndex,
-      );
+      const missed = activeQuestions.filter((q) => selectedAnswers[q.id] !== q.correctIndex);
       setMissedQuestions(missed);
       setIsCompleted(true);
     }
@@ -150,7 +148,9 @@ export function VocabTestCenter({ onBackToStudy, initialSuiteId }: VocabTestCent
 
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg">
-            {isAr ? `${COMPREHENSIVE_VOCAB_TEST_SUITES.length} باقات اختبار` : `${COMPREHENSIVE_VOCAB_TEST_SUITES.length} Test Suites`}
+            {isAr
+              ? `${COMPREHENSIVE_VOCAB_TEST_SUITES.length} باقات اختبار`
+              : `${COMPREHENSIVE_VOCAB_TEST_SUITES.length} Test Suites`}
           </span>
         </div>
       </div>
@@ -171,7 +171,9 @@ export function VocabTestCenter({ onBackToStudy, initialSuiteId }: VocabTestCent
               }`}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${suite.badgeColor}`}>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${suite.badgeColor}`}
+                >
                   {suite.badge}
                 </span>
                 <span className="text-[11px] font-mono text-muted-foreground">
@@ -253,15 +255,13 @@ export function VocabTestCenter({ onBackToStudy, initialSuiteId }: VocabTestCent
               const isSelected = chosenIndex === idx;
               const isCorrectOption = idx === currentQ.correctIndex;
 
-              let style =
-                "border-border/80 bg-surface-2/30 hover:bg-surface-2/70 text-foreground";
+              let style = "border-border/80 bg-surface-2/30 hover:bg-surface-2/70 text-foreground";
               if (isAnswered) {
                 if (isCorrectOption) {
                   style =
                     "border-emerald-500 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 font-bold ring-1 ring-emerald-500";
                 } else if (isSelected) {
-                  style =
-                    "border-destructive bg-destructive/15 text-destructive font-medium";
+                  style = "border-destructive bg-destructive/15 text-destructive font-medium";
                 } else {
                   style = "opacity-60 border-border/40 text-muted-foreground";
                 }
@@ -312,7 +312,9 @@ export function VocabTestCenter({ onBackToStudy, initialSuiteId }: VocabTestCent
                   ) : (
                     <>
                       <HelpCircle className="size-4 text-amber-600" />
-                      <span>{isAr ? "إجابة غير دقيقة — راجع الشرح:" : "Not quite. Here is why:"}</span>
+                      <span>
+                        {isAr ? "إجابة غير دقيقة — راجع الشرح:" : "Not quite. Here is why:"}
+                      </span>
                     </>
                   )}
                 </div>
@@ -394,17 +396,23 @@ export function VocabTestCenter({ onBackToStudy, initialSuiteId }: VocabTestCent
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-md mx-auto pt-2">
             <div className="p-3 rounded-xl bg-surface-2 border border-border/60">
               <div className="text-xl font-bold text-foreground">{correctCount}</div>
-              <div className="text-[11px] text-emerald-600 font-semibold">{isAr ? "إجابات صحيحة" : "Correct"}</div>
+              <div className="text-[11px] text-emerald-600 font-semibold">
+                {isAr ? "إجابات صحيحة" : "Correct"}
+              </div>
             </div>
             <div className="p-3 rounded-xl bg-surface-2 border border-border/60">
               <div className="text-xl font-bold text-foreground">
                 {activeQuestions.length - correctCount}
               </div>
-              <div className="text-[11px] text-destructive font-semibold">{isAr ? "بحاجة لمراجعة" : "Missed"}</div>
+              <div className="text-[11px] text-destructive font-semibold">
+                {isAr ? "بحاجة لمراجعة" : "Missed"}
+              </div>
             </div>
             <div className="p-3 rounded-xl bg-surface-2 border border-border/60 col-span-2 sm:col-span-1">
               <div className="text-xl font-bold text-primary">{percentage}%</div>
-              <div className="text-[11px] text-muted-foreground">{isAr ? "النسبة المئوية" : "Accuracy"}</div>
+              <div className="text-[11px] text-muted-foreground">
+                {isAr ? "النسبة المئوية" : "Accuracy"}
+              </div>
             </div>
           </div>
 
