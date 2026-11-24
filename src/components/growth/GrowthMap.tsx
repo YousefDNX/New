@@ -43,8 +43,7 @@ const DOMAIN_META: Record<
   GrowthArea,
   {
     icon: typeof BookOpen;
-    route:
-      "/app/study" | "/app/tasks" | "/app/level-up" | "/app/care" | "/app/future" | "/app/circle";
+    route: "/app/study" | "/app/tasks" | "/app/level-up" | "/app/quran" | "/app/circle";
     strokeClass: string;
     ringHex: string;
   }
@@ -69,13 +68,13 @@ const DOMAIN_META: Record<
   },
   wellbeing: {
     icon: HeartPulse,
-    route: "/app/care",
+    route: "/app/quran",
     strokeClass: "text-rose-400",
     ringHex: "#fb7185",
   },
   career: {
     icon: Briefcase,
-    route: "/app/future",
+    route: "/app/level-up",
     strokeClass: "text-indigo-400",
     ringHex: "#818cf8",
   },

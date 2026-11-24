@@ -1,27 +1,22 @@
-import { Check, Download, Loader2 } from "lucide-react";
+import { Check, Download, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { exportStudentDataJson, useSaveProfile } from "@/hooks/use-settings";
-import type { ProfileRow } from "@/lib/firestore-data";
+import { resolveCommunityGroup, type ProfileRow, type StudentGender } from "@/lib/firestore-data";
 import { usePrefs } from "@/lib/preferences";
 import { downloadTextFile } from "@/lib/safe-file";
 import { AVATAR_PRESETS, SUBJECT_OPTIONS } from "@/lib/settings";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { BRAND } from "@/config/brand";
 import { SettingsSectionCard } from "./SettingsPrimitives";
 
 export function AccountProfileSection({ profile }: { profile: ProfileRow | null | undefined }) {
-  const { t } = usePrefs();
+  const { t, lang } = usePrefs();
+  const isAr = lang === "ar";
   const saveProfile = useSaveProfile();
 
   const [name, setName] = useState("");
@@ -30,8 +25,10 @@ export function AccountProfileSection({ profile }: { profile: ProfileRow | null 
   const [schoolName, setSchoolName] = useState("");
   const [subjects, setSubjects] = useState<string[]>([]);
   const [learningGoals, setLearningGoals] = useState("");
+  const [pendingGender, setPendingGender] = useState<StudentGender | "">("");
   const [saving, setSaving] = useState(false);
   const [exportBusy, setExportBusy] = useState(false);
+  const resolvedGroup = resolveCommunityGroup(profile?.gender, profile?.community_group);
 
   useEffect(() => {
     if (!profile) return;
@@ -60,6 +57,9 @@ export function AccountProfileSection({ profile }: { profile: ProfileRow | null 
         school_name: schoolName.trim() ? schoolName.trim().slice(0, 120) : null,
         preferred_subjects: subjects,
         learning_goals: learningGoals.trim() ? learningGoals.trim().slice(0, 300) : null,
+        ...(!resolvedGroup && (pendingGender === "male" || pendingGender === "female")
+          ? { gender: pendingGender }
+          : {}),
       });
       toast.success(t("set.saved"), { id: "set-saved", duration: 1500 });
     } catch {
@@ -108,19 +108,87 @@ export function AccountProfileSection({ profile }: { profile: ProfileRow | null 
 
           <div className="space-y-1.5">
             <Label htmlFor="prof-grade">{t("set.grade")}</Label>
-            <Select value={gradeLevel} onValueChange={setGradeLevel}>
-              <SelectTrigger id="prof-grade" aria-label={t("set.grade")} className="h-9 w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="middle">{t("set.grade.middle")}</SelectItem>
-                <SelectItem value="high">{t("set.grade.high")}</SelectItem>
-                <SelectItem value="prep">{t("set.grade.prep")}</SelectItem>
-                <SelectItem value="undergrad">{t("set.grade.undergrad")}</SelectItem>
-                <SelectItem value="self">{t("set.grade.self")}</SelectItem>
-              </SelectContent>
-            </Select>
+            <ModernSelect
+              id="prof-grade"
+              size="sm"
+              ariaLabel={t("set.grade")}
+              value={gradeLevel}
+              onValueChange={setGradeLevel}
+              options={[
+                { value: "middle", label: t("set.grade.middle") },
+                { value: "high", label: t("set.grade.high") },
+                { value: "prep", label: t("set.grade.prep") },
+                { value: "undergrad", label: t("set.grade.undergrad") },
+                { value: "self", label: t("set.grade.self") },
+              ]}
+            />
           </div>
+        </div>
+
+        {/* Private Knowledge Circle Community Status */}
+        <div className="rounded-xl border border-border bg-surface-2/40 p-3.5 text-xs space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1.5 font-semibold text-foreground">
+              <ShieldCheck className="size-3.5 text-primary" />
+              <span>
+                {isAr ? "مجتمع حلقة المعرفة المخصص (خاص)" : "Knowledge Circle Community (Private)"}
+              </span>
+            </span>
+            {resolvedGroup && (
+              <span className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                <Lock className="size-3" />
+                <span>
+                  {resolvedGroup === "girls"
+                    ? isAr
+                      ? "مجتمع البنات · محمي"
+                      : "Girls' Community · Locked"
+                    : isAr
+                      ? "مجتمع البنين · محمي"
+                      : "Boys' Community · Locked"}
+                </span>
+              </span>
+            )}
+          </div>
+          {resolvedGroup ? (
+            <p className="text-[11px] text-muted-foreground">
+              {isAr
+                ? "تم تعيين قسمك الدراسي في حلقة المعرفة تلقائياً ولا يظهر الجنس في ملفك العام إلا إذا فعّلت ذلك من إعدادات الخصوصية."
+                : "Your Knowledge Circle community assignment is private and locked for community safety. Gender remains hidden from public profiles unless you opt in under Privacy & Security."}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[11px] text-muted-foreground">
+                {isAr
+                  ? "اختر الجنس مرة واحدة لتحديد مجتمع حلقة المعرفة المخصص لحسابك:"
+                  : "Select your gender once to unlock your assigned Knowledge Circle community:"}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  {
+                    value: "male" as const,
+                    label: isAr ? "ذكر (مجتمع البنين)" : "Male (Boys' Community)",
+                  },
+                  {
+                    value: "female" as const,
+                    label: isAr ? "أنثى (مجتمع البنات)" : "Female (Girls' Community)",
+                  },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setPendingGender(opt.value)}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium cursor-pointer ${
+                      pendingGender === opt.value
+                        ? "border-primary bg-primary/15 text-foreground"
+                        : "border-border bg-surface text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Avatar presets + optional URL */}

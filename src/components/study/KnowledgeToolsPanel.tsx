@@ -21,6 +21,7 @@ import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { FocusReadingButton, FocusReadingOverlay } from "@/components/common/FocusReadingOverlay";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { OPEN_LEARNING_LIBRARY, type ErrorReportKind } from "@/data/open-learning-library";
 import { useStudyActions, useStudyItems } from "@/hooks/use-modules";
@@ -424,48 +425,48 @@ export function KnowledgeToolsPanel() {
                 className="ps-8 text-xs"
               />
             </div>
-            <select
+            <ModernSelect
               value={libSubject}
-              onChange={(e) => setLibSubject(e.target.value)}
-              aria-label="Filter library by subject"
-              className="h-9 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-            >
-              <option value="all">All Subjects</option>
-              {librarySubjects.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-            <select
+              onValueChange={setLibSubject}
+              ariaLabel="Filter library by subject"
+              size="sm"
+              options={[
+                { value: "all", label: "All Subjects" },
+                ...librarySubjects.map((s) => ({ value: s, label: s })),
+              ]}
+            />
+            <ModernSelect
               value={libLevel}
-              onChange={(e) => setLibLevel(e.target.value as typeof libLevel)}
-              aria-label="Filter library by level"
-              className="h-9 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-            >
-              <option value="all">All Levels</option>
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-            </select>
+              onValueChange={(v) => setLibLevel(v as typeof libLevel)}
+              ariaLabel="Filter library by level"
+              size="sm"
+              options={[
+                { value: "all", label: "All Levels" },
+                { value: "beginner", label: "Beginner" },
+                { value: "intermediate", label: "Intermediate" },
+                { value: "advanced", label: "Advanced" },
+              ]}
+            />
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
             <div className="flex flex-wrap items-center gap-3">
-              <label className="inline-flex items-center gap-1.5">
+              <div className="inline-flex items-center gap-1.5">
                 <span>Language:</span>
-                <select
+                <ModernSelect
                   value={libLang}
-                  onChange={(e) => setLibLang(e.target.value as typeof libLang)}
-                  aria-label="Filter library by language"
-                  className="h-7 rounded border border-input bg-surface-2 px-2 text-xs text-foreground"
-                >
-                  <option value="all">All</option>
-                  <option value="en">English</option>
-                  <option value="ar">Arabic</option>
-                  <option value="bilingual">Bilingual</option>
-                </select>
-              </label>
+                  onValueChange={(v) => setLibLang(v as typeof libLang)}
+                  ariaLabel="Filter library by language"
+                  size="sm"
+                  className="w-32"
+                  options={[
+                    { value: "all", label: "All" },
+                    { value: "en", label: "English" },
+                    { value: "ar", label: "Arabic" },
+                    { value: "bilingual", label: "Bilingual" },
+                  ]}
+                />
+              </div>
               <label className="inline-flex items-center gap-1.5 cursor-pointer">
                 <input
                   type="checkbox"
@@ -612,19 +613,20 @@ export function KnowledgeToolsPanel() {
                       <div className="font-semibold text-foreground">
                         Report an Accuracy, Link, Accessibility, or License Issue
                       </div>
-                      <select
+                      <ModernSelect
                         value={reportKind}
-                        onChange={(e) => setReportKind(e.target.value as ErrorReportKind)}
-                        aria-label="Error report category"
-                        className="h-8 w-full rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                      >
-                        <option value="factual_error">Factual or Scientific Error</option>
-                        <option value="broken_link">Broken or Missing Source Reference</option>
-                        <option value="outdated">Outdated Information</option>
-                        <option value="copyright">Copyright or Attribution Concern</option>
-                        <option value="accessibility">Accessibility / Readability Issue</option>
-                        <option value="inappropriate">Age-Safety or Inappropriate Material</option>
-                      </select>
+                        onValueChange={(v) => setReportKind(v as ErrorReportKind)}
+                        ariaLabel="Error report category"
+                        size="sm"
+                        options={[
+                          { value: "factual_error", label: "Factual or Scientific Error" },
+                          { value: "broken_link", label: "Broken or Missing Source Reference" },
+                          { value: "outdated", label: "Outdated Information" },
+                          { value: "copyright", label: "Copyright or Attribution Concern" },
+                          { value: "accessibility", label: "Accessibility / Readability Issue" },
+                          { value: "inappropriate", label: "Age-Safety or Inappropriate Material" },
+                        ]}
+                      />
                       <Textarea
                         rows={2}
                         value={reportDetails}

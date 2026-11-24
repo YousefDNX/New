@@ -100,20 +100,22 @@ export function EditorialMasthead({
                     {t(group.label)}
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <Link
-                          key={item.id}
-                          to={item.to}
-                          onClick={() => setOpenGroupId(null)}
-                          className="flex min-h-[38px] items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface-2 hover:text-primary data-[status=active]:bg-primary/10 data-[status=active]:text-primary"
-                        >
-                          <Icon className="size-3.5 shrink-0 text-primary" />
-                          <span className="truncate">{t(item.label)}</span>
-                        </Link>
-                      );
-                    })}
+                    {(group?.items ?? [])
+                      .filter((item) => Boolean(item && item.id && item.to && item.icon))
+                      .map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.id}
+                            to={item.to}
+                            onClick={() => setOpenGroupId(null)}
+                            className="flex min-h-[38px] items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs font-medium leading-snug text-foreground transition-colors hover:bg-surface-2 hover:text-primary data-[status=active]:bg-primary/10 data-[status=active]:text-primary"
+                          >
+                            <Icon className="size-3.5 shrink-0 text-primary" />
+                            <span className="min-w-0 flex-1 break-words">{t(item.label)}</span>
+                          </Link>
+                        );
+                      })}
                   </div>
                 </PopoverContent>
               </Popover>
@@ -290,7 +292,35 @@ export function CommandOsSidebar({ allModulesTrigger }: { allModulesTrigger?: Re
                 {t(group.label)}
               </div>
             )}
-            {group.items.map((item) => {
+            {(group?.items ?? [])
+              .filter((item) => Boolean(item && item.id && item.to && item.icon))
+              .map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.id}
+                    to={item.to}
+                    title={t(item.label)}
+                    aria-label={t(item.label)}
+                    className={cn(
+                      "flex min-h-[36px] items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium leading-snug text-nav-foreground transition-colors hover:bg-surface-2 hover:text-foreground data-[status=active]:bg-primary/15 data-[status=active]:text-primary",
+                      sidebarCollapsed && "justify-center px-0",
+                    )}
+                  >
+                    <Icon className="size-4 shrink-0" />
+                    {!sidebarCollapsed && (
+                      <span className="min-w-0 flex-1 break-words">{t(item.label)}</span>
+                    )}
+                  </Link>
+                );
+              })}
+          </div>
+        ))}
+
+        <div className="space-y-1 border-t border-border/60 pt-2">
+          {[...NAV_FOOTER, ...NAV_UTILITIES]
+            .filter((item) => Boolean(item && item.id && item.to && item.icon))
+            .map((item) => {
               const Icon = item.icon;
               return (
                 <Link
@@ -299,48 +329,30 @@ export function CommandOsSidebar({ allModulesTrigger }: { allModulesTrigger?: Re
                   title={t(item.label)}
                   aria-label={t(item.label)}
                   className={cn(
-                    "flex min-h-[36px] items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-nav-foreground transition-colors hover:bg-surface-2 hover:text-foreground data-[status=active]:bg-primary/15 data-[status=active]:text-primary",
+                    "flex min-h-[36px] items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium leading-snug text-nav-foreground transition-colors hover:bg-surface-2 hover:text-foreground data-[status=active]:bg-primary/15 data-[status=active]:text-primary",
                     sidebarCollapsed && "justify-center px-0",
                   )}
                 >
                   <Icon className="size-4 shrink-0" />
-                  {!sidebarCollapsed && <span className="truncate">{t(item.label)}</span>}
+                  {!sidebarCollapsed && (
+                    <span className="min-w-0 flex-1 break-words">{t(item.label)}</span>
+                  )}
                 </Link>
               );
             })}
-          </div>
-        ))}
-
-        <div className="space-y-1 border-t border-border/60 pt-2">
-          {[...NAV_FOOTER, ...NAV_UTILITIES].map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.id}
-                to={item.to}
-                title={t(item.label)}
-                aria-label={t(item.label)}
-                className={cn(
-                  "flex min-h-[36px] items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-nav-foreground transition-colors hover:bg-surface-2 hover:text-foreground data-[status=active]:bg-primary/15 data-[status=active]:text-primary",
-                  sidebarCollapsed && "justify-center px-0",
-                )}
-              >
-                <Icon className="size-4 shrink-0" />
-                {!sidebarCollapsed && <span className="truncate">{t(item.label)}</span>}
-              </Link>
-            );
-          })}
           {rbac.isStaff && (
             <Link
               to={NAV_ADMIN.to}
               title={t(NAV_ADMIN.label)}
               className={cn(
-                "flex min-h-[36px] items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 data-[status=active]:bg-primary/15",
+                "flex min-h-[36px] items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold leading-snug text-primary transition-colors hover:bg-primary/10 data-[status=active]:bg-primary/15",
                 sidebarCollapsed && "justify-center px-0",
               )}
             >
               <NAV_ADMIN.icon className="size-4 shrink-0" />
-              {!sidebarCollapsed && <span className="truncate">{t(NAV_ADMIN.label)}</span>}
+              {!sidebarCollapsed && (
+                <span className="min-w-0 flex-1 break-words">{t(NAV_ADMIN.label)}</span>
+              )}
             </Link>
           )}
         </div>
@@ -466,8 +478,8 @@ const OS_DOCK_IDS = ["home", "ai", "study", "english", "tasks", "levelup", "qura
 export function CommandOsDock({ allModulesTrigger }: { allModulesTrigger: ReactNode }) {
   const { t } = usePrefs();
   const rbac = useRbac();
-  const dockItems = OS_DOCK_IDS.map((id) => ALL_NAV_ITEMS.find((i) => i.id === id)).filter(
-    (x): x is NonNullable<typeof x> => Boolean(x),
+  const dockItems = OS_DOCK_IDS.map((id) => ALL_NAV_ITEMS.find((i) => i && i.id === id)).filter(
+    (x): x is NonNullable<typeof x> => Boolean(x && x.id && x.to && x.icon),
   );
 
   return (
@@ -583,9 +595,9 @@ const COMPASS_RAIL_IDS = ["home", "ai", "study", "tasks", "quran", "settings"];
 
 export function FocusDeckCornerRail() {
   const { t } = usePrefs();
-  const railItems = COMPASS_RAIL_IDS.map((id) => ALL_NAV_ITEMS.find((i) => i.id === id)).filter(
-    (x): x is NonNullable<typeof x> => Boolean(x),
-  );
+  const railItems = COMPASS_RAIL_IDS.map((id) =>
+    ALL_NAV_ITEMS.find((i) => i && i.id === id),
+  ).filter((x): x is NonNullable<typeof x> => Boolean(x && x.id && x.to && x.icon));
 
   return (
     <aside
@@ -624,19 +636,19 @@ export function FocusDeckCornerRail() {
 }
 
 const SPATIAL_DOCK_IDS = ["home", "ai", "study", "english", "tasks", "quran", "settings"];
-const RADIAL_QUICK_IDS = ["ai", "study", "tasks", "levelup", "quran", "coding"];
+const RADIAL_QUICK_IDS = ["ai", "study", "tasks", "levelup", "quran", "circle"];
 
 export function SpatialFloatingDock({ allModulesTrigger }: { allModulesTrigger?: ReactNode }) {
   const { t, lang } = usePrefs();
   const { radialMenuOpen, toggleRadialMenu, setRadialMenuOpen } = useExperienceMode();
   const isAr = lang === "ar";
 
-  const dockItems = SPATIAL_DOCK_IDS.map((id) => ALL_NAV_ITEMS.find((i) => i.id === id)).filter(
-    (x): x is NonNullable<typeof x> => Boolean(x),
-  );
-  const radialItems = RADIAL_QUICK_IDS.map((id) => ALL_NAV_ITEMS.find((i) => i.id === id)).filter(
-    (x): x is NonNullable<typeof x> => Boolean(x),
-  );
+  const dockItems = SPATIAL_DOCK_IDS.map((id) =>
+    ALL_NAV_ITEMS.find((i) => i && i.id === id),
+  ).filter((x): x is NonNullable<typeof x> => Boolean(x && x.id && x.to && x.icon));
+  const radialItems = RADIAL_QUICK_IDS.map((id) =>
+    ALL_NAV_ITEMS.find((i) => i && i.id === id),
+  ).filter((x): x is NonNullable<typeof x> => Boolean(x && x.id && x.to && x.icon));
 
   return (
     <div className="fixed bottom-3 left-1/2 z-40 hidden -translate-x-1/2 flex-col items-center gap-3 md:flex">

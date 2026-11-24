@@ -957,7 +957,7 @@ export const SEEDED_SMART_CLASSROOMS: SmartClassroomRecord[] = [
         title: "Experiment Design: 3-Trial Control Variable Check",
         dueLabel: "Due Friday",
         kind: "project",
-        targetRoute: "/app/future",
+        targetRoute: "/app/study",
       },
       {
         id: "asg_stem_2",
@@ -1179,11 +1179,32 @@ export const CURATED_COMMUNITY_GUIDES = [
 
 const PII_SAFETY_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|(\+?\d[\d\s-]{6,}\d))/;
 
-export function validateSafeCommunityContribution(params: {
-  title: string;
-  summary: string;
-  stepsText: string;
-}): { ok: boolean; reason?: string } {
+export function validateSafeCommunityContribution(
+  params:
+    | string
+    | {
+        title: string;
+        summary: string;
+        stepsText: string;
+      },
+): { ok: boolean; reason?: string } {
+  if (typeof params === "string") {
+    const trimmed = params.trim();
+    if (trimmed.length < 3) {
+      return {
+        ok: false,
+        reason: "Please provide a clear, helpful message (at least 3 characters).",
+      };
+    }
+    if (PII_SAFETY_REGEX.test(trimmed)) {
+      return {
+        ok: false,
+        reason:
+          "Minor Safety Block: Never include email addresses, phone numbers, or personal contact details in community posts.",
+      };
+    }
+    return { ok: true };
+  }
   const combined = `${params.title} ${params.summary} ${params.stepsText}`;
   if (params.title.trim().length < 5 || params.summary.trim().length < 15) {
     return {

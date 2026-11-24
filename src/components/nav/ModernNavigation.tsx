@@ -4,8 +4,6 @@ import {
   BookOpen,
   BookOpenCheck,
   CheckSquare,
-  Compass,
-  HeartHandshake,
   Home,
   Keyboard,
   LayoutGrid,
@@ -13,7 +11,6 @@ import {
   Sparkles,
   Users,
   Volume2,
-  X,
 } from "lucide-react";
 import { Logo } from "@/components/app/Logo";
 import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
@@ -118,64 +115,66 @@ export function ModernNavHeader({
                   </p>
                   <p className="text-[11px] text-muted-foreground">
                     {lang === "ar"
-                      ? "انتقل مباشرة إلى أي أداة تعليمية أو دائرة معرفة"
+                      ? "انتقل مباشرة إلى أي أداة تعليمية أو حلقة معرفة"
                       : "Jump directly to any study module, sanctuary, or collaborative space"}
                   </p>
                 </div>
-                <Link
-                  to="/app/circle"
-                  search={{ section: "girls_space" } as never}
-                  onClick={() => setMegaOpen(false)}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-rose-500/35 bg-rose-500/10 px-2.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/20 whitespace-nowrap"
-                >
-                  <HeartHandshake className="size-3.5" />
-                  <span>{lang === "ar" ? "مساحة الفتيات" : "Girls' Space"}</span>
-                </Link>
               </div>
 
               <div className="grid max-h-[60dvh] gap-4 overflow-y-auto sm:grid-cols-2 md:grid-cols-3">
-                {[...NAV_GROUPS, ...EXTENDED_NAV_GROUPS].map((group) => (
-                  <div key={group.id} className="space-y-1.5">
-                    <p className="px-2 text-[11px] font-semibold text-muted-foreground">
-                      {t(group.label)}
-                    </p>
-                    <div className="space-y-0.5">
-                      {group.items.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <Link
-                            key={`modern-mega-${item.id}`}
-                            to={item.to}
-                            activeOptions={{ exact: item.exact ?? false }}
-                            onClick={() => setMegaOpen(false)}
-                            className="flex min-h-[36px] items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface-2 hover:text-primary data-[status=active]:bg-nav-active data-[status=active]:text-nav-active-foreground"
-                          >
-                            <Icon className="size-3.5 shrink-0 text-primary" />
-                            <span className="truncate">{t(item.label)}</span>
-                          </Link>
-                        );
-                      })}
+                {[...NAV_GROUPS, ...EXTENDED_NAV_GROUPS].map((group) => {
+                  if (!group || !Array.isArray(group.items)) return null;
+                  const items = group.items.filter((item): item is NavItem =>
+                    Boolean(item && item.id && item.to && item.icon),
+                  );
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={group.id} className="space-y-1.5">
+                      <p className="px-2 text-[11px] font-semibold text-muted-foreground">
+                        {t(group.label)}
+                      </p>
+                      <div className="space-y-0.5">
+                        {items.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <Link
+                              key={`modern-mega-${item.id}`}
+                              to={item.to}
+                              activeOptions={{ exact: item.exact ?? false }}
+                              onClick={() => setMegaOpen(false)}
+                              className="flex min-h-[36px] items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium leading-snug text-foreground transition-colors hover:bg-surface-2 hover:text-primary data-[status=active]:bg-nav-active data-[status=active]:text-nav-active-foreground"
+                            >
+                              <Icon className="size-3.5 shrink-0 text-primary" />
+                              <span className="min-w-0 flex-1 break-words">{t(item.label)}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  {[...NAV_FOOTER, ...NAV_UTILITIES].map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={`modern-util-${item.id}`}
-                        to={item.to}
-                        onClick={() => setMegaOpen(false)}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 text-xs font-medium text-foreground hover:border-primary/40 hover:text-primary whitespace-nowrap"
-                      >
-                        <Icon className="size-3.5 text-primary" />
-                        <span>{t(item.label)}</span>
-                      </Link>
-                    );
-                  })}
+                  {[...NAV_FOOTER, ...NAV_UTILITIES]
+                    .filter((item): item is NavItem =>
+                      Boolean(item && item.id && item.to && item.icon),
+                    )
+                    .map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={`modern-util-${item.id}`}
+                          to={item.to}
+                          onClick={() => setMegaOpen(false)}
+                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 text-xs font-medium text-foreground hover:border-primary/40 hover:text-primary whitespace-nowrap"
+                        >
+                          <Icon className="size-3.5 text-primary" />
+                          <span>{t(item.label)}</span>
+                        </Link>
+                      );
+                    })}
                   {rbac.isStaff && (
                     <Link
                       to={NAV_ADMIN.to}
@@ -312,8 +311,6 @@ export function ModernFloatingDock() {
 
 export function ModernMobileNav() {
   const { t, lang } = usePrefs();
-  const rbac = useRbac();
-  const [open, setOpen] = useState(false);
 
   const mobileDockItems = [
     {
@@ -328,6 +325,11 @@ export function ModernMobileNav() {
       label: t("nav.study"),
     },
     {
+      to: "/app/tasks" as const,
+      icon: CheckSquare,
+      label: t("nav.tasks"),
+    },
+    {
       to: "/app/ai" as const,
       icon: Sparkles,
       label: "BTC AI",
@@ -337,133 +339,33 @@ export function ModernMobileNav() {
       icon: Users,
       label: lang === "ar" ? "المعرفة" : "Circle",
     },
+    {
+      to: "/app/quran" as const,
+      icon: BookOpenCheck,
+      label: t("nav.quran"),
+    },
   ];
 
   return (
-    <>
-      <nav
-        aria-label={t("nav.home")}
-        data-testid="modern-mobile-nav"
-        className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-40 flex h-14 items-center justify-between gap-1 rounded-2xl border border-primary/30 bg-popover/95 px-2 shadow-2xl backdrop-blur-xl md:hidden"
-      >
-        {mobileDockItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              activeOptions={{ exact: item.exact ?? false }}
-              className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold text-muted-foreground transition-colors data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-            >
-              <Icon className="size-4 shrink-0" />
-              <span className="truncate text-[11px]">{item.label}</span>
-            </Link>
-          );
-        })}
-
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          aria-label={t("nav.more")}
-          className="flex min-h-[44px] items-center justify-center gap-1 rounded-xl border border-border bg-surface-2 px-3 text-[11px] font-semibold text-foreground"
-        >
-          <Compass className="size-4 text-primary" />
-          <span>{lang === "ar" ? "المزيد" : "Menu"}</span>
-        </button>
-      </nav>
-
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent
-          side="bottom"
-          className="max-h-[85dvh] overflow-y-auto rounded-t-3xl border-border bg-popover pb-[calc(env(safe-area-inset-bottom)+1.25rem)]"
-        >
-          <SheetHeader className="flex flex-row items-center justify-between">
-            <SheetTitle className="font-display">
-              {lang === "ar" ? "كل مساحات BTC" : "All BTC Workspaces"}
-            </SheetTitle>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="flex size-9 items-center justify-center rounded-xl border border-border text-muted-foreground"
-              aria-label={t("common.close")}
-            >
-              <X className="size-4" />
-            </button>
-          </SheetHeader>
-
-          <div className="space-y-4 px-4 pt-2">
-            <ProgressCard />
-
-            <Link
-              to="/app/circle"
-              search={{ section: "girls_space" } as never}
-              onClick={() => setOpen(false)}
-              className="flex items-center justify-between rounded-2xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-xs font-semibold text-rose-400"
-            >
-              <span className="flex items-center gap-2">
-                <HeartHandshake className="size-4" />
-                <span>
-                  {lang === "ar"
-                    ? "مساحة الفتيات (القيادة والعلوم)"
-                    : "Girls' Space — Protected Leadership & STEM"}
-                </span>
-              </span>
-              <span className="font-mono text-[11px]">→</span>
-            </Link>
-
-            {[...NAV_GROUPS, ...EXTENDED_NAV_GROUPS].map((group) => (
-              <div key={group.id} className="space-y-2">
-                <p className="px-1 text-[11px] font-semibold text-muted-foreground">
-                  {t(group.label)}
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {group.items.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={`mm-${item.id}`}
-                        to={item.to}
-                        onClick={() => setOpen(false)}
-                        className="flex min-h-[44px] items-center gap-2.5 rounded-xl border border-border bg-surface-2/80 px-3 py-2 text-xs font-medium text-foreground data-[status=active]:border-primary data-[status=active]:bg-nav-active data-[status=active]:text-nav-active-foreground"
-                      >
-                        <Icon className="size-4 shrink-0 text-primary" />
-                        <span className="truncate">{t(item.label)}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-
-            <div className="grid grid-cols-2 gap-2 border-t border-border/70 pt-3">
-              {[...NAV_FOOTER, ...NAV_UTILITIES].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={`mm-util-${item.id}`}
-                    to={item.to}
-                    onClick={() => setOpen(false)}
-                    className="flex min-h-[44px] items-center gap-2.5 rounded-xl border border-border bg-surface-2 px-3 py-2 text-xs font-medium text-foreground"
-                  >
-                    <Icon className="size-4 shrink-0 text-primary" />
-                    <span className="truncate">{t(item.label)}</span>
-                  </Link>
-                );
-              })}
-              {rbac.isStaff && (
-                <Link
-                  to={NAV_ADMIN.to}
-                  onClick={() => setOpen(false)}
-                  className="col-span-2 flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary"
-                >
-                  <NAV_ADMIN.icon className="size-4" />
-                  <span>{t(NAV_ADMIN.label)}</span>
-                </Link>
-              )}
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-    </>
+    <nav
+      aria-label={t("nav.home")}
+      data-testid="modern-mobile-nav"
+      className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-40 flex h-14 items-center gap-1 overflow-x-auto rounded-2xl border border-primary/30 bg-popover/95 px-2 shadow-2xl backdrop-blur-xl md:hidden scrollbar-none"
+    >
+      {mobileDockItems.map((item) => {
+        const Icon = item.icon;
+        return (
+          <Link
+            key={item.to}
+            to={item.to}
+            activeOptions={{ exact: item.exact ?? false }}
+            className="flex min-h-[44px] flex-1 min-w-[70px] shrink-0 items-center justify-center gap-1 rounded-xl px-2 text-xs font-semibold text-muted-foreground transition-colors data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
+          >
+            <Icon className="size-4 shrink-0" />
+            <span className="truncate text-[11px]">{item.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

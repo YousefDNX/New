@@ -11,7 +11,7 @@ export interface CurriculumUnitPlan {
   prerequisites: string[];
   knowledgeNodeId: string;
   estimatedMinutes: number;
-  linkedRoute: "/app/english" | "/app/study" | "/app/future" | "/app/ai";
+  linkedRoute: "/app/english" | "/app/study" | "/app/level-up" | "/app/ai";
   sampleCheck: {
     question: string;
     options: [string, string, string, string];
@@ -98,7 +98,7 @@ export const CURRICULUM_UNITS: CurriculumUnitPlan[] = [
     prerequisites: ["kn_scientific_method", "kn_ratios_percent"],
     knowledgeNodeId: "kn_data_inference",
     estimatedMinutes: 35,
-    linkedRoute: "/app/future",
+    linkedRoute: "/app/study",
     sampleCheck: {
       question:
         "When testing how salt concentration affects membrane flow rate, salt concentration is the:",
@@ -152,7 +152,7 @@ export const CURRICULUM_UNITS: CurriculumUnitPlan[] = [
     prerequisites: ["kn_logic_foundations"],
     knowledgeNodeId: "kn_code_control_flow",
     estimatedMinutes: 35,
-    linkedRoute: "/app/future",
+    linkedRoute: "/app/level-up",
     sampleCheck: {
       question:
         "Why should students test boundary cases (0, empty string, negative numbers) in loops?",
@@ -492,7 +492,7 @@ export interface ZeroToHeroJourney {
     label: string;
     requirementType:
       "assessment" | "lesson_or_map" | "practice_score" | "real_challenge_or_portfolio";
-    actionRoute: "/app/english" | "/app/study" | "/app/future" | "/app/ai";
+    actionRoute: "/app/english" | "/app/study" | "/app/level-up" | "/app/ai";
     description: string;
   }>;
 }
@@ -533,7 +533,7 @@ export const ZERO_TO_HERO_JOURNEYS: ZeroToHeroJourney[] = [
         stageNumber: 4,
         label: "Applied Portfolio Draft",
         requirementType: "real_challenge_or_portfolio",
-        actionRoute: "/app/future",
+        actionRoute: "/app/level-up",
         description: "Document a completed essay or communication deliverable in your Portfolio.",
       },
     ],
@@ -571,7 +571,7 @@ export const ZERO_TO_HERO_JOURNEYS: ZeroToHeroJourney[] = [
         stageNumber: 4,
         label: "Real-World Quantitative Project",
         requirementType: "real_challenge_or_portfolio",
-        actionRoute: "/app/future",
+        actionRoute: "/app/study",
         description: "Apply rate/percentage modeling to a Freshwater or Shade Challenge.",
       },
     ],
@@ -588,7 +588,7 @@ export const ZERO_TO_HERO_JOURNEYS: ZeroToHeroJourney[] = [
         stageNumber: 1,
         label: "AI & Digital Safety Baseline",
         requirementType: "assessment",
-        actionRoute: "/app/future",
+        actionRoute: "/app/level-up",
         description: "Complete 2+ Digital & AI Literacy verification scenarios.",
       },
       {
@@ -602,14 +602,14 @@ export const ZERO_TO_HERO_JOURNEYS: ZeroToHeroJourney[] = [
         stageNumber: 3,
         label: "Hands-On Coding Practice",
         requirementType: "practice_score",
-        actionRoute: "/app/future",
+        actionRoute: "/app/level-up",
         description: "Solve at least 2 interactive coding exercises inside Coding Studio.",
       },
       {
         stageNumber: 4,
         label: "Accessibility or Utility Build",
         requirementType: "real_challenge_or_portfolio",
-        actionRoute: "/app/future",
+        actionRoute: "/app/level-up",
         description: "Save a snippet or UDL challenge brief into your Student Portfolio.",
       },
     ],
@@ -634,7 +634,7 @@ export const ZERO_TO_HERO_JOURNEYS: ZeroToHeroJourney[] = [
         stageNumber: 2,
         label: "Interactive STEM Labs",
         requirementType: "lesson_or_map",
-        actionRoute: "/app/future",
+        actionRoute: "/app/study",
         description:
           "Complete interactive STEM lab simulations and connect Variables -> Inference.",
       },
@@ -649,7 +649,7 @@ export const ZERO_TO_HERO_JOURNEYS: ZeroToHeroJourney[] = [
         stageNumber: 4,
         label: "Safe Investigation Brief",
         requirementType: "real_challenge_or_portfolio",
-        actionRoute: "/app/future",
+        actionRoute: "/app/study",
         description: "Document a Science Fair or Environmental Sustainability Challenge.",
       },
     ],

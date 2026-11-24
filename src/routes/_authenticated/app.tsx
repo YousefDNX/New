@@ -83,7 +83,11 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/app")({
   ssr: false,
   beforeLoad: async ({ context }) => {
-    if (context.needsVerification || !isUserEligibleForApp(context.user, context.signInProvider)) {
+    if (
+      context.needsVerification ||
+      !isUserEligibleForApp(context.user, context.signInProvider) ||
+      context.user?.isAnonymous
+    ) {
       return { bootstrapError: false };
     }
     try {
@@ -169,43 +173,52 @@ function AllModulesMenu({ side = "bottom" }: { side?: "top" | "bottom" }) {
           </span>
         </div>
         <div className="grid max-h-[65dvh] gap-3 overflow-y-auto sm:grid-cols-2">
-          {[...NAV_GROUPS, ...EXTENDED_NAV_GROUPS].map((group) => (
-            <div key={group.id} className="space-y-1">
-              <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                {t(group.label)}
-              </p>
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={`menu-${item.id}`}
-                    to={item.to}
-                    onClick={() => setOpen(false)}
-                    className="flex min-h-[38px] items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface-2 hover:text-primary data-[status=active]:bg-primary/15 data-[status=active]:text-primary"
-                  >
-                    <Icon className="size-3.5 shrink-0 text-primary" />
-                    <span className="truncate">{t(item.label)}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border/70 pt-3">
-          {[...NAV_FOOTER, ...NAV_UTILITIES].map((item) => {
-            const Icon = item.icon;
+          {[...NAV_GROUPS, ...EXTENDED_NAV_GROUPS].map((group) => {
+            if (!group || !Array.isArray(group.items)) return null;
+            const items = group.items.filter((item) =>
+              Boolean(item && item.id && item.to && item.icon),
+            );
+            if (items.length === 0) return null;
             return (
-              <Link
-                key={`menu-util-${item.id}`}
-                to={item.to}
-                onClick={() => setOpen(false)}
-                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40 hover:text-primary"
-              >
-                <Icon className="size-3.5 text-primary" />
-                <span>{t(item.label)}</span>
-              </Link>
+              <div key={group.id} className="space-y-1">
+                <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t(group.label)}
+                </p>
+                {items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={`menu-${item.id}`}
+                      to={item.to}
+                      onClick={() => setOpen(false)}
+                      className="flex min-h-[38px] items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium leading-snug text-foreground transition-colors hover:bg-surface-2 hover:text-primary data-[status=active]:bg-primary/15 data-[status=active]:text-primary"
+                    >
+                      <Icon className="size-3.5 shrink-0 text-primary" />
+                      <span className="min-w-0 flex-1 break-words">{t(item.label)}</span>
+                    </Link>
+                  );
+                })}
+              </div>
             );
           })}
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border/70 pt-3">
+          {[...NAV_FOOTER, ...NAV_UTILITIES]
+            .filter((item) => Boolean(item && item.id && item.to && item.icon))
+            .map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={`menu-util-${item.id}`}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40 hover:text-primary"
+                >
+                  <Icon className="size-3.5 text-primary" />
+                  <span>{t(item.label)}</span>
+                </Link>
+              );
+            })}
           {rbac.isStaff && (
             <Link
               to={NAV_ADMIN.to}
@@ -297,11 +310,15 @@ function AppLayoutInner() {
   const layoutSpec = getLayoutModeById(effectiveLayoutMode);
   const isTopNavShell = layoutSpec.navPosition === "top";
   const isBottomDockShell = layoutSpec.navPosition === "bottom";
-  const primaryNavItems = ALL_NAV_ITEMS.filter((i) =>
-    (PRIMARY_TOP_NAV_IDS as readonly string[]).includes(i.id),
+  const primaryNavItems = ALL_NAV_ITEMS.filter(
+    (i) => i && i.id && (PRIMARY_TOP_NAV_IDS as readonly string[]).includes(i.id),
   );
   const secondaryNavItems = ALL_NAV_ITEMS.filter(
-    (i) => !(PRIMARY_TOP_NAV_IDS as readonly string[]).includes(i.id) && i.id !== "settings",
+    (i) =>
+      i &&
+      i.id &&
+      !(PRIMARY_TOP_NAV_IDS as readonly string[]).includes(i.id) &&
+      i.id !== "settings",
   );
   const isNestedRoute = pathname !== "/app" && pathname !== "/app/";
   const resolvedMeta = isNestedRoute ? resolveRouteMeta(pathname) : null;

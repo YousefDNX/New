@@ -63,7 +63,7 @@ export interface LearningPathStep {
   kind: "lesson" | "practice" | "project" | "checkpoint";
   summary: string;
   prerequisiteIds: string[];
-  targetRoute: "/app/study" | "/app/tasks" | "/app/ai" | "/app/future";
+  targetRoute: "/app/study" | "/app/tasks" | "/app/ai" | "/app/level-up";
   linkedSkillArea?: EnglishSkillAreaId;
   minMasteryScore: number;
   checkQuestion: {
@@ -934,7 +934,7 @@ export const ADAPTIVE_LEARNING_PATHS: AdaptiveLearningPath[] = [
         kind: "checkpoint",
         summary: "Define independent, dependent, and control variables for a real test.",
         prerequisiteIds: ["stem_step_2"],
-        targetRoute: "/app/future",
+        targetRoute: "/app/study",
         minMasteryScore: 80,
         checkQuestion: {
           prompt:
@@ -987,7 +987,7 @@ export const ADAPTIVE_LEARNING_PATHS: AdaptiveLearningPath[] = [
         kind: "project",
         summary: "Capture problem, process, outcome, and reflection in your BTC Portfolio.",
         prerequisiteIds: ["fut_step_1"],
-        targetRoute: "/app/future",
+        targetRoute: "/app/level-up",
         minMasteryScore: 75,
         checkQuestion: {
           prompt: "What makes a student portfolio entry persuasive to university reviewers?",

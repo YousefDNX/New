@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { usePrefs } from "@/lib/preferences";
 import { useStudentEcosystem } from "@/lib/student-ecosystem";
@@ -120,35 +121,28 @@ export function MunSimulatorPanel() {
           <div className="grid gap-2 sm:grid-cols-2">
             <div>
               <label className="font-semibold text-foreground block mb-1">Committee</label>
-              <select
-                aria-label="Committee"
+              <ModernSelect
+                ariaLabel="Committee"
+                size="sm"
                 value={committee}
-                onChange={(e) => setCommittee(e.target.value)}
-                className="w-full h-8 rounded-lg border border-border bg-surface-2 px-2.5 text-xs text-foreground"
-              >
-                {MUN_COMMITTEES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+                onValueChange={setCommittee}
+                options={MUN_COMMITTEES.map((c) => ({ value: c, label: c }))}
+              />
             </div>
             <div>
               <label className="font-semibold text-foreground block mb-1">
                 Assigned Delegation
               </label>
-              <select
-                aria-label="Assigned Delegation"
+              <ModernSelect
+                ariaLabel="Assigned Delegation"
+                size="sm"
                 value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
-                className="w-full h-8 rounded-lg border border-border bg-surface-2 px-2.5 text-xs text-foreground"
-              >
-                {SAMPLE_COUNTRIES.map((c) => (
-                  <option key={c.name} value={c.name}>
-                    {c.name} ({c.bloc})
-                  </option>
-                ))}
-              </select>
+                onValueChange={setSelectedCountry}
+                options={SAMPLE_COUNTRIES.map((c) => ({
+                  value: c.name,
+                  label: `${c.name} (${c.bloc})`,
+                }))}
+              />
             </div>
           </div>
 

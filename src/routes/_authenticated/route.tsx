@@ -19,7 +19,14 @@ export const Route = createFileRoute("/_authenticated")({
     </div>
   ),
   beforeLoad: async ({ location }) => {
-    const user = await waitForAuthReady();
+    let user = await waitForAuthReady();
+    if (!user) {
+      try {
+        user = await signInAsAnonymousGuest();
+      } catch (err) {
+        console.warn("Auto-guest signIn failed:", err);
+      }
+    }
     if (!user) {
       throw redirect({
         to: "/auth",

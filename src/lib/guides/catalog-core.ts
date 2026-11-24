@@ -2913,5 +2913,133 @@ export const CORE_GUIDES: Record<string, FeatureGuideEntry> = {
       limitations:
         "سياسة عدم تسامح مطلق مع التنمر أو المضايقة؛ تتم مراجعة الأنشطة دورياً لضمان سلامة الجميع.",
     },
+    ja: {
+      title: "ガールズスペース（STEM・リーダーシップ）",
+      category: "コミュニティ",
+      whatItDoes:
+        "女子学生が安心して参加できる、プライバシー保護された学習・リーダーシップ環境とメンターシップを提供します。",
+      whyAndProblem:
+        "ハラスメントのない環境で、STEM研究やロボティクス、模擬国連などのプロジェクトを主導できるよう支援します。",
+      whoBenefits: "STEM、生命科学、数学、パブリックスピーキングに取り組む女子学生。",
+      steps: [
+        "関心のあるトラック（AI・ロボティクス、生命科学、数学、外交）を選択します。",
+        "認定されたメンターシップ学習コホートを閲覧し、参加をリクエストします。",
+        "サポートが必要な場合はいつでも「モデレーターに相談」を利用できます。",
+      ],
+      options: [
+        {
+          label: "4つのエンパワーメントトラック",
+          desc: "AI・ロボティクス、生命科学、数学、外交・模擬国連。",
+        },
+        {
+          label: "モデレーターサポート",
+          desc: "認定モデレーターへのワンクリック個別相談。",
+        },
+      ],
+      limitations: "いじめやハラスメントは一切許容されず、すべての交流は厳格にモデレートされます。",
+    },
+    fr: {
+      title: "Espace Filles (STEM & Leadership)",
+      category: "Communauté",
+      whatItDoes:
+        "Offre un environnement éducatif et de leadership sûr, bienveillant et respectueux de la vie privée pour les étudiantes.",
+      whyAndProblem:
+        "Garantit aux étudiantes des cercles d'étude dédiés, sans harcèlement, pour mener des projets STEM, de robotique et de Modèle des Nations Unies.",
+      whoBenefits:
+        "Étudiantes engagées en STEM, sciences biomédicales, mathématiques et éloquence.",
+      steps: [
+        "Sélectionnez votre parcours (IA & Robotique, Biomédecine, Mathématiques ou Diplomatie).",
+        "Parcourez les cohortes de mentorat vérifiées et cliquez sur « Demander à rejoindre ».",
+        "Utilisez « Demander l'aide d'une modératrice » à tout moment pour un soutien confidentiel.",
+      ],
+      options: [
+        {
+          label: "4 parcours d'émancipation",
+          desc: "IA & Robotique, Sciences biomédicales, Mathématiques, Diplomatie & MUN.",
+        },
+        {
+          label: "Soutien des modératrices",
+          desc: "Escalade confidentielle en un clic vers des modératrices vérifiées.",
+        },
+      ],
+      limitations:
+        "Tolérance zéro envers le harcèlement ou l'intimidation ; toutes les interactions sont modérées.",
+    },
+    de: {
+      title: "Girls' Space (MINT & Leadership)",
+      category: "Community",
+      whatItDoes:
+        "Bietet eine sichere, geschützte Lern- und Führungsumgebung für Schülerinnen und Studentinnen mit Mentoring-Gruppen.",
+      whyAndProblem:
+        "Sorgt für belästigungsfreie Lerngruppen, in denen weibliche Lernende MINT-Forschung, Robotik und Model-UN-Projekte leiten können.",
+      whoBenefits: "Schülerinnen und Studentinnen in MINT, Biomedizin, Mathematik und Rhetorik.",
+      steps: [
+        "Wähle deinen Schwerpunkt (KI & Robotik, Biomedizin, Mathematik oder Diplomatie).",
+        "Durchsuche verifizierte Mentoring-Gruppen und klicke auf „Beitritt anfragen“.",
+        "Nutze jederzeit „Moderatorinnen-Hilfe anfordern“ für vertrauliche Unterstützung.",
+      ],
+      options: [
+        {
+          label: "4 Förderpfade",
+          desc: "KI & Robotik, Biomedizin, Mathematik-Meisterschaft, Diplomatie & MUN.",
+        },
+        {
+          label: "Moderatorinnen-Support",
+          desc: "Vertrauliche Ein-Klick-Anfrage an verifizierte Moderatorinnen.",
+        },
+      ],
+      limitations:
+        "Null-Toleranz-Politik gegenüber Mobbing und Belästigung; alle Interaktionen werden moderiert.",
+    },
+    "zh-CN": {
+      title: "女生空间（STEM 与领导力）",
+      category: "学习社区",
+      whatItDoes: "为女生提供安全、注重隐私保护的教育与领导力学习环境，配备同伴学习圈与导师支持。",
+      whyAndProblem:
+        "确保女生拥有免受骚扰的专属学习空间，自主牵头 STEM 研究、机器人项目及模拟联合国代表团。",
+      whoBenefits: "致力于进阶 STEM、生物医学、竞赛数学及公共演讲的女生。",
+      steps: [
+        "选择你的兴趣方向（AI 与机器人、生物医学、数学或外交）。",
+        "浏览经认证的导师学习小组并点击“申请加入”。",
+        "随时点击“请求管理员协助”获取一对一保密支持。",
+      ],
+      options: [
+        {
+          label: "4 大赋能方向",
+          desc: "AI 与机器人、生物医学、数学精进、外交与模联。",
+        },
+        {
+          label: "管理员支持",
+          desc: "一键保密联系经认证的女性管理员。",
+        },
+      ],
+      limitations: "对任何欺凌或骚扰零容忍；所有同伴互动均受严格审核。",
+    },
+    ko: {
+      title: "걸스 스페이스 (STEM & 리더십)",
+      category: "커뮤니티",
+      whatItDoes:
+        "여학생들을 위해 안전하고 프라이버시가 보호되는 교육·리더십 환경과 멘토링 학습 그룹을 제공합니다.",
+      whyAndProblem:
+        "괴롭힘 없는 전용 스터디 서클에서 여학생들이 STEM 연구, 로보틱스, 모의유엔 프로젝트를 주도할 수 있도록 돕습니다.",
+      whoBenefits: "심화 STEM, 의생명과학, 수학, 스피치에 도전하는 여학생.",
+      steps: [
+        "관심 트랙(AI 및 로보틱스, 의생명과학, 수학, 외교)을 선택하세요.",
+        "검증된 멘토링 학습 코호트를 살펴보고 '가입 요청'을 누르세요.",
+        "비공개 지원이 필요할 때는 언제든 '관리자 도움 요청'을 사용하세요.",
+      ],
+      options: [
+        {
+          label: "4가지 역량 강화 트랙",
+          desc: "AI·로보틱스, 의생명과학, 수학 마스터, 외교·MUN.",
+        },
+        {
+          label: "관리자 지원",
+          desc: "검증된 여성 관리자에게 원클릭 비공개 지원 요청.",
+        },
+      ],
+      limitations:
+        "괴롭힘이나 따돌림에 대해 무관용 원칙을 적용하며 모든 상호작용을 엄격히 관리합니다.",
+    },
   },
 };

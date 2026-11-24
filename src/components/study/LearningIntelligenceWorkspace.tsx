@@ -26,6 +26,7 @@ import { CurriculumAndOfflinePanel } from "@/components/study/CurriculumAndOffli
 import { VisualConceptExplorer } from "@/components/study/VisualConceptExplorer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { TEACH_ME_STYLES } from "@/data/curriculum-and-challenges";
 import {
@@ -809,72 +810,77 @@ export function LearningIntelligenceWorkspace({
                   Edit Your Learning DNA &amp; Privacy Controls
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <label className="space-y-1">
-                    <span className="text-[11px] text-muted-foreground">Focus Block Length</span>
-                    <select
-                      value={state.dnaPreferences.preferredSessionMin}
-                      onChange={(e) =>
+                  <div className="space-y-1">
+                    <span className="text-[11px] text-muted-foreground block">
+                      Focus Block Length
+                    </span>
+                    <ModernSelect
+                      ariaLabel="Focus Block Length"
+                      size="sm"
+                      value={String(state.dnaPreferences.preferredSessionMin)}
+                      onValueChange={(v) =>
                         update((prev) => ({
                           ...prev,
                           dnaPreferences: {
                             ...prev.dnaPreferences,
-                            preferredSessionMin: Number(e.target.value),
+                            preferredSessionMin: Number(v),
                           },
                         }))
                       }
-                      className="h-8 w-full rounded-md border border-input bg-surface px-2 text-xs text-foreground"
-                    >
-                      <option value={15}>15 min (Short sprints)</option>
-                      <option value={25}>25 min (Classic)</option>
-                      <option value={40}>40 min (Deep focus)</option>
-                    </select>
-                  </label>
+                      options={[
+                        { value: "15", label: "15 min (Short sprints)" },
+                        { value: "25", label: "25 min (Classic)" },
+                        { value: "40", label: "40 min (Deep focus)" },
+                      ]}
+                    />
+                  </div>
 
-                  <label className="space-y-1">
-                    <span className="text-[11px] text-muted-foreground">
+                  <div className="space-y-1">
+                    <span className="text-[11px] text-muted-foreground block">
                       Default Teaching Style
                     </span>
-                    <select
+                    <ModernSelect
+                      ariaLabel="Default Teaching Style"
+                      size="sm"
                       value={state.dnaPreferences.preferredExplanationStyle}
-                      onChange={(e) =>
+                      onValueChange={(v) =>
                         update((prev) => ({
                           ...prev,
                           dnaPreferences: {
                             ...prev.dnaPreferences,
-                            preferredExplanationStyle: e.target.value,
+                            preferredExplanationStyle: v,
                           },
                         }))
                       }
-                      className="h-8 w-full rounded-md border border-input bg-surface px-2 text-xs text-foreground"
-                    >
-                      {TEACH_ME_STYLES.map((st) => (
-                        <option key={st.id} value={st.id}>
-                          {st.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                      options={TEACH_ME_STYLES.map((st) => ({
+                        value: st.id,
+                        label: st.label,
+                      }))}
+                    />
+                  </div>
 
-                  <label className="space-y-1">
-                    <span className="text-[11px] text-muted-foreground">Study Rhythm</span>
-                    <select
+                  <div className="space-y-1">
+                    <span className="text-[11px] text-muted-foreground block">Study Rhythm</span>
+                    <ModernSelect
+                      ariaLabel="Study Rhythm"
+                      size="sm"
                       value={state.dnaPreferences.learningPace}
-                      onChange={(e) =>
+                      onValueChange={(v) =>
                         update((prev) => ({
                           ...prev,
                           dnaPreferences: {
                             ...prev.dnaPreferences,
-                            learningPace: e.target.value as "gentle" | "balanced" | "intensive",
+                            learningPace: v as "gentle" | "balanced" | "intensive",
                           },
                         }))
                       }
-                      className="h-8 w-full rounded-md border border-input bg-surface px-2 text-xs text-foreground"
-                    >
-                      <option value="gentle">Gentle Recovery</option>
-                      <option value="balanced">Balanced Daily</option>
-                      <option value="intensive">Exam Intensive</option>
-                    </select>
-                  </label>
+                      options={[
+                        { value: "gentle", label: "Gentle Recovery" },
+                        { value: "balanced", label: "Balanced Daily" },
+                        { value: "intensive", label: "Exam Intensive" },
+                      ]}
+                    />
+                  </div>
                 </div>
 
                 <label className="flex items-center gap-2 pt-1 cursor-pointer">
@@ -1157,98 +1163,102 @@ export function LearningIntelligenceWorkspace({
 
           {!examRunning && (
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6 rounded-xl border border-border bg-surface-2 p-3.5">
-              <label className="space-y-1">
-                <span className="text-[11px] font-semibold text-foreground">Subject</span>
-                <select
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-foreground block">Subject</span>
+                <ModernSelect
+                  ariaLabel="Subject"
+                  size="sm"
                   value={examConfig.subject}
-                  onChange={(e) =>
+                  onValueChange={(v) =>
                     setExamConfig((c) => ({
                       ...c,
-                      subject: e.target.value as ExamSimulationConfig["subject"],
+                      subject: v as ExamSimulationConfig["subject"],
                     }))
                   }
-                  className="h-8 w-full rounded-md border border-input bg-surface px-2 text-xs text-foreground"
-                >
-                  <option value="Mixed STEM & English">Mixed STEM &amp; English</option>
-                  <option value="English">English</option>
-                  <option value="Mathematics">Mathematics</option>
-                  <option value="Science">Science</option>
-                </select>
-              </label>
+                  options={[
+                    { value: "Mixed STEM & English", label: "Mixed STEM & English" },
+                    { value: "English", label: "English" },
+                    { value: "Mathematics", label: "Mathematics" },
+                    { value: "Science", label: "Science" },
+                  ]}
+                />
+              </div>
 
-              <label className="space-y-1">
-                <span className="text-[11px] font-semibold text-foreground">Topic</span>
-                <select
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-foreground block">Topic</span>
+                <ModernSelect
+                  ariaLabel="Topic"
+                  size="sm"
                   value={examConfig.topic}
-                  onChange={(e) =>
+                  onValueChange={(v) =>
                     setExamConfig((c) => ({
                       ...c,
-                      topic: e.target.value,
+                      topic: v,
                     }))
                   }
-                  className="h-8 w-full rounded-md border border-input bg-surface px-2 text-xs text-foreground"
-                >
-                  {availableExamTopics.map((tp) => (
-                    <option key={tp} value={tp}>
-                      {tp}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  options={availableExamTopics.map((tp) => ({ value: tp, label: tp }))}
+                />
+              </div>
 
-              <label className="space-y-1">
-                <span className="text-[11px] font-semibold text-foreground">Difficulty</span>
-                <select
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-foreground block">Difficulty</span>
+                <ModernSelect
+                  ariaLabel="Difficulty"
+                  size="sm"
                   value={examConfig.difficulty}
-                  onChange={(e) =>
+                  onValueChange={(v) =>
                     setExamConfig((c) => ({
                       ...c,
-                      difficulty: e.target.value as ExamSimulationConfig["difficulty"],
+                      difficulty: v as ExamSimulationConfig["difficulty"],
                     }))
                   }
-                  className="h-8 w-full rounded-md border border-input bg-surface px-2 text-xs text-foreground"
-                >
-                  <option value="foundation">Foundation</option>
-                  <option value="standard">Standard</option>
-                  <option value="challenge">Challenge</option>
-                </select>
-              </label>
+                  options={[
+                    { value: "foundation", label: "Foundation" },
+                    { value: "standard", label: "Standard" },
+                    { value: "challenge", label: "Challenge" },
+                  ]}
+                />
+              </div>
 
-              <label className="space-y-1">
-                <span className="text-[11px] font-semibold text-foreground">Length</span>
-                <select
-                  value={examConfig.questionCount}
-                  onChange={(e) =>
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-foreground block">Length</span>
+                <ModernSelect
+                  ariaLabel="Length"
+                  size="sm"
+                  value={String(examConfig.questionCount)}
+                  onValueChange={(v) =>
                     setExamConfig((c) => ({
                       ...c,
-                      questionCount: Number(e.target.value) as 5 | 8 | 10,
+                      questionCount: Number(v) as 5 | 8 | 10,
                     }))
                   }
-                  className="h-8 w-full rounded-md border border-input bg-surface px-2 text-xs text-foreground"
-                >
-                  <option value={5}>5 Questions</option>
-                  <option value={8}>8 Questions</option>
-                  <option value={10}>10 Questions</option>
-                </select>
-              </label>
+                  options={[
+                    { value: "5", label: "5 Questions" },
+                    { value: "8", label: "8 Questions" },
+                    { value: "10", label: "10 Questions" },
+                  ]}
+                />
+              </div>
 
-              <label className="space-y-1">
-                <span className="text-[11px] font-semibold text-foreground">Duration</span>
-                <select
-                  value={examConfig.durationMinutes}
-                  onChange={(e) =>
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-foreground block">Duration</span>
+                <ModernSelect
+                  ariaLabel="Duration"
+                  size="sm"
+                  value={String(examConfig.durationMinutes)}
+                  onValueChange={(v) =>
                     setExamConfig((c) => ({
                       ...c,
-                      durationMinutes: Number(e.target.value) as 10 | 15 | 25,
+                      durationMinutes: Number(v) as 10 | 15 | 25,
                     }))
                   }
-                  className="h-8 w-full rounded-md border border-input bg-surface px-2 text-xs text-foreground"
-                >
-                  <option value={10}>10 Minutes</option>
-                  <option value={15}>15 Minutes</option>
-                  <option value={25}>25 Minutes</option>
-                </select>
-              </label>
+                  options={[
+                    { value: "10", label: "10 Minutes" },
+                    { value: "15", label: "15 Minutes" },
+                    { value: "25", label: "25 Minutes" },
+                  ]}
+                />
+              </div>
 
               <div className="flex items-end">
                 <Button

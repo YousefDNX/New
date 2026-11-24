@@ -3,6 +3,7 @@ import { CheckCircle2, Circle, Plus, Target, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   useCareEntries,
   useCircles,
@@ -103,18 +104,17 @@ export function WeeklyObjectivesBoard() {
         </div>
 
         <form onSubmit={handleAdd} className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          <select
-            aria-label={t("weekly.category")}
+          <ModernSelect
+            ariaLabel={t("weekly.category")}
+            size="sm"
             value={selectedArea}
-            onChange={(e) => setSelectedArea(e.target.value as Area)}
-            className="h-9 rounded-md border border-input bg-surface-2 px-2.5 text-xs text-foreground"
-          >
-            {AREAS.map((areaKey) => (
-              <option key={areaKey} value={areaKey}>
-                {t(AREA_CONFIG[areaKey].labelKey)}
-              </option>
-            ))}
-          </select>
+            onValueChange={(val) => setSelectedArea(val as Area)}
+            className="w-full sm:w-44"
+            options={AREAS.map((areaKey) => ({
+              value: areaKey,
+              label: t(AREA_CONFIG[areaKey].labelKey),
+            }))}
+          />
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}

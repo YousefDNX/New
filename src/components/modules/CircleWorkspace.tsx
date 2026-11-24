@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import {
+  BookMarked,
   BookOpenCheck,
   CheckCircle2,
   Circle,
@@ -9,13 +9,14 @@ import {
   Flag,
   Globe2,
   GraduationCap,
-  HeartHandshake,
   ImageIcon,
+  Lock,
   LogOut,
   Pencil,
   Plus,
   Search,
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
   ThumbsUp,
   Trash2,
@@ -41,16 +42,23 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCircleActions, useCircleDetails, useCircles } from "@/hooks/use-modules";
 import { useProfile, useStats, useUser } from "@/hooks/use-nexora";
+import { useSaveProfile } from "@/hooks/use-settings";
 import {
   CURATED_COMMUNITY_GUIDES,
   SEEDED_SMART_CLASSROOMS,
   matchSafeStudyCohorts,
   validateSafeCommunityContribution,
 } from "@/lib/empowerment-engines";
-import { sanitizeHttpUrl, type ModerationReportRow } from "@/lib/firestore-data";
+import {
+  resolveCommunityGroup,
+  sanitizeHttpUrl,
+  type ModerationReportRow,
+  type StudentGender,
+} from "@/lib/firestore-data";
 import { OPEN_LEARNING_LIBRARY } from "@/data/open-learning-library";
 import { validateVolunteerContribution, type VolunteerTaskKind } from "@/lib/legacy-knowledge";
 import { formatNumber } from "@/lib/locale-format";
@@ -58,8 +66,7 @@ import { usePrefs } from "@/lib/preferences";
 import { useStudentEcosystem } from "@/lib/student-ecosystem";
 
 type CircleTab = "feed" | "tasks" | "resources" | "members" | "showcase" | "mun" | "global";
-export type CircleHubSection =
-  "qa" | "teams" | "matcher" | "classrooms" | "library" | "girls_space";
+export type CircleHubSection = "qa" | "teams" | "matcher" | "classrooms" | "library";
 
 export function CircleWorkspace({ initialSection }: { initialSection?: CircleHubSection }) {
   const { t, lang, privacy } = usePrefs();
@@ -67,8 +74,18 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
   const { data: profile } = useProfile();
   const { data: stats } = useStats();
   const { data: circles = [] } = useCircles();
+  const saveProfile = useSaveProfile();
   const { state: ecoState, update: updateEco } = useStudentEcosystem();
   const [hubSection, setHubSection] = useState<CircleHubSection>(initialSection ?? "teams");
+
+  const communityGroup = resolveCommunityGroup(profile?.gender, profile?.community_group);
+  const [pendingGender, setPendingGender] = useState<StudentGender | "">("");
+  const [assigningCommunity, setAssigningCommunity] = useState(false);
+
+  const visibleCircles = useMemo(() => {
+    if (!communityGroup) return [];
+    return circles.filter((c) => !c.community_group || c.community_group === communityGroup);
+  }, [circles, communityGroup]);
 
   useEffect(() => {
     if (initialSection) {
@@ -104,13 +121,14 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
   const [editPostBody, setEditPostBody] = useState("");
 
   const [selectedCircleId, setSelectedCircleId] = useState<string | null>(null);
-  const activeCircle = circles.find((c) => c.id === selectedCircleId) ?? circles[0] ?? null;
+  const activeCircle =
+    visibleCircles.find((c) => c.id === selectedCircleId) ?? visibleCircles[0] ?? null;
 
   useEffect(() => {
-    if (!selectedCircleId && circles[0]) {
-      setSelectedCircleId(circles[0].id);
+    if (!selectedCircleId && visibleCircles[0]) {
+      setSelectedCircleId(visibleCircles[0].id);
     }
-  }, [circles, selectedCircleId]);
+  }, [visibleCircles, selectedCircleId]);
 
   const { data: details } = useCircleDetails(activeCircle?.id ?? null);
   const [tab, setTab] = useState<CircleTab>("feed");
@@ -182,9 +200,20 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
       setTeamName("");
       setTeamSubject("");
       setSharedGoal("");
-      toast.success(`${t("circle.createTeam")} (+25 XP)`);
-    } catch {
-      toast.error(t("dash.tasks.errAdd"));
+      toast.success(
+        lang === "ar" ? "تم إنشاء حلقة الدراسة بنجاح!" : "Study circle created successfully!",
+      );
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "";
+      toast.error(
+        lang === "ar"
+          ? errMsg.includes("community")
+            ? "يرجى تحديد مجتمع حلقة المعرفة أولاً."
+            : "تعذر إنشاء حلقة الدراسة. يرجى المحاولة مرة أخرى."
+          : errMsg.includes("community")
+            ? "Please select your Knowledge Circle community first."
+            : "Could not create study circle. Please try again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -203,7 +232,21 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
         levelSnapshot: stats?.level ?? 1,
       });
       if (!res.joined) {
-        toast.error(t("circle.invalidCode"));
+        if (res.reason === "community_mismatch") {
+          toast.error(
+            lang === "ar"
+              ? "رمز الدعوة مخصص لمجتمع مختلف في حلقة المعرفة ولا يمكن الانضمام إليه."
+              : "This invite belongs to a different Knowledge Circle community area and cannot be joined.",
+          );
+        } else if (res.reason === "missing_community") {
+          toast.error(
+            lang === "ar"
+              ? "يرجى تحديد مجتمع حلقة المعرفة لحسابك أولاً."
+              : "Please confirm your Knowledge Circle community first.",
+          );
+        } else {
+          toast.error(t("circle.invalidCode"));
+        }
         return;
       }
       if (res.circleId) setSelectedCircleId(res.circleId);
@@ -291,14 +334,23 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
         subtitle={t("circle.sub")}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Link
-              to="/app"
-              search={{ tab: "legacy" }}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-3 text-xs font-medium text-foreground transition-colors hover:border-primary/50 hover:text-primary whitespace-nowrap"
-            >
-              <HeartHandshake className="size-3.5 text-emerald-400" />
-              <span>{lang === "ar" ? "الأثر والمشاريع النافعة" : "Legacy & Impact"}</span>
-            </Link>
+            {communityGroup && (
+              <span
+                data-testid="circle-community-badge"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 text-xs font-semibold text-primary whitespace-nowrap"
+              >
+                <Lock className="size-3.5" />
+                <span>
+                  {communityGroup === "girls"
+                    ? lang === "ar"
+                      ? "مجتمع البنات · محمي الخصوصية"
+                      : "Girls' Community · Privacy Protected"
+                    : lang === "ar"
+                      ? "مجتمع البنين · محمي الخصوصية"
+                      : "Boys' Community · Privacy Protected"}
+                </span>
+              </span>
+            )}
             <FeatureGuideTrigger
               featureId={
                 tab === "mun"
@@ -409,10 +461,91 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
 
       <div className="surface-card flex items-start gap-2.5 border-primary/30 p-4 text-xs text-muted-foreground">
         <ShieldAlert className="mt-0.5 size-4 shrink-0 text-primary" />
-        <span>{t("circle.safetyBanner")}</span>
+        <span>
+          {communityGroup === "girls"
+            ? lang === "ar"
+              ? "تم تخصيص حلقة المعرفة تلقائياً لقسم البنات بناءً على إعداد حسابك الخاص. لا يتم عرض الجنس علناً إلا باختيارك من الإعدادات."
+              : "Your Knowledge Circle is automatically scoped to the Girls' Community based on your private account setting. Gender stays hidden publicly unless you opt in."
+            : communityGroup === "boys"
+              ? lang === "ar"
+                ? "تم تخصيص حلقة المعرفة تلقائياً لقسم البنين بناءً على إعداد حسابك الخاص. لا يتم عرض الجنس علناً إلا باختيارك من الإعدادات."
+                : "Your Knowledge Circle is automatically scoped to the Boys' Community based on your private account setting. Gender stays hidden publicly unless you opt in."
+              : t("circle.safetyBanner")}
+        </span>
       </div>
 
-      {/* Top Hub Switcher: Q&A | Teams | Safe Matcher | Smart Classrooms | Community Library | Girls' Space */}
+      {/* One-time respectful community assignment for legacy signed-in accounts without gender set */}
+      {user && !user.isAnonymous && !communityGroup && (
+        <div
+          data-testid="circle-community-setup"
+          className="surface-card space-y-3 border-primary/35 bg-primary/5 p-5 text-xs"
+        >
+          <div className="flex items-center gap-2 font-display text-sm font-bold text-foreground">
+            <ShieldCheck className="size-4 text-primary" />
+            <span>
+              {lang === "ar"
+                ? "تحديد مجتمع حلقة المعرفة الخاص بك (مرة واحدة)"
+                : "Assign Your Knowledge Circle Community (One-Time Setup)"}
+            </span>
+          </div>
+          <p className="text-muted-foreground leading-relaxed">
+            {lang === "ar"
+              ? "يرجى اختيار الجنس مرة واحدة لفتح قسم حلقة المعرفة المخصص لحسابك (مجتمع البنين أو مجتمع البنات). يُحفظ هذا الاختيار بخصوصية تامة."
+              : "Select your gender once to enter your assigned Knowledge Circle community area (Boys' Community or Girls' Community). Your selection stays private."}
+          </p>
+          <div className="flex flex-wrap items-center gap-2.5">
+            {[
+              {
+                value: "male" as const,
+                label: lang === "ar" ? "ذكر — مجتمع البنين" : "Male — Boys' Community",
+              },
+              {
+                value: "female" as const,
+                label: lang === "ar" ? "أنثى — مجتمع البنات" : "Female — Girls' Community",
+              },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setPendingGender(opt.value)}
+                className={`rounded-xl border px-3.5 py-2 text-xs font-semibold cursor-pointer ${
+                  pendingGender === opt.value
+                    ? "border-primary bg-primary/15 text-foreground"
+                    : "border-border bg-surface text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+            <Button
+              type="button"
+              size="sm"
+              variant="glow"
+              disabled={!pendingGender || assigningCommunity}
+              onClick={async () => {
+                if (!pendingGender) return;
+                setAssigningCommunity(true);
+                try {
+                  await saveProfile({ gender: pendingGender });
+                  toast.success(
+                    lang === "ar"
+                      ? "تم تعيين مجتمع حلقة المعرفة بنجاح"
+                      : "Knowledge Circle community assigned",
+                  );
+                } catch {
+                  toast.error(t("set.error"));
+                } finally {
+                  setAssigningCommunity(false);
+                }
+              }}
+            >
+              {lang === "ar" ? "تأكيد والدخول" : "Confirm & Continue"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Unified Knowledge Circle Hub Switcher */}
       <div className="flex flex-wrap gap-2">
         {(
           [
@@ -438,18 +571,12 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
             },
             {
               id: "library",
-              label: lang === "ar" ? "مكتبة المعرفة المفتوحة" : "Community Knowledge Library",
+              label: lang === "ar" ? "مكتبة المعرفة والملازم" : "Notes & Knowledge Library",
               icon: BookOpenCheck,
-            },
-            {
-              id: "girls_space",
-              label: lang === "ar" ? "مساحة الفتيات (محمية)" : "Girls' Space (STEM & Leadership)",
-              icon: HeartHandshake,
             },
           ] as const
         ).map((sec) => {
           const Icon = sec.icon;
-          const isGirlsBtn = sec.id === "girls_space";
           return (
             <Button
               key={sec.id}
@@ -457,11 +584,7 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
               size="sm"
               variant={hubSection === sec.id ? "glow" : "outline"}
               onClick={() => setHubSection(sec.id)}
-              className={`h-9 text-xs ${
-                isGirlsBtn && hubSection !== "girls_space"
-                  ? "border-rose-500/35 text-rose-400 hover:bg-rose-500/10"
-                  : ""
-              }`}
+              className="h-9 text-xs"
             >
               <Icon className="size-3.5" />
               <span>{sec.label}</span>
@@ -473,6 +596,7 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
       {hubSection === "qa" && (
         <KnowledgeCircleQaBoard
           authorName={displayName}
+          communityGroup={communityGroup}
           onReportThread={(threadId) => {
             setReportTarget({ type: "post", id: threadId });
           }}
@@ -496,64 +620,71 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
                   12. Safe Study Group Matcher &amp; Global Exchange Cohorts (#40)
                 </h3>
                 <p className="text-muted-foreground">
-                  Matched by subject, grade band, study pace, and language using anonymized study
+                  Matched within your verified {communityGroup === "girls" ? "Girls'" : "Boys'"}{" "}
+                  community by subject, grade band, study pace, and language using anonymized study
                   aliases only. Zero unrestricted private messaging and instant block/report
                   protection.
                 </p>
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <label className="space-y-1">
+                  <div className="space-y-1">
                     <span className="text-[11px] text-muted-foreground">Grade Band</span>
-                    <select
+                    <ModernSelect
+                      size="sm"
+                      ariaLabel="Grade Band"
                       value={ecoState.studyMatcher.gradeBand}
-                      onChange={(e) =>
+                      onValueChange={(val) =>
                         updateEco((prev) => ({
                           ...prev,
-                          studyMatcher: { ...prev.studyMatcher, gradeBand: e.target.value },
+                          studyMatcher: { ...prev.studyMatcher, gradeBand: val },
                         }))
                       }
-                      className="h-8 w-full rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                    >
-                      <option value="Grades 7–9">Grades 7–9</option>
-                      <option value="Grades 8–10">Grades 8–10</option>
-                      <option value="Grades 9–12">Grades 9–12</option>
-                    </select>
-                  </label>
-                  <label className="space-y-1">
+                      options={[
+                        { value: "Grades 7–9", label: "Grades 7–9" },
+                        { value: "Grades 8–10", label: "Grades 8–10" },
+                        { value: "Grades 9–12", label: "Grades 9–12" },
+                      ]}
+                    />
+                  </div>
+                  <div className="space-y-1">
                     <span className="text-[11px] text-muted-foreground">Study Pace</span>
-                    <select
+                    <ModernSelect
+                      size="sm"
+                      ariaLabel="Study Pace"
                       value={ecoState.studyMatcher.preferredPace}
-                      onChange={(e) =>
+                      onValueChange={(val) =>
                         updateEco((prev) => ({
                           ...prev,
                           studyMatcher: {
                             ...prev.studyMatcher,
-                            preferredPace: e.target.value as "gentle" | "balanced" | "intensive",
+                            preferredPace: val as "gentle" | "balanced" | "intensive",
                           },
                         }))
                       }
-                      className="h-8 w-full rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                    >
-                      <option value="gentle">Gentle Recovery</option>
-                      <option value="balanced">Balanced Weekly</option>
-                      <option value="intensive">Exam Intensive</option>
-                    </select>
-                  </label>
-                  <label className="space-y-1">
+                      options={[
+                        { value: "gentle", label: "Gentle Recovery" },
+                        { value: "balanced", label: "Balanced Weekly" },
+                        { value: "intensive", label: "Exam Intensive" },
+                      ]}
+                    />
+                  </div>
+                  <div className="space-y-1">
                     <span className="text-[11px] text-muted-foreground">Preferred Language</span>
-                    <select
+                    <ModernSelect
+                      size="sm"
+                      ariaLabel="Preferred Language"
                       value={ecoState.studyMatcher.language}
-                      onChange={(e) =>
+                      onValueChange={(val) =>
                         updateEco((prev) => ({
                           ...prev,
-                          studyMatcher: { ...prev.studyMatcher, language: e.target.value },
+                          studyMatcher: { ...prev.studyMatcher, language: val },
                         }))
                       }
-                      className="h-8 w-full rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                    >
-                      <option value="en">English</option>
-                      <option value="ar">العربية (Arabic)</option>
-                    </select>
-                  </label>
+                      options={[
+                        { value: "en", label: "English" },
+                        { value: "ar", label: "العربية (Arabic)" },
+                      ]}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -834,17 +965,19 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
                     placeholder="Guide Title (e.g., Balancing Chemical Equations)"
                     className="text-xs sm:col-span-2"
                   />
-                  <select
+                  <ModernSelect
+                    size="sm"
+                    ariaLabel="Contribution subject"
                     value={contribSubject}
-                    onChange={(e) => setContribSubject(e.target.value)}
-                    aria-label="Contribution subject"
-                    className="h-9 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                  >
-                    <option value="Mathematics">Mathematics</option>
-                    <option value="Science">Science</option>
-                    <option value="English">English</option>
-                    <option value="Coding & AI">Coding &amp; AI</option>
-                  </select>
+                    onValueChange={setContribSubject}
+                    options={[
+                      { value: "Mathematics", label: "Mathematics" },
+                      { value: "Science", label: "Science" },
+                      { value: "English", label: "English" },
+                      { value: "Islamic Studies", label: "Islamic Studies" },
+                      { value: "Coding & AI", label: "Coding & AI" },
+                    ]}
+                  />
                 </div>
                 <Input
                   value={contribGrade}
@@ -954,31 +1087,33 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
                   className="space-y-2.5"
                 >
                   <div className="grid gap-2 sm:grid-cols-3">
-                    <select
+                    <ModernSelect
+                      size="sm"
+                      ariaLabel="Volunteer contribution type"
                       value={volKind}
-                      onChange={(e) => setVolKind(e.target.value as VolunteerTaskKind)}
-                      aria-label="Volunteer contribution type"
-                      className="h-9 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                    >
-                      <option value="translation">Bilingual Translation</option>
-                      <option value="proofreading">Proofreading &amp; Clarity</option>
-                      <option value="accessibility_improvement">
-                        Accessibility / Alt-Text Review
-                      </option>
-                      <option value="content_review">Source &amp; Fact Review</option>
-                    </select>
-                    <select
-                      value={volTargetId}
-                      onChange={(e) => setVolTargetId(e.target.value)}
-                      aria-label="Target open library resource"
-                      className="h-9 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground sm:col-span-2"
-                    >
-                      {OPEN_LEARNING_LIBRARY.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.title} ({r.subject})
-                        </option>
-                      ))}
-                    </select>
+                      onValueChange={(val) => setVolKind(val as VolunteerTaskKind)}
+                      options={[
+                        { value: "translation", label: "Bilingual Translation" },
+                        { value: "proofreading", label: "Proofreading & Clarity" },
+                        {
+                          value: "accessibility_improvement",
+                          label: "Accessibility / Alt-Text Review",
+                        },
+                        { value: "content_review", label: "Source & Fact Review" },
+                      ]}
+                    />
+                    <div className="sm:col-span-2">
+                      <ModernSelect
+                        size="sm"
+                        ariaLabel="Target open library resource"
+                        value={volTargetId}
+                        onValueChange={setVolTargetId}
+                        options={OPEN_LEARNING_LIBRARY.map((r) => ({
+                          value: r.id,
+                          label: `${r.title} (${r.subject})`,
+                        }))}
+                      />
+                    </div>
                   </div>
                   <Input
                     value={volLang}
@@ -1035,232 +1170,58 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
                   </div>
                 )}
               </div>
+
+              {/* Approved Islamic Educational Materials (Equal for Boys & Girls Communities) */}
+              <div className="surface-card space-y-3 p-5" data-testid="circle-islamic-library">
+                <div className="flex items-center gap-2">
+                  <BookMarked className="size-4 text-primary" />
+                  <h3 className="font-display text-sm font-bold text-foreground">
+                    {lang === "ar"
+                      ? "المواد التربوية والإسلامية المعتمدة للدراسة"
+                      : "Approved Islamic Educational Materials"}
+                  </h3>
+                </div>
+                <p className="text-muted-foreground">
+                  {lang === "ar"
+                    ? "ملاحظات مراجعة معتمدة للقرآن الكريم والتجويد والسيرة والفقه الميسر متاحة بالتساوي داخل قسمك الدراسي."
+                    : "Verified Quran, Tajweed, Seerah, and Fiqh revision sheets curated equally for your community."}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-border bg-surface-2/60 p-3.5 space-y-1">
+                    <span className="font-mono text-[10px] font-bold text-primary">
+                      QURAN & TAJWEED
+                    </span>
+                    <div className="font-semibold text-foreground">
+                      {lang === "ar"
+                        ? "ملخص أحكام النون الساكنة والتنوين والمدود"
+                        : "Tajweed Rules & Surah Al-Mulk Hifz Guide"}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      {lang === "ar"
+                        ? "أمثلة تطبيقية مرتبة لمراجعة التلاوة اليومية."
+                        : "Structured recitation examples for steady daily memorization."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-surface-2/60 p-3.5 space-y-1">
+                    <span className="font-mono text-[10px] font-bold text-primary">
+                      ISLAMIC STUDIES
+                    </span>
+                    <div className="font-semibold text-foreground">
+                      {lang === "ar"
+                        ? "مذكرة السيرة النبوية والأخلاق الإسلامية"
+                        : "Seerah Timeline & Character Ethics Notes"}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      {lang === "ar"
+                        ? "نقاط مراجعة واضحة للاختبارات المدرسية المعتمدة."
+                        : "Concise study notes aligned with school Islamic Education curricula."}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           );
         })()}
-
-      {/* GIRLS' SPACE — WELCOMING, SAFE & PRIVACY-PROTECTED EDUCATIONAL LEADERSHIP */}
-      {hubSection === "girls_space" && (
-        <div className="space-y-6 text-xs" data-testid="girls-space-hub">
-          {/* Hero Safety & Empowerment Banner with gentle Rose & Lavender accents */}
-          <div className="surface-card relative overflow-hidden rounded-2xl border border-rose-500/35 bg-gradient-to-r from-rose-500/10 via-fuchsia-500/5 to-surface-2 p-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2 text-xs font-bold text-rose-400">
-                  <HeartHandshake className="size-4" />
-                  <span>
-                    {lang === "ar"
-                      ? "مساحة الفتيات · خصوصية تامة ولا يتم الكشف عن العضوية علناً"
-                      : "Girls' Space · Privacy-Protected · Membership & Gender Never Publicly Disclosed"}
-                  </span>
-                </div>
-                <h3 className="font-display text-lg font-bold text-foreground">
-                  {lang === "ar"
-                    ? "مساحة تعليمية وقيادية آمنة ومحمية الخصوصية لطالبات العلم"
-                    : "Welcoming, Safe & Privacy-Protected Educational Leadership Space"}
-                </h3>
-                <p className="max-w-2xl text-xs text-muted-foreground leading-relaxed">
-                  {lang === "ar"
-                    ? "منصة داعمة ومحترمة ومحمية الخصوصية تمكن الطالبات من قيادة أفرقة البحث العلمي، ومناقشة التحديات التقنية، والتعاون في مسارات STEM ونماذج المحاكاة الدبلوماسية."
-                    : "A dedicated, safe, and moderated space for female students to connect, learn, mentor, and lead in STEM, public speaking, and community innovation."}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                <FeatureGuideTrigger featureId="girls-space" />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setReportTarget({ type: "circle", id: "girls_space" });
-                    setReportReason("inappropriate");
-                    setReportDetails("Moderator support request from Girls' Space");
-                  }}
-                  className="gap-1.5 border-primary/30 text-xs cursor-pointer"
-                >
-                  <ShieldAlert className="size-3.5 text-primary" />
-                  <span>{lang === "ar" ? "طلب مساعدة المشرفات" : "Ask Moderator Help"}</span>
-                </Button>
-              </div>
-            </div>
-
-            {/* Zero Tolerance Safeguards Notice */}
-            <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-border bg-surface-2/70 p-3 text-xs text-muted-foreground">
-              <ShieldAlert className="size-4 shrink-0 text-primary" />
-              <span>
-                {lang === "ar"
-                  ? "سياسة عدم التسامح مطلقاً مع التنمر أو المضايقة: تتم حماية خصوصية جميع الطالبات، وتتم مراجعة المحتوى دورياً لضمان بيئة تعليمية داعمة ومحفزة."
-                  : "Zero-Tolerance Anti-Bullying Safeguard: Student privacy is strictly protected. All peer interactions adhere to respectful academic collaboration standards."}
-              </span>
-            </div>
-          </div>
-
-          {/* 4 Core Pillars of Girls' Space */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="surface-card space-y-2 p-4">
-              <span className="text-xl">👩‍💻</span>
-              <h4 className="font-bold text-foreground">
-                {lang === "ar" ? "الذكاء الاصطناعي والروبوتات" : "AI & Robotics Circle"}
-              </h4>
-              <p className="text-[11px] text-muted-foreground">
-                {lang === "ar"
-                  ? "برمجة بايثون، الذكاء الاصطناعي التوليدي، وتحديات الروبوتات والابتكار الهندسي."
-                  : "Python engineering, generative AI research, algorithmic challenges, and robotics competitions."}
-              </p>
-              <span className="inline-flex items-center text-[10px] font-semibold text-primary">
-                {lang === "ar" ? "١٢ حلقة نقاش نشطة" : "12 Active Study Cohorts"}
-              </span>
-            </div>
-
-            <div className="surface-card space-y-2 p-4">
-              <span className="text-xl">🧬</span>
-              <h4 className="font-bold text-foreground">
-                {lang === "ar" ? "العلوم الطبية والحيوية" : "Biomedical & Life Sciences"}
-              </h4>
-              <p className="text-[11px] text-muted-foreground">
-                {lang === "ar"
-                  ? "أحياء متقدمة، كيمياء حيوية، والاستعداد لمسابقات الأولمبياد والدراسات الطبية."
-                  : "Genetics, cellular biology, organic chemistry, and medical olympiad study groups."}
-              </p>
-              <span className="inline-flex items-center text-[10px] font-semibold text-primary">
-                {lang === "ar" ? "٨ حلقات دراسية" : "8 Active Study Cohorts"}
-              </span>
-            </div>
-
-            <div className="surface-card space-y-2 p-4">
-              <span className="text-xl">📐</span>
-              <h4 className="font-bold text-foreground">
-                {lang === "ar" ? "الرياضيات والمنطق التحليلي" : "Quantitative Mastery"}
-              </h4>
-              <p className="text-[11px] text-muted-foreground">
-                {lang === "ar"
-                  ? "حل المسائل المتقدمة، نظرية الأعداد، والتفكير الرياضي والتفكير المنطقي الأولمبي."
-                  : "Advanced calculus, discrete mathematics, analytical puzzles, and proof writing."}
-              </p>
-              <span className="inline-flex items-center text-[10px] font-semibold text-primary">
-                {lang === "ar" ? "١٥ مجموعة تفاعلية" : "15 Interactive Groups"}
-              </span>
-            </div>
-
-            <div className="surface-card space-y-2 p-4">
-              <span className="text-xl">🎙️</span>
-              <h4 className="font-bold text-foreground">
-                {lang === "ar"
-                  ? "القيادة الدبلوماسية ونموذج الأمم المتحدة"
-                  : "Diplomacy & MUN Leadership"}
-              </h4>
-              <p className="text-[11px] text-muted-foreground">
-                {lang === "ar"
-                  ? "مهارات الإلقاء والخطابة، التفاوض، وصياغة القرارات الدولية والقيادة المجتمعية."
-                  : "Rhetoric, parliamentary procedure, resolution drafting, and youth delegation prep."}
-              </p>
-              <span className="inline-flex items-center text-[10px] font-semibold text-primary">
-                {lang === "ar" ? "١٠ وفود طلابية" : "10 Student Delegations"}
-              </span>
-            </div>
-          </div>
-
-          {/* Featured Safe Mentorship Cohorts */}
-          <div className="surface-card space-y-3 p-5">
-            <div>
-              <h4 className="font-display text-sm font-bold text-foreground">
-                {lang === "ar"
-                  ? "حلقات التمكين والتوجيه الأكاديمي المعتمدة"
-                  : "Curated Mentorship & Study Circles"}
-              </h4>
-              <p className="text-xs text-muted-foreground">
-                {lang === "ar"
-                  ? "انضمي إلى حلقة دراسية معتمدة مع مشرفات ومعلمات مؤهلات في بيئة خاصة ومحمية."
-                  : "Join verified student study circles guided by mentors and high-achieving peers in a safe environment."}
-              </p>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              {[
-                {
-                  id: "gs-cohort-1",
-                  title:
-                    lang === "ar"
-                      ? "حلقة هندسة الذكاء الاصطناعي للبنات"
-                      : "Girls in AI & Machine Learning",
-                  mentor: "Dr. Sarah A. · AI Researcher",
-                  focus: "Python, Neural Networks, PyTorch",
-                  members: 14,
-                  tag: "STEM",
-                },
-                {
-                  id: "gs-cohort-2",
-                  title:
-                    lang === "ar"
-                      ? "حلقة التحضير للأولمبياد العلمي الطبي"
-                      : "Biomedical Science Olympiad Prep",
-                  mentor: "Noura Al-K. · Medical Sciences",
-                  focus: "Human Physiology, Genetics, Lab Skills",
-                  members: 18,
-                  tag: "Medicine",
-                },
-                {
-                  id: "gs-cohort-3",
-                  title:
-                    lang === "ar"
-                      ? "نادي الخطابة والقيادة الطلابية الدبلوماسية"
-                      : "Female Leaders in MUN & Rhetoric",
-                  mentor: "Reem H. · MUN Delegate Coach",
-                  focus: "Public Speaking, International Law, Debate",
-                  members: 22,
-                  tag: "Leadership",
-                },
-                {
-                  id: "gs-cohort-4",
-                  title:
-                    lang === "ar"
-                      ? "حلقة الخوارزميات وحل المشكلات الرياضية"
-                      : "Competitive Math & Algorithmics",
-                  mentor: "Laila M. · Math Olympiad Coach",
-                  focus: "Combinatorics, Number Theory, Geometry",
-                  members: 11,
-                  tag: "Math",
-                },
-              ].map((c) => (
-                <div
-                  key={c.id}
-                  className="flex flex-col justify-between rounded-xl border border-border bg-surface-2/60 p-4 space-y-3"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                        {c.tag}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {c.members} {lang === "ar" ? "طالبة" : "Students"}
-                      </span>
-                    </div>
-                    <h5 className="font-bold text-foreground text-xs">{c.title}</h5>
-                    <p className="text-[11px] text-muted-foreground">{c.mentor}</p>
-                    <p className="text-[11px] text-foreground/80 font-mono">{c.focus}</p>
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="glow"
-                    className="w-full text-xs cursor-pointer"
-                    onClick={() =>
-                      toast.success(
-                        lang === "ar"
-                          ? "تم إرسال طلب الانضمام إلى الحلقة الدراسية بنجاح"
-                          : "Requested to join Girls' Study Circle",
-                      )
-                    }
-                  >
-                    {lang === "ar" ? "طلب الانضمام للحلقة الآمنة" : "Request to Join Safe Circle"}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Create or Join Team */}
       {hubSection === "teams" && (
@@ -1287,7 +1248,12 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
               onChange={(e) => setSharedGoal(e.target.value)}
               placeholder={t("circle.sharedGoal")}
             />
-            <Button type="submit" variant="glow" size="sm" disabled={busy}>
+            <Button
+              type="submit"
+              variant="glow"
+              size="sm"
+              disabled={busy || (Boolean(user && !user.isAnonymous) && !communityGroup)}
+            >
               <Plus className="size-3.5" />
               <span>{t("circle.createTeam")} (+25 XP)</span>
             </Button>
@@ -1309,7 +1275,12 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
                 className="font-mono uppercase"
               />
             </div>
-            <Button type="submit" variant="outline" size="sm" disabled={busy}>
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              disabled={busy || (Boolean(user && !user.isAnonymous) && !communityGroup)}
+            >
               <Users className="size-3.5" />
               <span>{t("circle.joinBtn")}</span>
             </Button>
@@ -1318,10 +1289,10 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
       )}
 
       {/* Active Teams List */}
-      {hubSection === "teams" && circles.length > 0 && activeCircle && (
+      {hubSection === "teams" && visibleCircles.length > 0 && activeCircle && (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            {circles.map((c) => (
+            {visibleCircles.map((c) => (
               <button
                 key={c.id}
                 type="button"
@@ -1513,14 +1484,14 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
             {tab === "showcase" ? (
               <div className="space-y-4 text-xs">
                 <div className="rounded-xl border border-primary/30 bg-primary/5 p-3.5 text-muted-foreground">
-                  Only projects you explicitly marked <strong>Showcase Opt-In: ON</strong> in Future
-                  / Portfolio appear here. Never share personal contact details or private student
-                  records.
+                  Only projects you explicitly marked <strong>Showcase Opt-In: ON</strong> in Growth
+                  Map / Portfolio appear here. Never share personal contact details or private
+                  student records.
                 </div>
                 {ecoState.portfolio.projects.filter((p) => p.showcaseOptIn).length === 0 ? (
                   <p className="py-6 text-center text-muted-foreground">
-                    No opted-in showcase projects yet. Create one under Future → Step-by-Step
-                    Project Builder and toggle Showcase Opt-In!
+                    No opted-in showcase projects yet. Create one under Growth Map → Portfolio and
+                    toggle Showcase Opt-In!
                   </p>
                 ) : (
                   <div className="grid gap-3 md:grid-cols-2">
@@ -1573,18 +1544,17 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
                   onSubmit={handleCreatePost}
                   className="space-y-2.5 rounded-xl border border-border bg-surface-2 p-4 lg:col-span-1"
                 >
-                  <select
+                  <ModernSelect
+                    size="sm"
+                    ariaLabel="Post type"
                     value={postKind}
-                    onChange={(e) =>
-                      setPostKind(e.target.value as "discussion" | "resource" | "task")
-                    }
-                    aria-label="Post type"
-                    className="h-8 w-full rounded-md border border-input bg-surface px-2 text-xs text-foreground"
-                  >
-                    <option value="discussion">{t("circle.postKind.discussion")}</option>
-                    <option value="resource">{t("circle.postKind.resource")}</option>
-                    <option value="task">{t("circle.postKind.task")}</option>
-                  </select>
+                    onValueChange={(val) => setPostKind(val as "discussion" | "resource" | "task")}
+                    options={[
+                      { value: "discussion", label: t("circle.postKind.discussion") },
+                      { value: "resource", label: t("circle.postKind.resource") },
+                      { value: "task", label: t("circle.postKind.task") },
+                    ]}
+                  />
                   <Input
                     required
                     value={postTitle}
@@ -1837,18 +1807,20 @@ export function CircleWorkspace({ initialSection }: { initialSection?: CircleHub
               <Label htmlFor="rep-reason" className="text-xs">
                 {t("circle.reportReason")}
               </Label>
-              <select
+              <ModernSelect
                 id="rep-reason"
+                size="sm"
+                ariaLabel={t("circle.reportReason")}
                 value={reportReason}
-                onChange={(e) => setReportReason(e.target.value as ModerationReportRow["reason"])}
-                className="h-9 w-full rounded-md border border-input bg-surface-2 px-3 text-xs text-foreground"
-              >
-                <option value="spam">Spam</option>
-                <option value="harassment">Harassment</option>
-                <option value="pii_sharing">Personal Contact / PII Sharing</option>
-                <option value="inappropriate">Inappropriate Content</option>
-                <option value="other">Other</option>
-              </select>
+                onValueChange={(val) => setReportReason(val as ModerationReportRow["reason"])}
+                options={[
+                  { value: "spam", label: "Spam" },
+                  { value: "harassment", label: "Harassment" },
+                  { value: "pii_sharing", label: "Personal Contact / PII Sharing" },
+                  { value: "inappropriate", label: "Inappropriate Content" },
+                  { value: "other", label: "Other" },
+                ]}
+              />
             </div>
             <Textarea
               rows={3}

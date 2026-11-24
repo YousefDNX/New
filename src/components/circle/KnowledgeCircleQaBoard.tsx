@@ -12,8 +12,10 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { validateSafeCommunityContribution } from "@/lib/empowerment-engines";
+import type { CommunityGroup } from "@/lib/firestore-data";
 import { usePrefs } from "@/lib/preferences";
 
 export const KNOWLEDGE_CATEGORIES = [
@@ -52,27 +54,27 @@ interface QaThread {
   replies: QaReply[];
 }
 
-const INITIAL_THREADS: QaThread[] = [
+const BOYS_INITIAL_THREADS: QaThread[] = [
   {
-    id: "qa-1",
+    id: "qa-b-1",
     category: "english",
-    author: "Amina S. (Grade 9)",
-    title: "Best way to memorize Grade 9 Unit 3 vocabulary for weekly quizzes?",
-    body: "I mix up similar adjectives in Unit 3 when writing sentences. How do you practice them with active recall?",
+    author: "Tariq S. (Grade 9)",
+    title: "Best way to memorize Grade 9 Unit 1–4 vocabulary for weekly quizzes?",
+    body: "I mix up similar adjectives across Units 1 to 4 when writing sentences. How do you practice them with active recall?",
     createdAt: "2h ago",
     helpfulCount: 14,
     replies: [
       {
-        id: "r-1",
+        id: "r-b-1",
         author: "Youssef K.",
-        body: "Use the flashcards tab in Study Studio and write one short sentence per missed word in the Mistake Log — it cuts confusion in half.",
+        body: "Use the flashcards tab in English World Vocabulary Academy and write one short sentence per missed word — it cuts confusion in half.",
         createdAt: "1h ago",
         helpfulCount: 8,
       },
     ],
   },
   {
-    id: "qa-2",
+    id: "qa-b-2",
     category: "math",
     author: "Omar H.",
     title: "Quick intuition for factoring quadratics when the leading coefficient > 1",
@@ -81,8 +83,8 @@ const INITIAL_THREADS: QaThread[] = [
     helpfulCount: 19,
     replies: [
       {
-        id: "r-2",
-        author: "Layla M.",
+        id: "r-b-2",
+        author: "Khalid M.",
         body: "Multiply a*c first, list factor pairs that add to b, and always verify by expanding the outer and inner terms right away.",
         createdAt: "4h ago",
         helpfulCount: 11,
@@ -90,9 +92,19 @@ const INITIAL_THREADS: QaThread[] = [
     ],
   },
   {
-    id: "qa-3",
+    id: "qa-b-3",
+    category: "islamic",
+    author: "Zaid A.",
+    title: "Tajweed & Hifz weekly revision schedule for Surah Al-Mulk",
+    body: "Sharing my 15-minute daily Ayat pairing sheet so we stay consistent with recitation rules and reflection.",
+    createdAt: "1d ago",
+    helpfulCount: 16,
+    replies: [],
+  },
+  {
+    id: "qa-b-4",
     category: "coding",
-    author: "Noura A.",
+    author: "Faisal R.",
     title: "How to structure clean recursion base cases without stack overflows?",
     body: "Looking for simple guidelines when solving tree traversal challenges.",
     createdAt: "1d ago",
@@ -101,20 +113,86 @@ const INITIAL_THREADS: QaThread[] = [
   },
 ];
 
+const GIRLS_INITIAL_THREADS: QaThread[] = [
+  {
+    id: "qa-g-1",
+    category: "english",
+    author: "Amina S. (Grade 9)",
+    title: "Active recall study notes for Grade 9 Units 1–4 & Unit 3 Mistake Log",
+    body: "Here is how I connect British-spelling meanings (e.g., judgement, minimise) with example sentences before quizzes.",
+    createdAt: "2h ago",
+    helpfulCount: 17,
+    replies: [
+      {
+        id: "r-g-1",
+        author: "Noura K.",
+        body: "Grouping verbs and nouns together in the Vocabulary Academy notebook tab helps me remember collocations faster.",
+        createdAt: "1h ago",
+        helpfulCount: 9,
+      },
+    ],
+  },
+  {
+    id: "qa-g-2",
+    category: "math",
+    author: "Layla M.",
+    title: "Book solution walkthrough for quadratic systems & geometric proofs",
+    body: "Breaking down Exercise 4B step by step — feel free to reply with alternate solution checks.",
+    createdAt: "4h ago",
+    helpfulCount: 21,
+    replies: [],
+  },
+  {
+    id: "qa-g-3",
+    category: "islamic",
+    author: "Mariam H.",
+    title: "Approved Islamic Studies notes: Prophetic Seerah timeline & Tafsir reflections",
+    body: "Compiled verified classroom summary notes for review ahead of midterm assessments.",
+    createdAt: "8h ago",
+    helpfulCount: 18,
+    replies: [],
+  },
+  {
+    id: "qa-g-4",
+    category: "coding",
+    author: "Reem A.",
+    title: "Clean step-by-step trace tables for nested loops in Python",
+    body: "Anyone practicing trace-table debugging want to compare notebook templates?",
+    createdAt: "1d ago",
+    helpfulCount: 13,
+    replies: [],
+  },
+];
+
 export function KnowledgeCircleQaBoard({
   authorName,
+  communityGroup,
   onReportThread,
 }: {
   authorName: string;
+  communityGroup?: CommunityGroup | null;
   onReportThread?: (threadId: string) => void;
 }) {
   const { lang } = usePrefs();
   const isAr = lang === "ar";
+  const scopeKey = communityGroup ?? "boys";
   const [charterAccepted, setCharterAccepted] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("btc_circle_charter_v1") === "accepted";
   });
-  const [threads, setThreads] = useState<QaThread[]>(INITIAL_THREADS);
+  const [threadsByScope, setThreadsByScope] = useState<Record<string, QaThread[]>>({
+    boys: BOYS_INITIAL_THREADS,
+    girls: GIRLS_INITIAL_THREADS,
+  });
+  const threads = threadsByScope[scopeKey] ?? BOYS_INITIAL_THREADS;
+  const setThreads = (updater: (prev: QaThread[]) => QaThread[]) => {
+    setThreadsByScope((prevMap) => ({
+      ...prevMap,
+      [scopeKey]: updater(
+        prevMap[scopeKey] ?? (scopeKey === "girls" ? GIRLS_INITIAL_THREADS : BOYS_INITIAL_THREADS),
+      ),
+    }));
+  };
   const [selectedCat, setSelectedCat] = useState<"all" | CategoryId>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showComposer, setShowComposer] = useState(false);
@@ -323,17 +401,16 @@ export function KnowledgeCircleQaBoard({
               placeholder={isAr ? "عنوان سؤالك الدراسي..." : "Clear question title..."}
               className="sm:col-span-2"
             />
-            <select
+            <ModernSelect
+              size="sm"
+              ariaLabel={isAr ? "تصنيف المادة" : "Subject category"}
               value={newCat}
-              onChange={(e) => setNewCat(e.target.value as CategoryId)}
-              className="h-9 rounded-md border border-input bg-surface-2 px-2.5 text-xs text-foreground"
-            >
-              {KNOWLEDGE_CATEGORIES.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {isAr ? cat.ar : cat.en}
-                </option>
-              ))}
-            </select>
+              onValueChange={(val) => setNewCat(val as CategoryId)}
+              options={KNOWLEDGE_CATEGORIES.map((cat) => ({
+                value: cat.id,
+                label: isAr ? cat.ar : cat.en,
+              }))}
+            />
           </div>
           <Textarea
             rows={3}

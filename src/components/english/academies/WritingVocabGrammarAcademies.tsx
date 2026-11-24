@@ -16,7 +16,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { GRADE_9_UNIT_3_WORDS } from "@/data/grade9-unit3-vocab";
+import {
+  GRADE_9_UNIT_QUIZZES,
+  GRADE_9_VOCAB_UNITS,
+  type Grade9VocabWord,
+} from "@/data/grade9-vocab-units";
 import {
   GRAMMAR_TOPICS,
   VOCAB_ACADEMY_TOPICS,
@@ -344,21 +348,42 @@ export function WritingAcademyPanel({
 /* VOCABULARY ACADEMY (MULTI-PRACTICE MASTERY + UNIT 3 BRIDGE + NOTEBOOK)     */
 /* -------------------------------------------------------------------------- */
 
-const GRADE_9_TOPIC_WORDS: VocabAcademyWord[] = GRADE_9_UNIT_3_WORDS.map((w) => ({
-  id: w.id,
-  word: w.word,
-  partOfSpeech: w.partOfSpeech,
-  phonetic: w.phonetic,
-  cefr: "A2",
-  meaningAr: w.meaningAr,
-  definitionEn: w.definitionEn,
-  exampleEn: w.exampleEn,
-  collocations: w.collocations,
-  wordFamily: [],
-  synonyms: w.synonyms,
-  antonyms: [],
-  quizBlankSentence: w.exampleEn.replace(new RegExp(`\\b${w.word}\\b`, "i"), "___"),
-}));
+function toAcademyWords(words: Grade9VocabWord[]): VocabAcademyWord[] {
+  return words.map((w) => ({
+    id: w.id,
+    word: w.word,
+    partOfSpeech: w.partOfSpeech,
+    phonetic: w.phonetic,
+    cefr: "A2",
+    meaningAr: w.meaningAr,
+    definitionEn: w.definitionEn,
+    exampleEn: w.exampleEn,
+    collocations: w.collocations,
+    wordFamily: [],
+    synonyms: w.synonyms,
+    antonyms: [],
+    quizBlankSentence: w.exampleEn.replace(new RegExp(`\\b${w.word}\\b`, "i"), "___"),
+  }));
+}
+
+const GRADE_9_DECKS = [
+  // Unit 3 remains first so default selectedDeckId stays "vt-g9-unit3"
+  ...([3, 1, 2, 4] as const).map((unitNum) => {
+    const meta = GRADE_9_VOCAB_UNITS.find((u) => u.unit === unitNum)!;
+    return {
+      id: meta.deckId,
+      unitNumber: meta.unit,
+      title: meta.title,
+      titleAr: meta.titleAr,
+      cefr: "A2" as const,
+      description: `${meta.themeEn} · ${meta.themeAr} (British spelling)`,
+      words: toAcademyWords(meta.words),
+      rawWords: meta.words,
+    };
+  }),
+];
+
+const G9_QUIZ_STORAGE_KEY = "btc_english_g9_vocab_v1";
 
 export function VocabularyAcademyPanel({
   englishState,
@@ -384,26 +409,15 @@ export function VocabularyAcademyPanel({
   onPushFlashcardToStudy: (entry: { word: string; back: string }) => void;
   onOpenUnit3FullArena?: () => void;
 }) {
-  const allDecks = useMemo(
-    () => [
-      {
-        id: "vt-g9-unit3",
-        title: "Grade 9 Unit 3: Food, Culture & Health (24 Words)",
-        titleAr: "مفردات الصف التاسع — الوحدة الثالثة",
-        cefr: "A2" as const,
-        description:
-          "Preserves exact Kuwait Grade 9 British spellings (flavour, fibre) integrated across all drills.",
-        words: GRADE_9_TOPIC_WORDS,
-      },
-      ...VOCAB_ACADEMY_TOPICS,
-    ],
-    [],
-  );
+  const allDecks = useMemo(() => [...GRADE_9_DECKS, ...VOCAB_ACADEMY_TOPICS], []);
 
   const [selectedDeckId, setSelectedDeckId] = useState(allDecks[0]!.id);
-  const [vocabMode, setVocabMode] = useState<"cards" | "fill" | "match" | "notebook">("cards");
+  const [vocabMode, setVocabMode] = useState<"cards" | "fill" | "match" | "quiz" | "notebook">(
+    "cards",
+  );
   const [cardIdx, setCardIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [deckSearch, setDeckSearch] = useState("");
 
   // Fill blank state
   const [fillInput, setFillInput] = useState("");
@@ -413,14 +427,62 @@ export function VocabularyAcademyPanel({
   const [matchLeft, setMatchLeft] = useState<string | null>(null);
   const [matchedIds, setMatchedIds] = useState<string[]>([]);
 
+  // Unit Quiz state persisted separately from btc_u3_known / btc_u3_mistakes
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = localStorage.getItem(G9_QUIZ_STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    } catch {
+      return {};
+    }
+  });
+
   // Custom notebook entry
   const [customWord, setCustomWord] = useState("");
   const [customAr, setCustomAr] = useState("");
   const [customDef, setCustomDef] = useState("");
 
   const deck = allDecks.find((d) => d.id === selectedDeckId) ?? allDecks[0]!;
-  const currentWord = deck.words[cardIdx % deck.words.length] ?? deck.words[0]!;
+  const filteredWords = useMemo(() => {
+    const q = deckSearch.trim().toLowerCase();
+    if (!q) return deck.words;
+    const matches = deck.words.filter(
+      (w) =>
+        w.word.toLowerCase().includes(q) ||
+        w.meaningAr.includes(deckSearch.trim()) ||
+        w.definitionEn.toLowerCase().includes(q),
+    );
+    return matches.length > 0 ? matches : deck.words;
+  }, [deck.words, deckSearch]);
+
+  const currentWord = filteredWords[cardIdx % filteredWords.length] ?? deck.words[0]!;
+  const rawCurrentMeta =
+    "rawWords" in deck && Array.isArray(deck.rawWords)
+      ? (deck.rawWords as Grade9VocabWord[]).find((rw) => rw.id === currentWord.id)
+      : undefined;
   const wordProg = englishState.vocabProgress[currentWord.id];
+
+  const deckPracticedCount = useMemo(
+    () =>
+      deck.words.filter((w) => {
+        const st = englishState.vocabProgress[w.id]?.status;
+        return st === "practicing" || st === "mastered";
+      }).length,
+    [deck.words, englishState.vocabProgress],
+  );
+  const deckMasteredPct =
+    deck.words.length > 0 ? Math.round((deckPracticedCount / deck.words.length) * 100) : 0;
+
+  const activeUnitNumber: 1 | 2 | 3 | 4 =
+    selectedDeckId === "vt-g9-unit1"
+      ? 1
+      : selectedDeckId === "vt-g9-unit2"
+        ? 2
+        : selectedDeckId === "vt-g9-unit4"
+          ? 4
+          : 3;
+  const unitQuizQuestions = GRADE_9_UNIT_QUIZZES[activeUnitNumber];
 
   const matchSubset = useMemo(() => deck.words.slice(0, 4), [deck]);
   const shuffledRight = useMemo(() => [...matchSubset].reverse(), [matchSubset]);
@@ -429,6 +491,7 @@ export function VocabularyAcademyPanel({
     setSelectedDeckId(id);
     setCardIdx(0);
     setFlipped(false);
+    setDeckSearch("");
     setFillInput("");
     setFillChecked(null);
     setMatchLeft(null);
@@ -470,11 +533,11 @@ export function VocabularyAcademyPanel({
       <div className="surface-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h4 className="font-display text-base font-bold text-foreground">
-            Vocabulary Academy & Grade 9 Unit 3 Integration
+            Vocabulary Academy · Grade 9 Units 1, 2, 3 &amp; 4
           </h4>
           <p className="text-xs text-muted-foreground">
-            Words require multiple accurate practices across modes before turning Mastered (1
-            correct practice = Practicing).
+            Master British-spelling Grade 9 vocabulary (Units 1–4) with Arabic meanings, examples,
+            pronunciation audio, flashcards, fill-in-the-blank drills, and unit quizzes.
           </p>
         </div>
         {onOpenUnit3FullArena && (
@@ -492,20 +555,63 @@ export function VocabularyAcademyPanel({
         )}
       </div>
 
-      {/* Deck Buttons */}
-      <div className="flex flex-wrap gap-2">
-        {allDecks.map((d) => (
-          <Button
-            key={d.id}
-            type="button"
-            size="sm"
-            variant={selectedDeckId === d.id ? "glow" : "outline"}
-            onClick={() => selectDeck(d.id)}
-            className="h-9 text-xs"
-          >
-            {d.cefr} · {d.title.split(":")[0]} ({d.words.length})
-          </Button>
-        ))}
+      {/* Grade 9 Units 1–4 Quick Selector + Additional CEFR Topics */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2" data-testid="g9-unit-tabs">
+          {([1, 2, 3, 4] as const).map((unitNum) => {
+            const unitDeck = allDecks.find((d) => d.id === `vt-g9-unit${unitNum}`)!;
+            const active = selectedDeckId === unitDeck.id;
+            const practiced = unitDeck.words.filter((w) => {
+              const st = englishState.vocabProgress[w.id]?.status;
+              return st === "practicing" || st === "mastered";
+            }).length;
+            return (
+              <Button
+                key={unitDeck.id}
+                type="button"
+                size="sm"
+                data-testid={`vocab-unit-${unitNum}-tab`}
+                variant={active ? "glow" : "outline"}
+                onClick={() => selectDeck(unitDeck.id)}
+                className="h-9 text-xs"
+              >
+                Unit {unitNum} ({unitDeck.words.length}) · {practiced}/{unitDeck.words.length}
+              </Button>
+            );
+          })}
+          {VOCAB_ACADEMY_TOPICS.map((d) => (
+            <Button
+              key={d.id}
+              type="button"
+              size="sm"
+              variant={selectedDeckId === d.id ? "glow" : "outline"}
+              onClick={() => selectDeck(d.id)}
+              className="h-9 text-xs"
+            >
+              {d.cefr} · {d.title.split(":")[0]} ({d.words.length})
+            </Button>
+          ))}
+        </div>
+
+        {/* Selected Unit Progress & Search Bar */}
+        <div className="surface-card flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <div className="text-xs font-bold text-foreground">{deck.title}</div>
+            <div className="text-[11px] text-muted-foreground">
+              {deckPracticedCount}/{deck.words.length} words practiced ({deckMasteredPct}%)
+            </div>
+          </div>
+          <Input
+            value={deckSearch}
+            onChange={(e) => {
+              setDeckSearch(e.target.value);
+              setCardIdx(0);
+            }}
+            placeholder="Search word or Arabic meaning..."
+            aria-label="Search unit vocabulary"
+            className="h-8 max-w-xs text-xs"
+          />
+        </div>
       </div>
 
       {/* Mode Switcher */}
@@ -515,6 +621,7 @@ export function VocabularyAcademyPanel({
             { id: "cards", label: "Flashcards & Word Families" },
             { id: "fill", label: "Fill-in-the-Blank Practice" },
             { id: "match", label: "Match Meaning Pairs" },
+            { id: "quiz", label: `Unit ${activeUnitNumber} Quiz (${unitQuizQuestions.length})` },
             {
               id: "notebook",
               label: `Personal Notebook (${englishState.personalNotebook.length})`,
@@ -539,7 +646,7 @@ export function VocabularyAcademyPanel({
         <div className="surface-card space-y-4 p-5">
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
             <span>
-              Word {(cardIdx % deck.words.length) + 1} of {deck.words.length} ·{" "}
+              Word {(cardIdx % filteredWords.length) + 1} of {filteredWords.length} ·{" "}
               {currentWord.partOfSpeech} · {currentWord.cefr}
             </span>
             <span className="font-semibold text-foreground">
@@ -614,6 +721,11 @@ export function VocabularyAcademyPanel({
                 </div>
                 <p className="text-foreground">{currentWord.definitionEn}</p>
                 <p className="italic text-muted-foreground">"{currentWord.exampleEn}"</p>
+                {rawCurrentMeta?.exampleAr && (
+                  <p className="text-xs text-muted-foreground font-arabic" dir="rtl">
+                    {rawCurrentMeta.exampleAr}
+                  </p>
+                )}
                 <div className="grid gap-2 pt-1 text-xs text-muted-foreground sm:grid-cols-2">
                   {currentWord.collocations.length > 0 && (
                     <div>
@@ -657,7 +769,7 @@ export function VocabularyAcademyPanel({
                     accurate: true,
                   });
                   setFlipped(false);
-                  setCardIdx((i) => (i + 1) % deck.words.length);
+                  setCardIdx((i) => (i + 1) % filteredWords.length);
                 }}
                 className="h-9 gap-1 text-xs"
               >
@@ -691,8 +803,8 @@ export function VocabularyAcademyPanel({
       {vocabMode === "fill" && (
         <div className="surface-card space-y-4 p-5">
           <div className="text-xs font-semibold text-muted-foreground">
-            Fill-in-the-Blank Practice · Word {(cardIdx % deck.words.length) + 1}/
-            {deck.words.length}
+            Fill-in-the-Blank Practice · Word {(cardIdx % filteredWords.length) + 1}/
+            {filteredWords.length}
           </div>
           <p className="text-sm font-medium text-foreground">{currentWord.quizBlankSentence}</p>
           <p className="text-xs text-muted-foreground" dir="rtl">
@@ -715,7 +827,7 @@ export function VocabularyAcademyPanel({
               onClick={() => {
                 setFillInput("");
                 setFillChecked(null);
-                setCardIdx((i) => (i + 1) % deck.words.length);
+                setCardIdx((i) => (i + 1) % filteredWords.length);
               }}
               className="min-h-[40px]"
             >
@@ -818,7 +930,76 @@ export function VocabularyAcademyPanel({
         </div>
       )}
 
-      {/* Mode 4: Personal Vocabulary Notebook */}
+      {/* Mode 4: Grade 9 Unit Quiz */}
+      {vocabMode === "quiz" && (
+        <div className="surface-card space-y-4 p-5" data-testid="g9-unit-quiz">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="font-bold text-foreground">
+              Grade 9 Unit {activeUnitNumber} Quick Assessment ({unitQuizQuestions.length}{" "}
+              Questions)
+            </span>
+            <span className="font-mono text-primary">
+              Score: {unitQuizQuestions.filter((q) => quizAnswers[q.id] === q.correctIndex).length}/
+              {unitQuizQuestions.length}
+            </span>
+          </div>
+          <div className="space-y-4">
+            {unitQuizQuestions.map((q, idx) => {
+              const chosen = quizAnswers[q.id];
+              return (
+                <div
+                  key={q.id}
+                  className="rounded-xl border border-border bg-surface-2 p-4 space-y-2 text-xs"
+                >
+                  <p className="font-semibold text-foreground">
+                    {idx + 1}. {q.promptEn}
+                  </p>
+                  <p className="text-muted-foreground font-arabic" dir="rtl">
+                    {q.promptAr}
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {q.options.map((opt, optIdx) => {
+                      const picked = chosen === optIdx;
+                      const isCorrect = optIdx === q.correctIndex;
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => {
+                            const next = { ...quizAnswers, [q.id]: optIdx };
+                            setQuizAnswers(next);
+                            if (typeof window !== "undefined") {
+                              try {
+                                localStorage.setItem(G9_QUIZ_STORAGE_KEY, JSON.stringify(next));
+                              } catch {
+                                // ignore storage quota errors
+                              }
+                            }
+                          }}
+                          className={`rounded-lg border px-3 py-2 text-start font-medium transition-colors cursor-pointer ${
+                            picked
+                              ? isCorrect
+                                ? "border-success bg-success/15 text-success"
+                                : "border-destructive bg-destructive/15 text-destructive"
+                              : "border-border bg-surface text-foreground hover:border-primary/40"
+                          }`}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {chosen !== undefined && (
+                    <p className="text-[11px] text-muted-foreground">{q.explanationEn}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Mode 5: Personal Vocabulary Notebook */}
       {vocabMode === "notebook" && (
         <div className="surface-card space-y-4 p-5">
           <div className="grid gap-2 sm:grid-cols-3">

@@ -19,6 +19,7 @@ import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   CRITICAL_THINKING_CASES,
@@ -935,16 +936,18 @@ export function PracticalSkillsWorkspace() {
                   onChange={(e) => setNewExpAmount(e.target.value)}
                   className="h-8 w-20 text-xs"
                 />
-                <select
+                <ModernSelect
                   value={newExpCat}
-                  onChange={(e) => setNewExpCat(e.target.value as "needs" | "wants" | "savings")}
-                  aria-label="Expense category"
-                  className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                >
-                  <option value="needs">Need</option>
-                  <option value="wants">Want</option>
-                  <option value="savings">Savings</option>
-                </select>
+                  onValueChange={(v) => setNewExpCat(v as "needs" | "wants" | "savings")}
+                  ariaLabel="Expense category"
+                  size="sm"
+                  className="w-28"
+                  options={[
+                    { value: "needs", label: "Need" },
+                    { value: "wants", label: "Want" },
+                    { value: "savings", label: "Savings" },
+                  ]}
+                />
                 <Button type="submit" size="sm" variant="outline" className="h-8 text-xs">
                   Add
                 </Button>
@@ -1152,17 +1155,19 @@ export function PracticalSkillsWorkspace() {
               placeholder="Add assignment, exam review, or habit..."
               className="flex-1 min-w-48 text-xs"
             />
-            <select
+            <ModernSelect
               value={matrixQuadInput}
-              onChange={(e) => setMatrixQuadInput(e.target.value as MatrixItem["quadrant"])}
-              aria-label="Priority quadrant"
-              className="h-9 rounded-md border border-input bg-surface-2 px-2.5 text-xs text-foreground"
-            >
-              <option value="do_first">Important + Urgent (Do First)</option>
-              <option value="schedule">Important + Not Urgent (Schedule)</option>
-              <option value="delegate">Not Important + Urgent (Quick Batch)</option>
-              <option value="eliminate">Low Value Distraction (Drop)</option>
-            </select>
+              onValueChange={(v) => setMatrixQuadInput(v as MatrixItem["quadrant"])}
+              ariaLabel="Priority quadrant"
+              size="sm"
+              className="w-64"
+              options={[
+                { value: "do_first", label: "Important + Urgent (Do First)" },
+                { value: "schedule", label: "Important + Not Urgent (Schedule)" },
+                { value: "delegate", label: "Not Important + Urgent (Quick Batch)" },
+                { value: "eliminate", label: "Low Value Distraction (Drop)" },
+              ]}
+            />
             <Button type="submit" size="sm" variant="outline">
               Add Item
             </Button>

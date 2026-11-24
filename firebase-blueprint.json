@@ -88,6 +88,20 @@
           "maxLength": 32,
           "description": "Verified phone number if authenticated or linked via SMS."
         },
+        "gender": {
+          "type": "string",
+          "enum": ["male", "female"],
+          "description": "Private student gender used only to assign Knowledge Circle community."
+        },
+        "community_group": {
+          "type": "string",
+          "enum": ["boys", "girls"],
+          "description": "Locked Knowledge Circle community group derived from private gender."
+        },
+        "show_gender_on_profile": {
+          "type": "boolean",
+          "description": "Optional public visibility flag (defaults to false)."
+        },
         "created_at": {
           "type": "string",
           "format": "date-time",
@@ -704,6 +718,11 @@
         },
         "shared_goal": { "type": "string", "maxLength": 200 },
         "member_uids": { "type": "array", "description": "Bounded member UID list (max 25)." },
+        "community_group": {
+          "type": "string",
+          "enum": ["boys", "girls"],
+          "description": "Knowledge Circle community partition."
+        },
         "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
         "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
       },
@@ -741,6 +760,11 @@
           "pattern": "^[a-zA-Z0-9_\\-]+$",
           "minLength": 1,
           "maxLength": 128
+        },
+        "community_group": {
+          "type": "string",
+          "enum": ["boys", "girls"],
+          "description": "Knowledge Circle community partition."
         },
         "created_at": { "type": "string", "format": "date-time", "maxLength": 40 }
       },
@@ -810,6 +834,11 @@
           "type": "array",
           "description": "Bounded helpful reaction UIDs (max 25)."
         },
+        "community_group": {
+          "type": "string",
+          "enum": ["boys", "girls"],
+          "description": "Knowledge Circle community partition."
+        },
         "created_at": { "type": "string", "format": "date-time", "maxLength": 40 }
       },
       "required": [
@@ -871,6 +900,11 @@
         "status": {
           "type": "string",
           "enum": ["submitted", "pending", "reviewed", "action_taken", "resolved", "dismissed"]
+        },
+        "community_group": {
+          "type": "string",
+          "enum": ["boys", "girls"],
+          "description": "Originating Knowledge Circle community partition."
         },
         "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
         "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }

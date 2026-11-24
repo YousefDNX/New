@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   LISTENING_TRACKS,
   READING_PASSAGES,
@@ -239,19 +240,20 @@ export function ListeningAcademyPanel({
               </div>
 
               {voices.length > 0 && (
-                <select
-                  aria-label="English voice accent"
+                <ModernSelect
+                  ariaLabel="English voice accent"
+                  size="sm"
                   value={selectedVoiceURI}
-                  onChange={(e) => setSelectedVoiceURI(e.target.value)}
-                  className="h-9 max-w-[210px] rounded-md border border-border bg-surface px-2.5 text-xs text-foreground"
-                >
-                  <option value="">Default Browser English Voice</option>
-                  {voices.map((v) => (
-                    <option key={v.voiceURI} value={v.voiceURI}>
-                      {v.name} ({v.lang})
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={setSelectedVoiceURI}
+                  className="max-w-[230px]"
+                  options={[
+                    { value: "", label: "Default Browser English Voice" },
+                    ...voices.map((v) => ({
+                      value: v.voiceURI,
+                      label: `${v.name} (${v.lang})`,
+                    })),
+                  ]}
+                />
               )}
             </div>
           ) : (

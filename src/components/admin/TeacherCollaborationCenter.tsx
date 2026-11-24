@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { CURRICULUM_UNITS } from "@/data/curriculum-and-challenges";
 import { useQuizAttempts, useStudyItems } from "@/hooks/use-modules";
@@ -338,45 +339,36 @@ export function TeacherCollaborationCenter() {
 
           {/* Country / Grade / Subject Filters */}
           <div className="grid gap-2 sm:grid-cols-3 text-xs">
-            <select
+            <ModernSelect
+              size="sm"
               value={countryFilter}
-              onChange={(e) => setCountryFilter(e.target.value)}
-              aria-label="Filter by country or track"
-              className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-            >
-              <option value="all">All Countries / Tracks</option>
-              {countries.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <select
+              onValueChange={setCountryFilter}
+              ariaLabel="Filter by country or track"
+              options={[
+                { value: "all", label: "All Countries / Tracks" },
+                ...countries.map((c) => ({ value: c, label: c })),
+              ]}
+            />
+            <ModernSelect
+              size="sm"
               value={gradeFilter}
-              onChange={(e) => setGradeFilter(e.target.value)}
-              aria-label="Filter by grade"
-              className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-            >
-              <option value="all">All Grades</option>
-              {grades.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
-            <select
+              onValueChange={setGradeFilter}
+              ariaLabel="Filter by grade"
+              options={[
+                { value: "all", label: "All Grades" },
+                ...grades.map((g) => ({ value: g, label: g })),
+              ]}
+            />
+            <ModernSelect
+              size="sm"
               value={subjectFilter}
-              onChange={(e) => setSubjectFilter(e.target.value)}
-              aria-label="Filter by subject"
-              className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-            >
-              <option value="all">All Subjects</option>
-              {subjects.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+              onValueChange={setSubjectFilter}
+              ariaLabel="Filter by subject"
+              options={[
+                { value: "all", label: "All Subjects" },
+                ...subjects.map((s) => ({ value: s, label: s })),
+              ]}
+            />
           </div>
 
           <div className="space-y-3 text-xs">

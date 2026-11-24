@@ -30,6 +30,7 @@ import { StudyPlannerSuite } from "@/components/study/StudyPlannerSuite";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { useFocusActions, useFocusSessions } from "@/hooks/use-modules";
 import { useTaskActions, useTasks, type TaskRow } from "@/hooks/use-nexora";
 import type { GrowthArea } from "@/lib/firestore-data";
@@ -277,16 +278,17 @@ export function ProductivityWorkspace({ initialTab = "tasks" }: { initialTab?: P
               className="h-8 text-xs"
             />
             <div className="grid grid-cols-3 gap-2">
-              <select
+              <ModernSelect
+                size="sm"
                 value={editPriority}
-                onChange={(e) => setEditPriority(e.target.value as "low" | "medium" | "high")}
-                aria-label={t("dash.tasks.priority")}
-                className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-              >
-                <option value="high">{t("dash.tasks.priority.high")}</option>
-                <option value="medium">{t("dash.tasks.priority.medium")}</option>
-                <option value="low">{t("dash.tasks.priority.low")}</option>
-              </select>
+                onValueChange={(v) => setEditPriority(v as "low" | "medium" | "high")}
+                ariaLabel={t("dash.tasks.priority")}
+                options={[
+                  { value: "high", label: t("dash.tasks.priority.high") },
+                  { value: "medium", label: t("dash.tasks.priority.medium") },
+                  { value: "low", label: t("dash.tasks.priority.low") },
+                ]}
+              />
               <Input
                 value={editSubject}
                 onChange={(e) => setEditSubject(e.target.value)}
@@ -548,33 +550,29 @@ export function ProductivityWorkspace({ initialTab = "tasks" }: { initialTab?: P
                 <Label htmlFor="pr-area" className="text-xs">
                   {t("prod.area")}
                 </Label>
-                <select
+                <ModernSelect
                   id="pr-area"
                   value={area}
-                  onChange={(e) => setArea(e.target.value as GrowthArea)}
-                  className="h-9 w-full rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                >
-                  {AREAS.map((a) => (
-                    <option key={a} value={a}>
-                      {t(AREA_CONFIG[a].labelKey)}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={(v) => setArea(v as GrowthArea)}
+                  ariaLabel={t("prod.area")}
+                  options={AREAS.map((a) => ({ value: a, label: t(AREA_CONFIG[a].labelKey) }))}
+                />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="pr-prio" className="text-xs">
                   {t("dash.tasks.priority")}
                 </Label>
-                <select
+                <ModernSelect
                   id="pr-prio"
                   value={priority}
-                  onChange={(e) => setPriority(e.target.value as "low" | "medium" | "high")}
-                  className="h-9 w-full rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                >
-                  <option value="high">{t("dash.tasks.priority.high")}</option>
-                  <option value="medium">{t("dash.tasks.priority.medium")}</option>
-                  <option value="low">{t("dash.tasks.priority.low")}</option>
-                </select>
+                  onValueChange={(v) => setPriority(v as "low" | "medium" | "high")}
+                  ariaLabel={t("dash.tasks.priority")}
+                  options={[
+                    { value: "high", label: t("dash.tasks.priority.high") },
+                    { value: "medium", label: t("dash.tasks.priority.medium") },
+                    { value: "low", label: t("dash.tasks.priority.low") },
+                  ]}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2.5">
@@ -593,16 +591,17 @@ export function ProductivityWorkspace({ initialTab = "tasks" }: { initialTab?: P
                 <Label htmlFor="pr-rec" className="text-xs">
                   {t("prod.recurrence")}
                 </Label>
-                <select
+                <ModernSelect
                   id="pr-rec"
                   value={recurrence}
-                  onChange={(e) => setRecurrence(e.target.value as "none" | "daily" | "weekly")}
-                  className="h-9 w-full rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                >
-                  <option value="none">{t("prod.rec.none")}</option>
-                  <option value="daily">{t("prod.rec.daily")}</option>
-                  <option value="weekly">{t("prod.rec.weekly")}</option>
-                </select>
+                  onValueChange={(v) => setRecurrence(v as "none" | "daily" | "weekly")}
+                  ariaLabel={t("prod.recurrence")}
+                  options={[
+                    { value: "none", label: t("prod.rec.none") },
+                    { value: "daily", label: t("prod.rec.daily") },
+                    { value: "weekly", label: t("prod.rec.weekly") },
+                  ]}
+                />
               </div>
             </div>
             <div className="space-y-1">
@@ -635,27 +634,31 @@ export function ProductivityWorkspace({ initialTab = "tasks" }: { initialTab?: P
                   className="h-8 ps-8 text-xs"
                 />
               </div>
-              <select
+              <ModernSelect
+                size="sm"
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                aria-label={t("prod.filter.all")}
-                className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-              >
-                <option value="all">{t("prod.filter.all")}</option>
-                <option value="open">{t("prod.filter.open")}</option>
-                <option value="done">{t("prod.filter.done")}</option>
-              </select>
-              <select
+                onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
+                ariaLabel={t("prod.filter.all")}
+                className="w-auto min-w-[110px]"
+                options={[
+                  { value: "all", label: t("prod.filter.all") },
+                  { value: "open", label: t("prod.filter.open") },
+                  { value: "done", label: t("prod.filter.done") },
+                ]}
+              />
+              <ModernSelect
+                size="sm"
                 value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value as typeof priorityFilter)}
-                aria-label={t("dash.tasks.priority")}
-                className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-              >
-                <option value="all">{t("common.all")}</option>
-                <option value="high">{t("dash.tasks.priority.high")}</option>
-                <option value="medium">{t("dash.tasks.priority.medium")}</option>
-                <option value="low">{t("dash.tasks.priority.low")}</option>
-              </select>
+                onValueChange={(v) => setPriorityFilter(v as typeof priorityFilter)}
+                ariaLabel={t("dash.tasks.priority")}
+                className="w-auto min-w-[110px]"
+                options={[
+                  { value: "all", label: t("common.all") },
+                  { value: "high", label: t("dash.tasks.priority.high") },
+                  { value: "medium", label: t("dash.tasks.priority.medium") },
+                  { value: "low", label: t("dash.tasks.priority.low") },
+                ]}
+              />
 
               {uiMode === "advanced" && (
                 <div className="flex items-center gap-1 rounded-md border border-border bg-surface-2 p-0.5">
@@ -784,19 +787,16 @@ export function ProductivityWorkspace({ initialTab = "tasks" }: { initialTab?: P
                   className="text-center text-xs"
                 />
                 {openTasks.length > 0 && (
-                  <select
-                    aria-label={t("prod.linkTask")}
+                  <ModernSelect
+                    size="sm"
+                    ariaLabel={t("prod.linkTask")}
                     value={linkedTaskId}
-                    onChange={(e) => setLinkedTaskId(e.target.value)}
-                    className="h-8 w-full rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                  >
-                    <option value="">{t("prod.linkTaskNone")}</option>
-                    {openTasks.map((tk) => (
-                      <option key={tk.id} value={tk.id}>
-                        {tk.title}
-                      </option>
-                    ))}
-                  </select>
+                    onValueChange={setLinkedTaskId}
+                    options={[
+                      { value: "", label: t("prod.linkTaskNone") },
+                      ...openTasks.map((tk) => ({ value: tk.id, label: tk.title })),
+                    ]}
+                  />
                 )}
               </div>
 

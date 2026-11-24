@@ -8,6 +8,7 @@ import {
 } from "@/lib/quran-memorization";
 import { getMushafPageMeta, SURAHS_INDEX } from "@/lib/quran-mushaf";
 import { toArabicIndicDigits } from "@/lib/quran";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   BookOpen,
   CheckCircle2,
@@ -349,17 +350,19 @@ export const QuranMemorizationPanel: React.FC<QuranMemorizationPanelProps> = ({
                 </div>
 
                 {/* Status Switcher Select */}
-                <select
+                <ModernSelect
                   value={entry.status}
-                  onChange={(e) => handleStatusChange(s.id, e.target.value as MemorizationStatus)}
-                  className="text-[11px] font-bold py-1 px-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none"
-                  aria-label={`تغيير حالة حفظ سورة ${s.nameAr}`}
-                >
-                  <option value="not_started">لم تبدأ</option>
-                  <option value="memorizing">قيد الحفظ</option>
-                  <option value="memorized">تم الحفظ</option>
-                  <option value="mastered">متقن ومثبت ⭐</option>
-                </select>
+                  onValueChange={(val) => handleStatusChange(s.id, val as MemorizationStatus)}
+                  ariaLabel={`تغيير حالة حفظ سورة ${s.nameAr}`}
+                  size="sm"
+                  className="w-36 shrink-0"
+                  options={[
+                    { value: "not_started", label: "لم تبدأ" },
+                    { value: "memorizing", label: "قيد الحفظ" },
+                    { value: "memorized", label: "تم الحفظ" },
+                    { value: "mastered", label: "متقن ومثبت ⭐" },
+                  ]}
+                />
               </div>
 
               {/* Action Buttons: Review & Jump to Audio/Mushaf */}

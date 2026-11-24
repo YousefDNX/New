@@ -20,8 +20,6 @@ export function AccessibilitySection({
 }) {
   const {
     t,
-    uiMode,
-    setUiMode,
     a11y,
     setA11y,
     ecosystem,
@@ -56,47 +54,6 @@ export function AccessibilitySection({
         </div>
         <AccessibilityAssistantDialog />
       </div>
-
-      <SettingsRow id="ui-mode-exp" label={t("set.a11y.modeTitle")} desc={t("set.a11y.modeDesc")}>
-        <div className="inline-flex rounded-lg border border-border bg-surface-2 p-1 text-xs">
-          <button
-            type="button"
-            onClick={() => {
-              const prev = uiMode;
-              runSave(
-                () => setUiMode("simplified"),
-                () => setUiMode(prev),
-                { ui_mode: "simplified" },
-              );
-            }}
-            className={`rounded-md px-3 py-1 font-semibold transition-colors ${
-              uiMode === "simplified"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {t("ui.mode.simplified")}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const prev = uiMode;
-              runSave(
-                () => setUiMode("advanced"),
-                () => setUiMode(prev),
-                { ui_mode: "advanced" },
-              );
-            }}
-            className={`rounded-md px-3 py-1 font-semibold transition-colors ${
-              uiMode === "advanced"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {t("ui.mode.advanced")}
-          </button>
-        </div>
-      </SettingsRow>
 
       <div className="py-3.5">
         <div className="mb-3 flex items-center justify-between">
@@ -153,14 +110,6 @@ export function AccessibilitySection({
           id="a11y-focus"
           checked={a11y.focusRing}
           onCheckedChange={(v) => changeA11y({ focusRing: v }, { focus_ring: v })}
-        />
-      </SettingsRow>
-
-      <SettingsRow id="a11y-simp" label={t("set.simplified")} desc={t("set.simplified.d")}>
-        <Switch
-          id="a11y-simp"
-          checked={a11y.simplified}
-          onCheckedChange={(v) => changeA11y({ simplified: v }, { simplified_ui: v })}
         />
       </SettingsRow>
 

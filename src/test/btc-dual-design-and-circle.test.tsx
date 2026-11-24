@@ -127,7 +127,7 @@ function DualNavHarness() {
   );
 }
 
-describe("BTC Dual Visual Themes, Dual Navigation Layouts, Knowledge Q&A & Girls Space", () => {
+describe("BTC Dual Visual Themes, Dual Navigation Layouts, Knowledge Q&A & Unified Knowledge Circle", () => {
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.removeAttribute("data-btc-theme");
@@ -214,20 +214,18 @@ describe("BTC Dual Visual Themes, Dual Navigation Layouts, Knowledge Q&A & Girls
     expect(screen.getByText(/factoring quadratics/i)).toBeInTheDocument();
   });
 
-  it("opens Girls Space with privacy banner directly when initialSection='girls_space'", () => {
+  it("renders unified Knowledge Circle without standalone Girls' Space switcher and prompts unassigned accounts respectfully", () => {
     render(
       <PreferencesProvider>
         <FeatureGuideProvider>
-          <CircleWorkspace initialSection="girls_space" />
+          <CircleWorkspace initialSection="qa" />
         </FeatureGuideProvider>
       </PreferencesProvider>,
     );
 
-    expect(screen.getByTestId("girls-space-hub")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /Girls' Space · Privacy-Protected · Membership & Gender Never Publicly Disclosed/i,
-      ),
-    ).toBeInTheDocument();
+    expect(screen.queryByTestId("girls-space-hub")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Girls' Space/i })).not.toBeInTheDocument();
+    expect(screen.getByTestId("knowledge-circle-qa")).toBeInTheDocument();
+    expect(screen.getByTestId("circle-community-setup")).toBeInTheDocument();
   });
 });

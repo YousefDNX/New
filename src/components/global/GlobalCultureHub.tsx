@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   BOOK_CLUB_CATALOG,
@@ -322,22 +323,26 @@ export function GlobalCultureHub() {
                       {book.author} · {book.theme}
                     </div>
                   </div>
-                  <select
-                    aria-label={`Reading status for ${book.title}`}
+                  <ModernSelect
+                    ariaLabel={`Reading status for ${book.title}`}
+                    size="sm"
                     value={status}
-                    onChange={(e) => {
-                      const nextStatus = e.target.value as BookReadingStatus;
+                    className="w-36 shrink-0"
+                    onValueChange={(nextStatus) => {
                       updateEco((prev) => ({
                         ...prev,
-                        bookReadingList: { ...prev.bookReadingList, [book.id]: nextStatus },
+                        bookReadingList: {
+                          ...prev.bookReadingList,
+                          [book.id]: nextStatus as BookReadingStatus,
+                        },
                       }));
                     }}
-                    className="h-7 rounded border border-border bg-surface-1 px-2 text-[11px]"
-                  >
-                    <option value="want_to_read">Want to Read</option>
-                    <option value="reading">Reading</option>
-                    <option value="finished">Finished</option>
-                  </select>
+                    options={[
+                      { value: "want_to_read", label: "Want to Read" },
+                      { value: "reading", label: "Reading" },
+                      { value: "finished", label: "Finished" },
+                    ]}
+                  />
                 </div>
                 <p className="text-muted-foreground">{book.summary}</p>
                 <Textarea

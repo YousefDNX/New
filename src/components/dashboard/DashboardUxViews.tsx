@@ -25,8 +25,7 @@ import type { Area } from "@/lib/growth";
 import type { DashboardWidgetId } from "@/lib/settings";
 import type { UiExperienceId } from "@/lib/ui-experiences";
 
-export type DashboardOverviewTab =
-  "overview" | "growthmap" | "history" | "journal" | "legacy" | "rahmah";
+export type DashboardOverviewTab = "overview" | "growthmap" | "history" | "journal";
 
 interface DashboardUxViewProps {
   experience: Exclude<UiExperienceId, "classic">;

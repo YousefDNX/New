@@ -4,11 +4,9 @@ import {
   Map,
   Sparkles,
   BookOpen,
+  BookOpenCheck,
   CheckSquare,
-  HeartPulse,
-  Compass,
   Users,
-  Radar,
   Trophy,
   Accessibility,
   Languages,
@@ -55,62 +53,26 @@ const CORE_WORKSPACES: Array<{
   icon: typeof Sparkles;
   nameKey: DictKey;
   descKey: DictKey;
-  to: "/app/ai" | "/app/study" | "/app/tasks" | "/app/level-up" | "/app/care" | "/app/future";
+  to: "/app/ai" | "/app/study" | "/app/tasks" | "/app/quran" | "/app/circle";
 }> = [
   { icon: Sparkles, nameKey: "mod.ai.name", descKey: "mod.ai.d", to: "/app/ai" },
   { icon: BookOpen, nameKey: "mod.study.name", descKey: "mod.study.d", to: "/app/study" },
-  { icon: CheckSquare, nameKey: "mod.tasks.name", descKey: "mod.tasks.d", to: "/app/tasks" },
-  { icon: Trophy, nameKey: "mod.levelup.name", descKey: "mod.levelup.d", to: "/app/level-up" },
-  { icon: HeartPulse, nameKey: "mod.care.name", descKey: "mod.care.d", to: "/app/care" },
-  { icon: Compass, nameKey: "mod.future.name", descKey: "mod.future.d", to: "/app/future" },
+  { icon: CheckSquare, nameKey: "nav.tasks", descKey: "mod.tasks.d", to: "/app/tasks" },
+  { icon: Users, nameKey: "mod.circle.name", descKey: "mod.circle.d", to: "/app/circle" },
+  { icon: BookOpenCheck, nameKey: "nav.quran", descKey: "mod.quran.hub", to: "/app/quran" },
 ];
 
 const EXTRA_BREADTH: Array<{ icon: typeof Users; nameKey: DictKey }> = [
   { icon: Accessibility, nameKey: "mod.access.name" },
   { icon: Languages, nameKey: "mod.global.name" },
   { icon: Users, nameKey: "mod.circle.name" },
-  { icon: Radar, nameKey: "mod.radar.name" },
 ];
 
 function Landing() {
   const { t, lang } = usePrefs();
-  const [authState, setAuthState] = useState<"checking" | "guest" | "verify" | "ready">("checking");
   const [heroImgError, setHeroImgError] = useState(false);
   const btc = isBtcMode();
   const isAr = lang === "ar";
-
-  useEffect(() => {
-    let active = true;
-    void waitForAuthReady(lang).then((user) => {
-      if (!active) return;
-      if (!user) {
-        setAuthState("guest");
-      } else if (userRequiresEmailVerification(user)) {
-        setAuthState("verify");
-      } else if (isUserEligibleForApp(user)) {
-        setAuthState("ready");
-      } else {
-        setAuthState("guest");
-      }
-    });
-    const unsub = subscribeToAuthState((user) => {
-      if (!active) return;
-      if (!user) setAuthState("guest");
-      else if (userRequiresEmailVerification(user)) setAuthState("verify");
-      else setAuthState("ready");
-    });
-    return () => {
-      active = false;
-      unsub();
-    };
-  }, [lang]);
-
-  const primaryHref =
-    authState === "ready"
-      ? { to: "/app" as const }
-      : authState === "verify"
-        ? { to: "/auth" as const, search: { mode: "verify" } }
-        : { to: "/auth" as const };
 
   return (
     <div className="flex min-h-dvh flex-col bg-background bg-hero">
@@ -142,24 +104,12 @@ function Landing() {
           </nav>
           <div className="flex items-center gap-2.5 shrink-0">
             <LanguageSwitcher compact />
-            {authState === "ready" ? (
-              <Button asChild size="sm" className="whitespace-nowrap shrink-0">
-                <Link to="/app">
-                  <span>{t("landing.cta.openApp")}</span>
-                  <ArrowRight className="size-3.5 rtl-flip" />
-                </Link>
-              </Button>
-            ) : authState === "verify" ? (
-              <Button asChild size="sm" className="whitespace-nowrap shrink-0">
-                <Link to="/auth" search={{ mode: "verify" }}>
-                  {t("landing.cta.verifyAccount")}
-                </Link>
-              </Button>
-            ) : (
-              <Button asChild size="sm" className="whitespace-nowrap shrink-0">
-                <Link to="/auth">{t("auth.signin")}</Link>
-              </Button>
-            )}
+            <Button asChild size="sm" className="whitespace-nowrap shrink-0">
+              <Link to="/app">
+                <span>{isAr ? "دخول كضيف" : "Enter as Guest"}</span>
+                <ArrowRight className="size-3.5 rtl-flip" />
+              </Link>
+            </Button>
           </div>
         </div>
         <nav
@@ -212,14 +162,8 @@ function Landing() {
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <Button asChild size="lg" className="whitespace-nowrap">
-                  <Link {...primaryHref}>
-                    <span>
-                      {authState === "ready"
-                        ? t("landing.cta.openApp")
-                        : authState === "verify"
-                          ? t("landing.cta.verifyAccount")
-                          : t("auth.signup")}
-                    </span>
+                  <Link to="/app">
+                    <span>{isAr ? "دخول كضيف" : "Enter as Guest"}</span>
                     <ArrowRight className="size-4 rtl-flip" />
                   </Link>
                 </Button>
@@ -236,7 +180,7 @@ function Landing() {
                 <span aria-hidden="true">·</span>
                 <span>{t("landing.badge.bilingual")}</span>
                 <span aria-hidden="true">·</span>
-                <span>{t("landing.badge.growthMap")}</span>
+                <span>{isAr ? "الدراسة والمهام" : "Study & Tasks"}</span>
               </div>
             </div>
 
@@ -348,7 +292,7 @@ function Landing() {
             {CORE_WORKSPACES.map((m) => (
               <Link
                 key={m.nameKey}
-                to={authState === "ready" ? m.to : "/auth"}
+                to={m.to}
                 className="surface-card group flex flex-col justify-between p-5 transition-colors hover:border-primary/40"
               >
                 <div>
@@ -380,10 +324,10 @@ function Landing() {
               ))}
             </div>
             <Link
-              {...primaryHref}
+              to="/app"
               className="font-semibold text-primary hover:underline whitespace-nowrap"
             >
-              {authState === "ready" ? t("landing.cta.openApp") : t("auth.signup")}
+              {isAr ? "دخول كضيف ومتابعة" : "Open App & Continue"}
             </Link>
           </div>
         </section>

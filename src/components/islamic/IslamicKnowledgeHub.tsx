@@ -24,6 +24,7 @@ import {
 } from "@/lib/islamic-learning-store";
 import { evaluateIslamicStudyQuery } from "@/lib/islamic-search";
 import type { GlobalCountryCode } from "@/lib/quran-reciters-directory";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   AlertTriangle,
   BookMarked,
@@ -384,25 +385,28 @@ export const IslamicKnowledgeHub: React.FC<IslamicKnowledgeHubProps> = ({
               ))}
             </div>
 
-            <label className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-2 text-xs">
               <span className="font-bold text-stone-600 dark:text-stone-300 whitespace-nowrap">
                 {isAr ? "عرض المذهب:" : "Madhhab View:"}
               </span>
-              <select
+              <ModernSelect
                 value={madhhab}
-                onChange={(e) => setMadhhab(e.target.value as FiqhMadhhab)}
-                aria-label={isAr ? "اختيار المذهب الفقهي" : "Select Madhhab"}
-                className="px-2.5 py-1.5 rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
-              >
-                <option value="general">
-                  {isAr ? "كل المذاهب الأربعة (مقارن)" : "All Four Schools (Comparative)"}
-                </option>
-                <option value="hanafi">{isAr ? "المذهب الحنفي" : "Hanafi"}</option>
-                <option value="maliki">{isAr ? "المذهب المالكي" : "Maliki"}</option>
-                <option value="shafii">{isAr ? "المذهب الشافعي" : "Shafi'i"}</option>
-                <option value="hanbali">{isAr ? "المذهب الحنبلي" : "Hanbali"}</option>
-              </select>
-            </label>
+                onValueChange={(val) => setMadhhab(val as FiqhMadhhab)}
+                ariaLabel={isAr ? "اختيار المذهب الفقهي" : "Select Madhhab"}
+                size="sm"
+                className="w-56"
+                options={[
+                  {
+                    value: "general",
+                    label: isAr ? "كل المذاهب الأربعة (مقارن)" : "All Four Schools (Comparative)",
+                  },
+                  { value: "hanafi", label: isAr ? "المذهب الحنفي" : "Hanafi" },
+                  { value: "maliki", label: isAr ? "المذهب المالكي" : "Maliki" },
+                  { value: "shafii", label: isAr ? "المذهب الشافعي" : "Shafi'i" },
+                  { value: "hanbali", label: isAr ? "المذهب الحنبلي" : "Hanbali" },
+                ]}
+              />
+            </div>
           </div>
 
           <div className="space-y-4">

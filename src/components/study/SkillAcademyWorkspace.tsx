@@ -37,7 +37,7 @@ interface SkillDirectoryItem {
   actionLabel: string;
   viewModeTarget?: "english_world" | "adaptive_paths" | "zero_to_hero" | "literacy_access";
   studyTabTarget?: "flashcards" | "unit3_vocab" | "quiz";
-  routeTarget?: "/app/english" | "/app/study" | "/app/level-up" | "/app/future";
+  routeTarget?: "/app/english" | "/app/study" | "/app/level-up";
 }
 
 const BTC_SKILL_DIRECTORY: SkillDirectoryItem[] = [
@@ -130,8 +130,8 @@ const BTC_SKILL_DIRECTORY: SkillDirectoryItem[] = [
       "Student Budgeting",
       "Eisenhower Prioritization",
     ],
-    actionLabel: "Open Future & Skills",
-    routeTarget: "/app/future",
+    actionLabel: "Open Skills & Level-Up",
+    routeTarget: "/app/level-up",
   },
 ];
 

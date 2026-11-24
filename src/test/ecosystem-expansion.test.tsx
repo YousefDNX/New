@@ -376,8 +376,8 @@ describe("BTC Next-Generation Global Learning Ecosystem", () => {
     expect(widget).toBeTruthy();
     expect(screen.getByText("Publish Clean Energy Summary")).toBeTruthy();
     expect(screen.getByText(/1 verified citations/i)).toBeTruthy();
-    expect(screen.getByRole("link", { name: /Community Impact Hub/i }).getAttribute("href")).toBe(
-      "/app?tab=legacy",
+    expect(screen.getByRole("link", { name: /Knowledge Circle/i }).getAttribute("href")).toBe(
+      "/app/circle",
     );
   });
 });

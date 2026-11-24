@@ -25,6 +25,7 @@ import {
   type QuranVerse,
 } from "@/lib/quran";
 import { useQuranPreferences } from "@/hooks/use-quran-preferences";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   Bookmark,
   BookmarkCheck,
@@ -534,23 +535,22 @@ export const DigitalQuranReader: React.FC = () => {
                   <span>{prefs.showTranslation ? "Translation On" : "Show translation"}</span>
                 </button>
 
-                <select
-                  aria-label="Select translation edition"
-                  value={prefs.translationId}
-                  onChange={(e) =>
+                <ModernSelect
+                  ariaLabel="Select translation edition"
+                  size="sm"
+                  value={String(prefs.translationId)}
+                  onValueChange={(val) =>
                     void persistPreferences({
                       ...prefs,
-                      translationId: Number(e.target.value),
+                      translationId: Number(val),
                     })
                   }
-                  className="rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 px-2 py-1 text-xs"
-                >
-                  {VERIFIED_QURAN_TRANSLATIONS.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.languageLabel} · {t.name}
-                    </option>
-                  ))}
-                </select>
+                  className="w-60"
+                  options={VERIFIED_QURAN_TRANSLATIONS.map((t) => ({
+                    value: String(t.id),
+                    label: `${t.languageLabel} · ${t.name}`,
+                  }))}
+                />
               </div>
             </div>
           </div>
@@ -1123,23 +1123,22 @@ export const DigitalQuranReader: React.FC = () => {
                   </button>
                 )}
 
-                <select
-                  aria-label="Select authentic reciter"
-                  value={prefs.reciterId}
-                  onChange={(e) =>
+                <ModernSelect
+                  ariaLabel="Select authentic reciter"
+                  size="sm"
+                  value={String(prefs.reciterId)}
+                  onValueChange={(val) =>
                     void persistPreferences({
                       ...prefs,
-                      reciterId: Number(e.target.value),
+                      reciterId: Number(val),
                     })
                   }
-                  className="rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 px-2.5 py-1.5"
-                >
-                  {VERIFIED_QURAN_RECITERS.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.nameAr} · {r.nameEn} ({r.style})
-                    </option>
-                  ))}
-                </select>
+                  className="w-64"
+                  options={VERIFIED_QURAN_RECITERS.map((r) => ({
+                    value: String(r.id),
+                    label: `${r.nameAr} · ${r.nameEn} (${r.style})`,
+                  }))}
+                />
               </div>
 
               <div className="flex items-center gap-3">

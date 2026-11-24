@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   CheckSquare,
   Flame,
-  HeartHandshake,
   Languages,
   LifeBuoy,
   Map as MapIcon,
@@ -195,9 +194,9 @@ export function AlternativeHomeDashboard() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="min-h-[46px] gap-2 px-5">
-                <Link to="/app/circle" search={{ section: "girls_space" } as never}>
-                  <HeartHandshake className="size-4 text-rose-400" />
-                  <span>{isAr ? "مساحة الفتيات الآمنة" : "Girls' Space"}</span>
+                <Link to="/app/circle">
+                  <Users className="size-4 text-primary" />
+                  <span>{isAr ? "حلقة المعرفة" : "Knowledge Circle"}</span>
                 </Link>
               </Button>
               <FeatureGuideTrigger featureId="dashboard-overview" />

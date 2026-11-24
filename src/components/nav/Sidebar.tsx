@@ -1,14 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import {
-  EXTENDED_NAV_GROUPS,
-  NAV_ADMIN,
-  NAV_GROUPS,
-  NAV_FOOTER,
-  NAV_LAYOUT,
-  NAV_UTILITIES,
-} from "@/config/navigation";
+import { NAV_ADMIN, NAV_GROUPS, NAV_FOOTER, NAV_LAYOUT, NAV_UTILITIES } from "@/config/navigation";
 import { NavItemLink } from "./NavItemLink";
 import { ProgressCard } from "@/components/app/ProgressCard";
 import { Logo } from "@/components/app/Logo";
@@ -28,7 +21,6 @@ export function Sidebar() {
   const rbac = useRbac();
   const [collapsed, setCollapsed] = useState(() => effectiveLayout.sidebarMode === "compact");
   const [showAllInSimplified, setShowAllInSimplified] = useState(false);
-  const [spacesOpen, setSpacesOpen] = useState(true);
 
   useEffect(() => {
     setCollapsed(effectiveLayout.sidebarMode === "compact");
@@ -93,10 +85,14 @@ export function Sidebar() {
         style={{ display: "flex", flexDirection: "column", gap: "var(--nav-group-gap)" }}
       >
         {NAV_GROUPS.map((g) => {
+          if (!g || !Array.isArray(g.items)) return null;
+          const validItems = g.items.filter((item) =>
+            Boolean(item && item.id && item.to && item.icon),
+          );
           const items =
             simplifiedMode && !showAllInSimplified
-              ? g.items.filter((item) => CORE_IDS.has(item.id))
-              : g.items;
+              ? validItems.filter((item) => CORE_IDS.has(item.id))
+              : validItems;
           if (items.length === 0) return null;
           return (
             <div key={g.id} className="flex flex-col" style={{ gap: "var(--nav-item-gap)" }}>
@@ -114,31 +110,6 @@ export function Sidebar() {
             </div>
           );
         })}
-
-        {!simplifiedMode && (
-          <div
-            className="flex flex-col border-t border-border/60 pt-2"
-            style={{ gap: "var(--nav-item-gap)" }}
-          >
-            {!collapsed && (
-              <button
-                type="button"
-                onClick={() => setSpacesOpen((v) => !v)}
-                aria-expanded={spacesOpen}
-                className="flex items-center justify-between px-3 pb-1 text-[11px] font-semibold text-muted-foreground/80 hover:text-foreground cursor-pointer"
-              >
-                <span>{t("nav.more")}</span>
-                <ChevronDown
-                  className={cn("size-3.5 transition-transform", spacesOpen && "rotate-180")}
-                />
-              </button>
-            )}
-            {(collapsed || spacesOpen) &&
-              EXTENDED_NAV_GROUPS.flatMap((g) => g.items).map((i) => (
-                <NavItemLink key={i.id} item={i} collapsed={collapsed} />
-              ))}
-          </div>
-        )}
 
         {simplifiedMode && !collapsed && (
           <button
@@ -160,31 +131,38 @@ export function Sidebar() {
         >
           <NotificationCenter compact={collapsed} />
         </div>
-        {NAV_FOOTER.map((i) => (
+        {NAV_FOOTER.filter((i) => Boolean(i && i.id && i.to && i.icon)).map((i) => (
           <NavItemLink key={i.id} item={i} collapsed={collapsed} />
         ))}
         <div className="flex flex-col gap-1 border-t border-border/60 pt-1.5">
-          {NAV_UTILITIES.map((item) => (
-            <NavItemLink key={item.id} item={item} collapsed={collapsed} />
-          ))}
+          {NAV_UTILITIES.filter((item) => Boolean(item && item.id && item.to && item.icon)).map(
+            (item) => (
+              <NavItemLink key={item.id} item={item} collapsed={collapsed} />
+            ),
+          )}
           {rbac.isStaff && (
             <Link
               to={NAV_ADMIN.to}
               title={collapsed ? t(NAV_ADMIN.label) : undefined}
               className={cn(
-                "group relative flex items-center gap-3 px-3 text-[0.84rem] font-semibold text-primary transition-colors",
+                "group relative flex items-center gap-3 px-3 py-1.5 text-[0.84rem] font-semibold leading-snug text-primary transition-colors",
                 "hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 "data-[status=active]:bg-primary/15",
                 collapsed && "justify-center px-0",
               )}
-              style={{ height: "var(--nav-item-height)", borderRadius: "var(--nav-item-radius)" }}
+              style={{
+                minHeight: "var(--nav-item-height)",
+                borderRadius: "var(--nav-item-radius)",
+              }}
             >
               <NAV_ADMIN.icon
                 style={{ width: "var(--nav-icon-size)", height: "var(--nav-icon-size)" }}
                 className="shrink-0 text-primary"
                 strokeWidth={1.9}
               />
-              {!collapsed && <span className="truncate">{t(NAV_ADMIN.label)}</span>}
+              {!collapsed && (
+                <span className="min-w-0 flex-1 break-words">{t(NAV_ADMIN.label)}</span>
+              )}
             </Link>
           )}
         </div>

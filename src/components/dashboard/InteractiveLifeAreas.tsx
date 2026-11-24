@@ -36,8 +36,8 @@ const AREA_MODULE_LINKS: Record<Area, string> = {
   academic: "/app/study",
   productivity: "/app/tasks",
   growth: "/app/level-up",
-  wellbeing: "/app/care",
-  career: "/app/future",
+  wellbeing: "/app/quran",
+  career: "/app/level-up",
   community: "/app/circle",
 };
 

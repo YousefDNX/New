@@ -344,10 +344,10 @@ export function ThemesLayoutsSection({
                 runSave(
                   () => {
                     setBtcNavLayout("classic");
-                    setLayoutMode("sidebar");
+                    setLayoutMode("classic");
                   },
                   () => setBtcNavLayout(prev),
-                  { layout_mode: "sidebar", sidebar_mode: "expanded" },
+                  { layout_mode: "classic", sidebar_mode: "expanded" },
                 );
               }}
               className="h-9 text-xs"

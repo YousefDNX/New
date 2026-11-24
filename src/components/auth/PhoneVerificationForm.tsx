@@ -23,6 +23,7 @@ import { usePrefs } from "@/lib/preferences";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 
 export interface PhoneVerificationFormProps {
   mode: "signin" | "link" | "update" | "upgrade";
@@ -328,18 +329,17 @@ export function PhoneVerificationForm({
         <form onSubmit={handleSendSms} className="space-y-3.5" noValidate>
           <div className="space-y-1.5">
             <Label htmlFor={`phone-country-${mode}`}>{t("auth.phone.country")}</Label>
-            <select
+            <ModernSelect
               id={`phone-country-${mode}`}
+              ariaLabel={t("auth.phone.country")}
+              size="sm"
               value={countryDial}
-              onChange={(e) => setCountryDial(e.target.value)}
-              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-            >
-              {COUNTRY_CODES.map((c) => (
-                <option key={c.iso} value={c.dial}>
-                  {formatCountryLabel(c, lang)}
-                </option>
-              ))}
-            </select>
+              onValueChange={setCountryDial}
+              options={COUNTRY_CODES.map((c) => ({
+                value: c.dial,
+                label: formatCountryLabel(c, lang),
+              }))}
+            />
           </div>
 
           <div className="space-y-1.5">

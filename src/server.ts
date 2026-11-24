@@ -83,15 +83,21 @@ function isH3SwallowedErrorBody(body: string): boolean {
 }
 
 import {
+  checkCircleRateLimit,
   clearServerErrors,
+  createScopedCirclePost,
   getActiveSessionsSummary,
   getPlatformControls,
   getSanitizedServerErrors,
   getServerAuditEvents,
+  listScopedCirclePosts,
   recordServerAuditEvent,
   recordServerError,
   recordSessionHeartbeat,
+  resolveCommunityGroupFromGender,
+  scrubPii,
   updatePlatformControls,
+  validateCircleCommunityAccess,
   verifyModeratorRequest,
 } from "./lib/moderator.server";
 
@@ -173,6 +179,118 @@ export default {
         clearServerErrors();
         recordServerAuditEvent("server_errors_cleared", "Moderator cleared error ring buffer.");
         return jsonResponse({ ok: true });
+      }
+
+      if (url.pathname === "/api/moderator/circle-audit" && request.method === "GET") {
+        const mod = await verifyModeratorRequest(request);
+        if (!mod.authorized) {
+          return jsonResponse(
+            { ok: false, error: "Access Restricted to Verified Moderators." },
+            403,
+          );
+        }
+        return jsonResponse({ ok: true, auditLogs: getServerAuditEvents() });
+      }
+
+      if (url.pathname === "/api/circle/validate-access" && request.method === "POST") {
+        const body = await readJsonBody<{
+          actorUid?: string;
+          verifiedGroup?: string;
+          targetGroup?: string;
+          requestedCommunitySwitch?: string;
+        }>(request);
+        if (!body) {
+          return jsonResponse({ ok: false, error: "Invalid payload" }, 400);
+        }
+        const rate = checkCircleRateLimit(body.actorUid || "anon", "access", 30, 60_000);
+        if (!rate.allowed) {
+          return jsonResponse(
+            { ok: false, error: `Rate limit exceeded. Retry in ${rate.retryAfterSec}s.` },
+            429,
+          );
+        }
+        const result = validateCircleCommunityAccess(body);
+        return jsonResponse({ ok: result.allowed, ...result }, result.status);
+      }
+
+      if (url.pathname === "/api/circle/posts" && request.method === "GET") {
+        const verifiedGroup = resolveCommunityGroupFromGender(
+          url.searchParams.get("verifiedGroup"),
+        );
+        const requestedGroup = url.searchParams.get("communityGroup");
+        const access = validateCircleCommunityAccess({
+          actorUid: url.searchParams.get("actorUid") || "anon",
+          verifiedGroup,
+          targetGroup: requestedGroup,
+        });
+        if (!access.allowed || !access.communityGroup) {
+          return jsonResponse({ ok: false, error: access.reason }, access.status);
+        }
+        return jsonResponse({
+          ok: true,
+          communityGroup: access.communityGroup,
+          posts: listScopedCirclePosts(access.communityGroup),
+        });
+      }
+
+      if (url.pathname === "/api/circle/posts" && request.method === "POST") {
+        const body = await readJsonBody<{
+          actorUid?: string;
+          verifiedGroup?: string;
+          targetGroup?: string;
+          category?: string;
+          title?: string;
+          body?: string;
+          authorAlias?: string;
+        }>(request);
+        if (!body || !body.actorUid || !body.title) {
+          return jsonResponse({ ok: false, error: "actorUid and title are required." }, 400);
+        }
+        const created = createScopedCirclePost({
+          actorUid: body.actorUid,
+          verifiedGroup: body.verifiedGroup ?? null,
+          targetGroup: body.targetGroup ?? null,
+          category: body.category || "general",
+          title: body.title,
+          body: body.body || "",
+          authorAlias: body.authorAlias || "Student",
+        });
+        if (!created.ok) {
+          return jsonResponse({ ok: false, error: created.error }, created.status);
+        }
+        return jsonResponse({ ok: true, post: created.post }, 201);
+      }
+
+      if (url.pathname === "/api/circle/report" && request.method === "POST") {
+        const body = await readJsonBody<{
+          actorUid?: string;
+          verifiedGroup?: string;
+          targetId?: string;
+          reason?: string;
+          details?: string;
+        }>(request);
+        if (!body || !body.actorUid || !body.targetId) {
+          return jsonResponse({ ok: false, error: "actorUid and targetId are required." }, 400);
+        }
+        const access = validateCircleCommunityAccess({
+          actorUid: body.actorUid,
+          verifiedGroup: body.verifiedGroup ?? null,
+        });
+        if (!access.allowed || !access.communityGroup) {
+          return jsonResponse({ ok: false, error: access.reason }, access.status);
+        }
+        const rate = checkCircleRateLimit(body.actorUid, "report", 5, 60_000);
+        if (!rate.allowed) {
+          return jsonResponse(
+            { ok: false, error: `Rate limit exceeded. Retry in ${rate.retryAfterSec}s.` },
+            429,
+          );
+        }
+        recordServerAuditEvent(
+          "circle_safety_report",
+          `Community ${access.communityGroup} report (${body.reason || "other"}) for target ${body.targetId}: ${scrubPii(body.details || "")}`,
+        );
+        return jsonResponse({ ok: true, status: "submitted" }, 201);
       }
 
       if (url.pathname === "/api/ai/status" && request.method === "GET") {

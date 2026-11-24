@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { useFocusActions, useFocusSessions } from "@/hooks/use-modules";
 import { useUser } from "@/hooks/use-nexora";
 import { SUBJECT_OPTIONS } from "@/lib/settings";
@@ -236,20 +237,23 @@ export function StudyPlannerSuite({
             <Label htmlFor="daily-target-select" className="text-xs text-muted-foreground">
               Daily Target
             </Label>
-            <select
+            <ModernSelect
               id="daily-target-select"
               data-testid="daily-target-select"
+              ariaLabel="Daily Target"
+              size="sm"
               value={String(targetMinutes)}
-              onChange={(e) => handleTargetChange(Number(e.target.value))}
-              className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs font-semibold text-foreground"
-            >
-              <option value="30">30m (0.5h)</option>
-              <option value="60">60m (1h)</option>
-              <option value="90">90m (1.5h)</option>
-              <option value="120">120m (2h)</option>
-              <option value="180">180m (3h)</option>
-              <option value="240">240m (4h)</option>
-            </select>
+              onValueChange={(v) => handleTargetChange(Number(v))}
+              className="w-32"
+              options={[
+                { value: "30", label: "30m (0.5h)" },
+                { value: "60", label: "60m (1h)" },
+                { value: "90", label: "90m (1.5h)" },
+                { value: "120", label: "120m (2h)" },
+                { value: "180", label: "180m (3h)" },
+                { value: "240", label: "240m (4h)" },
+              ]}
+            />
           </div>
         </div>
 
@@ -351,19 +355,15 @@ export function StudyPlannerSuite({
             <Label htmlFor="ql-subject" className="text-xs">
               Subject
             </Label>
-            <select
+            <ModernSelect
               id="ql-subject"
               data-testid="quick-log-subject"
+              ariaLabel="Subject"
+              size="sm"
               value={quickSubject}
-              onChange={(e) => setQuickSubject(e.target.value)}
-              className="h-9 w-full rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-            >
-              {SUBJECT_OPTIONS.map((subj) => (
-                <option key={subj} value={subj}>
-                  {subj}
-                </option>
-              ))}
-            </select>
+              onValueChange={setQuickSubject}
+              options={SUBJECT_OPTIONS.map((subj) => ({ value: subj, label: subj }))}
+            />
           </div>
 
           <div className="space-y-1">
@@ -438,19 +438,15 @@ export function StudyPlannerSuite({
                 <Label htmlFor="ps-subject" className="text-xs">
                   Subject
                 </Label>
-                <select
+                <ModernSelect
                   id="ps-subject"
                   data-testid="plan-session-subject"
+                  ariaLabel="Subject"
+                  size="sm"
                   value={planSubject}
-                  onChange={(e) => setPlanSubject(e.target.value)}
-                  className="h-9 w-full rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                >
-                  {SUBJECT_OPTIONS.map((subj) => (
-                    <option key={subj} value={subj}>
-                      {subj}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={setPlanSubject}
+                  options={SUBJECT_OPTIONS.map((subj) => ({ value: subj, label: subj }))}
+                />
               </div>
 
               <div className="space-y-1 lg:col-span-2">
@@ -504,16 +500,18 @@ export function StudyPlannerSuite({
                 <Label htmlFor="ps-priority" className="text-xs">
                   Priority
                 </Label>
-                <select
+                <ModernSelect
                   id="ps-priority"
+                  ariaLabel="Priority"
+                  size="sm"
                   value={planPriority}
-                  onChange={(e) => setPlanPriority(e.target.value as SmartStudyBlock["priority"])}
-                  className="h-9 w-full rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                >
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
+                  onValueChange={(v) => setPlanPriority(v as SmartStudyBlock["priority"])}
+                  options={[
+                    { value: "high", label: "High" },
+                    { value: "medium", label: "Medium" },
+                    { value: "low", label: "Low" },
+                  ]}
+                />
               </div>
             </div>
 

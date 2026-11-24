@@ -33,7 +33,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { exportStudentDataJson } from "@/hooks/use-settings";
+import { exportStudentDataJson, useSaveProfile } from "@/hooks/use-settings";
 import {
   evaluatePasswordStrength,
   extractFirebaseAuthCode,
@@ -77,8 +77,11 @@ export function PrivacySecuritySection({
   runSave: (apply: () => void, undo: () => void, patch: SettingsPatch) => void;
 }) {
   const { t, lang, privacy, setPrivacy } = usePrefs();
+  const isAr = lang === "ar";
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const saveProfile = useSaveProfile();
+  const [genderOptInBusy, setGenderOptInBusy] = useState(false);
 
   const [emailFormOpen, setEmailFormOpen] = useState(false);
   const [pwFormOpen, setPwFormOpen] = useState(false);
@@ -739,6 +742,33 @@ export function PrivacySecuritySection({
           id="sec-circle"
           checked={privacy.showInCircle}
           onCheckedChange={(v) => updatePrivacy({ showInCircle: v }, { show_in_circle: v })}
+        />
+      </SettingsRow>
+
+      <SettingsRow
+        id="sec-show-gender"
+        label={isAr ? "إظهار الجنس في الملف الشخصي" : "Show gender on profile"}
+        desc={
+          isAr
+            ? "مُعطّل افتراضياً لحماية خصوصيتك. لن يظهر جنسك علناً ما لم تختر تفعيله."
+            : "Off by default for student privacy. Gender is never shown publicly unless you explicitly enable this."
+        }
+      >
+        <Switch
+          id="sec-show-gender"
+          disabled={genderOptInBusy}
+          checked={Boolean(profile?.show_gender_on_profile)}
+          onCheckedChange={async (checked) => {
+            setGenderOptInBusy(true);
+            try {
+              await saveProfile({ show_gender_on_profile: checked });
+              toast.success(t("set.saved"), { id: "set-saved", duration: 1500 });
+            } catch {
+              toast.error(t("set.error"));
+            } finally {
+              setGenderOptInBusy(false);
+            }
+          }}
         />
       </SettingsRow>
 

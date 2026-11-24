@@ -47,19 +47,17 @@ export function EcosystemOverviewWidget() {
           </p>
         </div>
         <Link
-          to="/app"
-          search={{ tab: "legacy" }}
+          to="/app/circle"
           className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
         >
-          <span>{isAr ? "الأثر والمكتبة المفتوحة" : "Community Impact Hub"}</span>
+          <span>{isAr ? "حلقة المعرفة والمجتمع" : "Knowledge Circle"}</span>
           <ArrowRight className="size-3.5 rtl-flip" />
         </Link>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-xs">
         <Link
-          to="/app/future"
-          search={{ tab: "projects" }}
+          to="/app/level-up"
           className="group flex flex-col justify-between rounded-xl border border-border bg-surface-2 p-3.5 transition-colors hover:border-primary/50"
         >
           <div className="space-y-1">
@@ -143,13 +141,13 @@ export function EcosystemOverviewWidget() {
         </Link>
 
         <Link
-          to="/app/opportunities"
+          to="/app/circle"
           className="group flex flex-col justify-between rounded-xl border border-border bg-surface-2 p-3.5 transition-colors hover:border-primary/50"
         >
           <div className="space-y-1">
             <div className="flex items-center justify-between text-emerald-400">
               <span className="font-semibold">
-                {isAr ? "الفرص والأثر المجتمعي" : "Opportunities & Impact"}
+                {isAr ? "الأنشطة والمجتمع" : "Community & Projects"}
               </span>
               <HeartHandshake className="size-4 shrink-0" />
             </div>
@@ -158,12 +156,12 @@ export function EcosystemOverviewWidget() {
             </div>
             <p className="line-clamp-2 text-[11px] text-muted-foreground">
               {isAr
-                ? `${savedOrOpenOpportunities} فرص مسجلة · ${eco.realWorldGoodProjects.length} مبادرات أثر حقيقي.`
-                : `${savedOrOpenOpportunities} saved opportunities · ${eco.realWorldGoodProjects.length} community initiatives.`}
+                ? `${savedOrOpenOpportunities} نشاط مسجل · ${eco.realWorldGoodProjects.length} مبادرات طلابية.`
+                : `${savedOrOpenOpportunities} saved tracks · ${eco.realWorldGoodProjects.length} student initiatives.`}
             </p>
           </div>
           <span className="mt-2 inline-flex items-center gap-1 font-semibold text-emerald-400">
-            {isAr ? "استكشف الفرص" : "Explore Opportunities"}{" "}
+            {isAr ? "استكشف حلقة المعرفة" : "Explore Knowledge Circle"}{" "}
             <ArrowRight className="size-3 rtl-flip transition-transform group-hover:translate-x-0.5" />
           </span>
         </Link>

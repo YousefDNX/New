@@ -382,7 +382,7 @@ export const OPEN_LEARNING_LIBRARY: KnowledgeResource[] = [
       },
     ],
     moduleId: "07",
-    targetRoute: "/app/care",
+    targetRoute: "/app/study",
   },
 ];
 
@@ -615,7 +615,7 @@ export const FOUNDATIONAL_LEARNING_TRACKS: FoundationalTrack[] = [
     titleAr: "التفكير النقدي والمنطق",
     encouragementNote:
       "Questioning assumptions gently leads to wiser decisions and clearer thinking.",
-    targetRoute: "/app/future",
+    targetRoute: "/app/level-up",
     steps: [
       {
         id: "fnd_crit_1",

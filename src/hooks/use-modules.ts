@@ -18,6 +18,7 @@ import {
   generateInviteCode,
   generateSafeDocId,
   sanitizeHttpUrl,
+  resolveCommunityGroup,
   type AiChatMessage,
   type AiConversationRow,
   type CareEntryRow,
@@ -26,6 +27,7 @@ import {
   type CircleMemberRow,
   type CirclePostRow,
   type CircleTeamRow,
+  type CommunityGroup,
   type FocusSessionRow,
   type FutureMilestoneItem,
   type FuturePlanRow,
@@ -36,6 +38,7 @@ import {
   type ModerationReportRow,
   type OpportunityCategory,
   type OpportunityRow,
+  type ProfileRow,
   type QuizAttemptRow,
   type StudyItemRow,
   type StudyTopicStatus,
@@ -957,20 +960,60 @@ export function useAiConversationActions() {
 
 /* ─────────────────────────── KNOWLEDGE CIRCLE & MODERATION ─────────────────────────── */
 
+export async function resolveUserCommunityGroupFromProfile(
+  userId: string,
+): Promise<CommunityGroup | null> {
+  try {
+    const snap = await getDoc(doc(db, "profiles", userId));
+    if (snap.exists()) {
+      const prof = snap.data() as ProfileRow;
+      const resolved = resolveCommunityGroup(prof.gender, prof.community_group);
+      if (resolved) return resolved;
+    }
+  } catch {
+    /* fallback to guest settings below */
+  }
+  if (typeof window !== "undefined") {
+    const stored = window.localStorage.getItem("btc_guest_community_group");
+    if (stored === "boys" || stored === "girls") return stored;
+  }
+  return "boys";
+}
+
 export function useCircles() {
   return useQuery({
     queryKey: ["circles"],
     queryFn: async (): Promise<CircleTeamRow[]> => {
+      const localCircles: CircleTeamRow[] = [];
+      if (typeof window !== "undefined") {
+        try {
+          const raw = window.localStorage.getItem("btc_local_circles_v1");
+          if (raw) localCircles.push(...JSON.parse(raw));
+        } catch {
+          /* ignore */
+        }
+      }
       const userId = await requireEligibleUid();
-      if (!userId) return [];
+      if (!userId) return localCircles;
       try {
-        const snap = await getDocs(
-          query(collection(db, "circles"), where("member_uids", "array-contains", userId)),
-        );
-        return snap.docs
+        const [snap, userGroup] = await Promise.all([
+          getDocs(query(collection(db, "circles"), where("member_uids", "array-contains", userId))),
+          resolveUserCommunityGroupFromProfile(userId),
+        ]);
+        const remote = snap.docs
           .map((d) => d.data() as CircleTeamRow)
+          .filter((c) => !userGroup || !c.community_group || c.community_group === userGroup);
+        const combined = [...localCircles, ...remote];
+        const seen = new Set<string>();
+        return combined
+          .filter((c) => {
+            if (seen.has(c.id)) return false;
+            seen.add(c.id);
+            return true;
+          })
           .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
       } catch (err) {
+        if (localCircles.length > 0) return localCircles;
         handleFirestoreError(err, OperationType.LIST, "circles");
       }
     },
@@ -1018,8 +1061,8 @@ export function useCircleActions() {
     xpSnapshot: number;
     levelSnapshot: number;
   }) => {
-    const userId = await requireEligibleUid();
-    if (!userId) throw new Error("Sign in required.");
+    const userId = (await requireEligibleUid()) || "guest_user";
+    const userGroup = (await resolveUserCommunityGroupFromProfile(userId)) || "boys";
     const now = new Date().toISOString();
     const circleId = generateSafeDocId("circle");
     const inviteCode = generateInviteCode(8);
@@ -1035,6 +1078,7 @@ export function useCircleActions() {
       owner_id: userId,
       shared_goal: clampString(payload.sharedGoal, 200),
       member_uids: [userId],
+      community_group: userGroup,
       created_at: now,
       updated_at: now,
     };
@@ -1045,6 +1089,7 @@ export function useCircleActions() {
       circle_name: name,
       subject: teamDoc.subject,
       owner_id: userId,
+      community_group: userGroup,
       created_at: now,
     };
 
@@ -1064,7 +1109,17 @@ export function useCircleActions() {
       await setDoc(doc(db, "circle_invites", inviteCode), inviteDoc);
       await setDoc(doc(db, "circles", circleId, "members", userId), memberDoc);
     } catch (err) {
-      handleFirestoreError(err, OperationType.CREATE, `circles/${circleId}`);
+      console.warn("Firestore write failed for circle, persisting locally:", err);
+      if (typeof window !== "undefined") {
+        try {
+          const raw = window.localStorage.getItem("btc_local_circles_v1");
+          const list: CircleTeamRow[] = raw ? JSON.parse(raw) : [];
+          list.unshift(teamDoc);
+          window.localStorage.setItem("btc_local_circles_v1", JSON.stringify(list));
+        } catch (e) {
+          console.warn("Could not write circle to local storage:", e);
+        }
+      }
     }
 
     await awardXpIfUnique({
@@ -1091,14 +1146,22 @@ export function useCircleActions() {
     showProgress: boolean;
     xpSnapshot: number;
     levelSnapshot: number;
-  }): Promise<{ joined: boolean; circleId?: string }> => {
+  }): Promise<{
+    joined: boolean;
+    circleId?: string;
+    reason?: "invalid_code" | "missing_community" | "community_mismatch";
+  }> => {
     const userId = await requireEligibleUid();
     if (!userId) throw new Error("Sign in required.");
+    const userGroup = await resolveUserCommunityGroupFromProfile(userId);
+    if (!userGroup) {
+      return { joined: false, reason: "missing_community" };
+    }
     const cleanCode = payload.inviteCode
       .trim()
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, "");
-    if (cleanCode.length < 6) return { joined: false };
+    if (cleanCode.length < 6) return { joined: false, reason: "invalid_code" };
 
     let inviteSnap;
     try {
@@ -1106,8 +1169,23 @@ export function useCircleActions() {
     } catch (err) {
       handleFirestoreError(err, OperationType.GET, `circle_invites/${cleanCode}`);
     }
-    if (!inviteSnap.exists()) return { joined: false };
+    if (!inviteSnap.exists()) return { joined: false, reason: "invalid_code" };
     const invite = inviteSnap.data() as CircleInviteRow;
+
+    let targetGroup: CommunityGroup | null = invite.community_group ?? null;
+    if (!targetGroup) {
+      try {
+        const circleSnap = await getDoc(doc(db, "circles", invite.circle_id));
+        if (circleSnap.exists()) {
+          targetGroup = (circleSnap.data() as CircleTeamRow).community_group ?? null;
+        }
+      } catch {
+        targetGroup = null;
+      }
+    }
+    if (targetGroup && targetGroup !== userGroup) {
+      return { joined: false, reason: "community_mismatch" };
+    }
 
     const now = new Date().toISOString();
     const memberDoc: CircleMemberRow = {
@@ -1162,11 +1240,20 @@ export function useCircleActions() {
   }) => {
     const userId = await requireEligibleUid();
     if (!userId) throw new Error("Sign in required.");
+    const userGroup = await resolveUserCommunityGroupFromProfile(userId);
+    if (
+      userGroup &&
+      payload.circle.community_group &&
+      payload.circle.community_group !== userGroup
+    ) {
+      throw new Error("Cross-community posting is not permitted.");
+    }
     const title = clampString(payload.title, 160);
     if (!title) throw new Error("Post title is required.");
 
     const now = new Date().toISOString();
     const id = generateSafeDocId("post");
+    const scopedGroup = payload.circle.community_group ?? userGroup ?? undefined;
     const post: CirclePostRow = {
       id,
       circle_id: payload.circle.id,
@@ -1180,6 +1267,7 @@ export function useCircleActions() {
       status: "open",
       member_uids: payload.circle.member_uids.slice(0, 25),
       helpful_uids: [],
+      ...(scopedGroup ? { community_group: scopedGroup } : {}),
       created_at: now,
     };
 
@@ -1245,6 +1333,7 @@ export function useCircleActions() {
   }) => {
     const userId = await requireEligibleUid();
     if (!userId) throw new Error("Sign in required.");
+    const userGroup = await resolveUserCommunityGroupFromProfile(userId);
     const id = generateSafeDocId("rep");
     const report: ModerationReportRow = {
       id,
@@ -1255,6 +1344,7 @@ export function useCircleActions() {
       reason: payload.reason,
       details: clampString(payload.details, 1000),
       status: "submitted",
+      ...(userGroup ? { community_group: userGroup } : {}),
       created_at: new Date().toISOString(),
     };
     try {

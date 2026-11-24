@@ -27,6 +27,7 @@ import {
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { downloadTextFile as downloadSafeTextFile } from "@/lib/safe-file";
 import { Button } from "@/components/ui/button";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   ResponsiveContainer,
   RadarChart,
@@ -744,18 +745,16 @@ export function GrowthMapExperience() {
                 }
                 className="min-h-[44px] sm:col-span-5 text-xs"
               />
-              <select
-                aria-label="Growth area"
+              <ModernSelect
+                ariaLabel="Growth area"
                 value={newGoalArea}
-                onChange={(e) => setNewGoalArea(e.target.value as GrowthArea)}
-                className="min-h-[44px] rounded-md border border-input bg-surface-2 px-2.5 text-xs text-foreground sm:col-span-2"
-              >
-                {AREAS.map((a) => (
-                  <option key={a} value={a}>
-                    {t(AREA_CONFIG[a].labelKey)}
-                  </option>
-                ))}
-              </select>
+                onValueChange={(val) => setNewGoalArea(val as GrowthArea)}
+                className="sm:col-span-2"
+                options={AREAS.map((a) => ({
+                  value: a,
+                  label: t(AREA_CONFIG[a].labelKey),
+                }))}
+              />
               <Input
                 value={newGoalMilestonesRaw}
                 onChange={(e) => setNewGoalMilestonesRaw(e.target.value)}
@@ -916,11 +915,11 @@ export function GrowthMapExperience() {
               </Link>
 
               <Link
-                to="/app/future"
+                to="/app/level-up"
                 className="rounded-xl border border-border bg-surface-2 p-3.5 hover:border-primary/50"
               >
                 <div className="text-[0.68rem] uppercase text-muted-foreground">
-                  {isAr ? "ملف المشاريع والمستقبل" : "Portfolio & Future"}
+                  {isAr ? "الإنجازات والمستويات" : "Achievements & Portfolio"}
                 </div>
                 <div className="mt-1 font-display text-sm font-bold text-xp">
                   {ecoState.adventure.collectedRelics.length}/4 Relics ·{" "}
@@ -1173,7 +1172,7 @@ export function GrowthMapExperience() {
               </Link>
 
               <Link
-                to="/app/care"
+                to="/app/quran"
                 className="group flex flex-col justify-between rounded-xl border border-border bg-surface-2 p-4 transition-all hover:border-primary/50 hover:bg-surface-2/90"
               >
                 <div>
@@ -1181,18 +1180,22 @@ export function GrowthMapExperience() {
                     <HeartPulse className="size-4" />
                   </div>
                   <h4 className="mt-3 font-display text-sm font-semibold text-foreground transition-colors group-hover:text-xp">
-                    {t("dash.growth.rec2.title")}
+                    {isAr ? "القرآن الكريم والسكينة" : "Quran & Islamic Center"}
                   </h4>
-                  <p className="mt-1 text-xs text-muted-foreground">{t("dash.growth.rec2.desc")}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {isAr
+                      ? "اقرأ وردك اليومي واستمع لتلاوات هادئة تعزز التركيز."
+                      : "Read daily verses and reflect in the Islamic Learning Center."}
+                  </p>
                 </div>
                 <div className="mt-4 flex items-center justify-between text-xs font-medium text-xp">
-                  <span>{t("dash.growth.rec2.cta")}</span>
+                  <span>{isAr ? "افتح القرآن الكريم" : "Open Quran Center"}</span>
                   <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1 rtl-flip" />
                 </div>
               </Link>
 
               <Link
-                to="/app/opportunities"
+                to="/app/circle"
                 className="group flex flex-col justify-between rounded-xl border border-border bg-surface-2 p-4 transition-all hover:border-primary/50 hover:bg-surface-2/90"
               >
                 <div>
@@ -1200,12 +1203,16 @@ export function GrowthMapExperience() {
                     <Compass className="size-4" />
                   </div>
                   <h4 className="mt-3 font-display text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
-                    {t("dash.growth.rec3.title")}
+                    {isAr ? "حلقة المعرفة" : "Knowledge Circle"}
                   </h4>
-                  <p className="mt-1 text-xs text-muted-foreground">{t("dash.growth.rec3.desc")}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {isAr
+                      ? "تعاون مع زملائك في المذاكرة وتبادل الملخصات والأسئلة."
+                      : "Collaborate in your peer study circle, notes, and Q&A rooms."}
+                  </p>
                 </div>
                 <div className="mt-4 flex items-center justify-between text-xs font-medium text-primary">
-                  <span>{t("dash.growth.rec3.cta")}</span>
+                  <span>{isAr ? "ادخل حلقة المعرفة" : "Open Knowledge Circle"}</span>
                   <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1 rtl-flip" />
                 </div>
               </Link>

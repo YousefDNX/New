@@ -61,8 +61,13 @@ export function AppFooter() {
               </Link>
             </li>
             <li>
-              <Link to="/app/care" className="hover:text-primary transition-colors">
-                {t("footer.env.care")}
+              <Link to="/app/quran" className="hover:text-primary transition-colors">
+                {t("nav.quran")}
+              </Link>
+            </li>
+            <li>
+              <Link to="/app/circle" className="hover:text-primary transition-colors">
+                {t("nav.circle")}
               </Link>
             </li>
           </ul>

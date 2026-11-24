@@ -68,14 +68,28 @@ export function Logo({
         )}
       </div>
       {!compact && (
-        <div className="flex flex-col leading-tight">
-          <span className="font-display text-[1rem] font-bold tracking-[0.08em] text-foreground whitespace-nowrap">
+        <div className="flex flex-col leading-none">
+          <span
+            className={`font-display font-bold tracking-[0.08em] text-foreground whitespace-nowrap ${
+              size === "sm" ? "text-[0.95rem]" : "text-[1rem]"
+            }`}
+          >
             {brand.name}
           </span>
-          {showSubtitle && btc && (
-            <span className="text-[9px] font-semibold tracking-[0.14em] text-muted-foreground uppercase whitespace-nowrap">
-              {brand.fullName}
+          {btc ? (
+            <span
+              className={`mt-0.5 font-medium tracking-[0.04em] text-muted-foreground whitespace-nowrap ${
+                size === "sm" ? "text-[9.5px]" : "text-[10.5px]"
+              }`}
+            >
+              Levelup peers
             </span>
+          ) : (
+            showSubtitle && (
+              <span className="mt-0.5 text-[9px] font-semibold tracking-[0.14em] text-muted-foreground uppercase whitespace-nowrap">
+                {brand.fullName}
+              </span>
+            )
           )}
         </div>
       )}

@@ -103,24 +103,6 @@ export const GLOBAL_SHORTCUTS: readonly ShortcutDefinition[] = [
     modulePath: "/app/circle",
   },
   {
-    id: "nav-future",
-    keyLabel: "F",
-    keys: ["F"],
-    actionEn: "Open Future Pathways & University Roadmaps",
-    actionAr: "فتح مسارات المستقبل والجامعات",
-    category: "navigation",
-    modulePath: "/app/future",
-  },
-  {
-    id: "nav-opportunities",
-    keyLabel: "O",
-    keys: ["O"],
-    actionEn: "Explore Verified Opportunities & Competitions",
-    actionAr: "استكشاف الفرص والمسابقات المعتمدة",
-    category: "navigation",
-    modulePath: "/app/opportunities",
-  },
-  {
     id: "nav-levelup",
     keyLabel: "L",
     keys: ["L"],
@@ -247,14 +229,6 @@ export function useKeyboardShortcuts({
         case "c":
           event.preventDefault();
           void navigate({ to: "/app/circle" });
-          break;
-        case "f":
-          event.preventDefault();
-          void navigate({ to: "/app/future" });
-          break;
-        case "o":
-          event.preventDefault();
-          void navigate({ to: "/app/opportunities" });
           break;
         case "l":
           event.preventDefault();

@@ -1,34 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StudyWorkspace } from "@/components/modules/StudyWorkspace";
-import { AlternativeStudyWorkspace } from "@/components/study/AlternativeStudyWorkspace";
-import { usePrefs } from "@/lib/preferences";
 import { BRAND } from "@/config/brand";
 
 export const Route = createFileRoute("/_authenticated/app/study")({
-  validateSearch: (search: Record<string, unknown>): { tab?: string } =>
-    typeof search["tab"] === "string" ? { tab: search["tab"] } : {},
+  validateSearch: (search: Record<string, unknown>): { tab?: string; unit?: number } => {
+    const out: { tab?: string; unit?: number } = {};
+    if (typeof search["tab"] === "string") out.tab = search["tab"];
+    if (typeof search["unit"] === "number") out.unit = search["unit"];
+    return out;
+  },
   head: () => ({
     meta: [
-      { title: `Study — ${BRAND.name}` },
+      { title: `Grade 9 Study — ${BRAND.name}` },
       {
         name: "description",
-        content: `Study notes, flashcards, quizzes, and mistake log on ${BRAND.name}.`,
+        content: `Grade 9 English vocabulary flashcards and study units on ${BRAND.name}.`,
       },
-      { property: "og:title", content: `Study — ${BRAND.name}` },
+      { property: "og:title", content: `Grade 9 Study — ${BRAND.name}` },
       {
         property: "og:description",
-        content: `Study notes, flashcards, quizzes, and mistake log on ${BRAND.name}.`,
+        content: `Grade 9 English vocabulary flashcards and study units on ${BRAND.name}.`,
       },
     ],
   }),
-  component: StudyRouteComponent,
+  component: StudyWorkspace,
 });
-
-function StudyRouteComponent() {
-  const { effectiveBtcVisualTheme } = usePrefs();
-  return effectiveBtcVisualTheme === "btc_alternative" ? (
-    <AlternativeStudyWorkspace />
-  ) : (
-    <StudyWorkspace />
-  );
-}

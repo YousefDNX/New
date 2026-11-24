@@ -1,31 +1,25 @@
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  ArrowRight,
   Atom,
   BookOpen,
   BookOpenCheck,
   Bot,
-  Brain,
   Calendar,
   CheckCircle2,
   Code2,
   Compass,
-  FileText,
-  Heart,
   Keyboard,
   Layers,
   LayoutPanelTop,
   Moon,
   NotebookPen,
   Palette,
-  Search,
   Settings,
   Sparkles,
   Sun,
   Trophy,
   Users,
-  Zap,
 } from "lucide-react";
 import { BRAND, isBtcMode } from "@/config/brand";
 import {
@@ -195,13 +189,6 @@ export function CommandPalette() {
               <span>{t("cal.title")}</span>
             </CommandItem>
             <CommandItem
-              onSelect={() => handleNavigate("/app/care")}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <Heart className="size-4 text-rose-400" />
-              <span>{isArabic ? "الرعاية والعافية" : "Care & Wellbeing"}</span>
-            </CommandItem>
-            <CommandItem
               onSelect={() => handleNavigate("/app/quran")}
               className="flex items-center gap-2 cursor-pointer"
             >
@@ -213,21 +200,7 @@ export function CommandPalette() {
               className="flex items-center gap-2 cursor-pointer"
             >
               <Users className="size-4 text-amber-400" />
-              <span>{isArabic ? "مجتمع الطلاب" : "Circle & Community"}</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => handleNavigate("/app/opportunities")}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <Zap className="size-4 text-yellow-400" />
-              <span>{isArabic ? "الفرص والمنح" : "Opportunities & Contests"}</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => handleNavigate("/app/future")}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <Brain className="size-4 text-indigo-400" />
-              <span>{isArabic ? "التخطيط المستقبلي" : "Future Planning & Career"}</span>
+              <span>{isArabic ? "حلقة المعرفة" : "Knowledge Circle"}</span>
             </CommandItem>
             <CommandItem
               onSelect={() => handleNavigate("/app/level-up")}

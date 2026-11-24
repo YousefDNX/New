@@ -39,7 +39,7 @@ service cloud.firestore {
     function isAdmin() {
       return isEligibleUser() && (
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        (request.auth.token.email_verified == true && request.auth.token.email == 'alshbrawe7373@gmail.com')
+        (request.auth.token.email_verified == true && request.auth.token.email in ['alshbrawe7373@gmail.com', 'alshbrawe7676@gmail.com'])
       );
     }
 
@@ -55,6 +55,29 @@ service cloud.firestore {
 
     function canManageHelp() {
       return isAdmin() || hasStaffRole(['founder', 'admin', 'content_manager']);
+    }
+
+    function hasAssignedCommunityGroup() {
+      return isEligibleUser()
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && ('community_group' in get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data)
+        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.community_group in ['boys', 'girls'];
+    }
+
+    function userCommunityGroup() {
+      return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.community_group;
+    }
+
+    function isValidGenderCommunity(data) {
+      return isOptionalEnum(data, 'gender', ['male', 'female'])
+        && isOptionalEnum(data, 'community_group', ['boys', 'girls'])
+        && isOptionalBool(data, 'show_gender_on_profile')
+        && (
+          !('gender' in data) || data.gender == null || (
+            (data.gender == 'male' && data.community_group == 'boys') ||
+            (data.gender == 'female' && data.community_group == 'girls')
+          )
+        );
     }
 
     function isCircleMember(circleId) {
@@ -125,6 +148,9 @@ service cloud.firestore {
           'auth_provider',
           'email_verified',
           'phone_number',
+          'gender',
+          'community_group',
+          'show_gender_on_profile',
           'created_at',
           'updated_at'
         ])
@@ -148,6 +174,7 @@ service cloud.firestore {
         && isOptionalString(data, 'auth_provider', 64)
         && isOptionalBool(data, 'email_verified')
         && isOptionalString(data, 'phone_number', 32)
+        && isValidGenderCommunity(data)
         && isOptionalString(data, 'created_at', 40)
         && isOptionalString(data, 'updated_at', 40);
     }
@@ -692,7 +719,7 @@ service cloud.firestore {
 
     function isValidCircleTeam(data, circleId) {
       return data.keys().hasAll(['id', 'name', 'invite_code', 'owner_id', 'member_uids', 'created_at', 'updated_at'])
-        && data.keys().hasOnly(['id', 'name', 'description', 'subject', 'invite_code', 'owner_id', 'shared_goal', 'member_uids', 'created_at', 'updated_at'])
+        && data.keys().hasOnly(['id', 'name', 'description', 'subject', 'invite_code', 'owner_id', 'shared_goal', 'member_uids', 'community_group', 'created_at', 'updated_at'])
         && data.id == circleId
         && isValidId(data.id)
         && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
@@ -704,13 +731,14 @@ service cloud.firestore {
         && isOptionalString(data, 'shared_goal', 200)
         && data.member_uids is list && data.member_uids.size() >= 1 && data.member_uids.size() <= 25
         && data.member_uids[0] is string
+        && isOptionalEnum(data, 'community_group', ['boys', 'girls'])
         && data.created_at is string && data.created_at.size() <= 40
         && data.updated_at is string && data.updated_at.size() <= 40;
     }
 
     function isValidCircleInvite(data, inviteCode) {
       return data.keys().hasAll(['id', 'circle_id', 'circle_name', 'owner_id', 'created_at'])
-        && data.keys().hasOnly(['id', 'circle_id', 'circle_name', 'subject', 'owner_id', 'created_at'])
+        && data.keys().hasOnly(['id', 'circle_id', 'circle_name', 'subject', 'owner_id', 'community_group', 'created_at'])
         && data.id == inviteCode
         && isValidId(data.id)
         && data.id.size() >= 6 && data.id.size() <= 16
@@ -718,6 +746,7 @@ service cloud.firestore {
         && data.circle_name is string && data.circle_name.size() >= 1 && data.circle_name.size() <= 80
         && isOptionalString(data, 'subject', 60)
         && data.owner_id == request.auth.uid
+        && isOptionalEnum(data, 'community_group', ['boys', 'girls'])
         && data.created_at is string && data.created_at.size() <= 40;
     }
 
@@ -751,6 +780,7 @@ service cloud.firestore {
           'status',
           'member_uids',
           'helpful_uids',
+          'community_group',
           'created_at'
         ])
         && data.id == postId
@@ -768,6 +798,7 @@ service cloud.firestore {
         && data.member_uids is list && data.member_uids.size() >= 1 && data.member_uids.size() <= 25
         && data.member_uids[0] is string
         && isBoundedStringList(data, 'helpful_uids', 25)
+        && isOptionalEnum(data, 'community_group', ['boys', 'girls'])
         && data.created_at is string && data.created_at.size() <= 40;
     }
 
@@ -787,6 +818,7 @@ service cloud.firestore {
           'details',
           'moderator_notes',
           'status',
+          'community_group',
           'created_at',
           'updated_at'
         ])
@@ -799,11 +831,12 @@ service cloud.firestore {
         && isOptionalString(data, 'target_id', 128)
         && isOptionalEnum(data, 'reported_target_type', ['circle_post', 'circle_member', 'comment', 'resource', 'other'])
         && isOptionalString(data, 'reported_target_id', 128)
-        && isOptionalEnum(data, 'reason', ['harassment', 'spam', 'pii_exposed', 'inappropriate', 'cheating', 'other'])
+        && isOptionalEnum(data, 'reason', ['harassment', 'spam', 'pii_exposed', 'pii_sharing', 'inappropriate', 'cheating', 'other'])
         && isOptionalEnum(data, 'category', ['inappropriate_content', 'harassment', 'spam', 'impersonation', 'unsafe_behavior', 'misleading_content', 'other'])
         && isOptionalString(data, 'details', 2000)
         && isOptionalString(data, 'moderator_notes', 1000)
         && data.status in ['submitted', 'pending', 'reviewed', 'action_taken', 'resolved', 'dismissed']
+        && isOptionalEnum(data, 'community_group', ['boys', 'girls'])
         && data.created_at is string && data.created_at.size() <= 40
         && isOptionalString(data, 'updated_at', 40);
     }
@@ -1387,6 +1420,14 @@ service cloud.firestore {
         && isValidProfile(incoming(), userId)
         && incoming().id == existing().id
         && (!('created_at' in existing()) || incoming().created_at == existing().created_at)
+        && (
+          isAdmin() || (
+            ((!('gender' in existing()) || existing().gender == null)
+              && (!('community_group' in existing()) || existing().community_group == null)) ||
+            (incoming().get('gender', null) == existing().get('gender', null)
+              && incoming().get('community_group', null) == existing().get('community_group', null))
+          )
+        )
         && incoming().diff(existing()).affectedKeys().hasOnly([
           'display_name',
           'avatar_url',
@@ -1404,6 +1445,9 @@ service cloud.firestore {
           'auth_provider',
           'email_verified',
           'phone_number',
+          'gender',
+          'community_group',
+          'show_gender_on_profile',
           'updated_at'
         ]);
       allow delete: if isValidId(userId) && isOwner(userId);
@@ -1811,7 +1855,13 @@ service cloud.firestore {
     match /circle_invites/{inviteCode} {
       allow get: if isValidId(inviteCode) && isEligibleUser();
       allow list: if false;
-      allow create: if isValidId(inviteCode) && isEligibleUser() && isValidCircleInvite(incoming(), inviteCode);
+      allow create: if isValidId(inviteCode)
+        && isEligibleUser()
+        && isValidCircleInvite(incoming(), inviteCode)
+        && (
+          !hasAssignedCommunityGroup() ||
+          (('community_group' in incoming()) && incoming().community_group == userCommunityGroup())
+        );
       allow update: if false;
       allow delete: if isValidId(inviteCode) && isEligibleUser() && existing().owner_id == request.auth.uid;
     }
@@ -1826,7 +1876,11 @@ service cloud.firestore {
         && isValidCircleTeam(incoming(), circleId)
         && incoming().owner_id == request.auth.uid
         && request.auth.uid in incoming().member_uids
-        && incoming().member_uids.size() == 1;
+        && incoming().member_uids.size() == 1
+        && (
+          !hasAssignedCommunityGroup() ||
+          (('community_group' in incoming()) && incoming().community_group == userCommunityGroup())
+        );
       allow update: if isValidId(circleId)
         && isEligibleUser()
         && isValidCircleTeam(incoming(), circleId)
@@ -1844,6 +1898,11 @@ service cloud.firestore {
             && incoming().member_uids.hasAll(existing().member_uids)
             && incoming().member_uids.size() == existing().member_uids.size() + 1
             && incoming().diff(existing()).affectedKeys().hasOnly(['member_uids', 'updated_at'])
+            && (
+              !('community_group' in existing()) ||
+              existing().community_group == null ||
+              (hasAssignedCommunityGroup() && existing().community_group == userCommunityGroup())
+            )
           ) || (
             request.auth.uid in existing().member_uids
             && !(request.auth.uid in incoming().member_uids)
@@ -1894,7 +1953,13 @@ service cloud.firestore {
           && isEligibleUser()
           && isValidCirclePost(incoming(), circleId, postId)
           && incoming().author_id == request.auth.uid
-          && isCircleMember(circleId);
+          && isCircleMember(circleId)
+          && (
+            !('community_group' in incoming()) ||
+            incoming().community_group == null ||
+            !hasAssignedCommunityGroup() ||
+            incoming().community_group == userCommunityGroup()
+          );
         allow update: if isValidId(circleId)
           && isValidId(postId)
           && isEligibleUser()

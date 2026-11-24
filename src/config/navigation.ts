@@ -10,14 +10,9 @@ import {
   BookOpenCheck,
   CheckSquare,
   Trophy,
-  HeartPulse,
-  HeartHandshake,
-  Compass,
   Languages,
   Users,
-  Radar,
   Settings,
-  ShieldCheck,
   HelpCircle,
   MessageSquare,
   Shield,
@@ -32,13 +27,8 @@ export type NavTo =
   | "/app/english"
   | "/app/tasks"
   | "/app/level-up"
-  | "/app/care"
   | "/app/quran"
-  | "/app/future"
   | "/app/circle"
-  | "/app/opportunities"
-  | "/app/rahmah"
-  | "/app/martial-arts"
   | "/app/settings"
   | "/app/help"
   | "/app/support"
@@ -71,15 +61,15 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     id: "learn",
     label: "nav.group.learn",
-    items: [
-      { id: "study", to: "/app/study", label: "nav.study", icon: BookOpen },
-      { id: "english", to: "/app/english", label: "nav.english", icon: Languages },
-    ],
+    items: [{ id: "study", to: "/app/study", label: "nav.study", icon: BookOpen }],
   },
   {
     id: "do",
     label: "nav.group.do",
-    items: [{ id: "tasks", to: "/app/tasks", label: "nav.tasks", icon: CheckSquare }],
+    items: [
+      { id: "tasks", to: "/app/tasks", label: "nav.tasks", icon: CheckSquare },
+      { id: "circle", to: "/app/circle", label: "nav.circle", icon: Users },
+    ],
   },
   {
     id: "self",
@@ -88,38 +78,11 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-export const EXTENDED_NAV_GROUPS: NavGroup[] = [
-  {
-    id: "growth_spaces",
-    label: "nav.group.do",
-    items: [
-      { id: "levelup", to: "/app/level-up", label: "nav.levelup", icon: Trophy },
-      { id: "circle", to: "/app/circle", label: "nav.circle", icon: Users },
-      { id: "future", to: "/app/future", label: "nav.future", icon: Compass },
-      { id: "opportunities", to: "/app/opportunities", label: "nav.radar", icon: Radar },
-    ],
-  },
-  {
-    id: "wellbeing_spaces",
-    label: "nav.group.self",
-    items: [
-      { id: "care", to: "/app/care", label: "nav.care", icon: HeartPulse },
-      { id: "rahmah", to: "/app/rahmah", label: "nav.rahmah", icon: HeartHandshake },
-      { id: "martial-arts", to: "/app/martial-arts", label: "nav.martialArts", icon: ShieldCheck },
-    ],
-  },
-];
+export const EXTENDED_NAV_GROUPS: NavGroup[] = [];
 
 export const NAV_FOOTER: NavItem[] = [
   { id: "settings", to: "/app/settings", label: "nav.settings", icon: Settings },
 ];
-
-export const LEVEL_UP_NAV_ITEM: NavItem = {
-  id: "levelup",
-  to: "/app/level-up",
-  label: "nav.levelup",
-  icon: Trophy,
-};
 
 export const NAV_UTILITIES: NavItem[] = [
   { id: "help", to: "/app/help", label: "nav.helpCenter", icon: HelpCircle },
@@ -134,15 +97,7 @@ export const NAV_ADMIN: NavItem = {
   staffOnly: true,
 };
 
-export const PRIMARY_TOP_NAV_IDS = [
-  "home",
-  "ai",
-  "study",
-  "english",
-  "tasks",
-  "levelup",
-  "quran",
-] as const;
+export const PRIMARY_TOP_NAV_IDS = ["home", "ai", "study", "tasks", "circle", "quran"] as const;
 
 export const ALL_NAV_ITEMS: NavItem[] = [
   ...NAV_GROUPS.flatMap((g) => g.items),
@@ -169,77 +124,35 @@ export interface RouteMetaEntry {
 }
 
 export const ROUTE_META: Record<string, RouteMetaEntry> = {
-  "/app": { labelKey: "nav.home", labelEn: "Dashboard", labelAr: "الرئيسية" },
+  "/app": { labelKey: "nav.home", labelEn: "Home", labelAr: "الرئيسية" },
   "/app/ai": {
     labelKey: "nav.ai",
-    labelEn: "AI Mentor",
-    labelAr: "المرشد الذكي",
+    labelEn: "BTC AI",
+    labelAr: "BTC الذكي",
     groupLabelKey: "nav.group.core",
   },
   "/app/study": {
     labelKey: "nav.study",
-    labelEn: "Study Workspace",
-    labelAr: "مساحة الدراسة",
-    groupLabelKey: "nav.group.learn",
-  },
-  "/app/english": {
-    labelKey: "nav.english",
-    labelEn: "English World",
-    labelAr: "عالم الإنجليزية",
-    groupLabelKey: "nav.group.learn",
-  },
-  "/app/future": {
-    labelKey: "nav.future",
-    labelEn: "Future & Career",
-    labelAr: "المستقبل والمسار",
+    labelEn: "Study",
+    labelAr: "الدراسة",
     groupLabelKey: "nav.group.learn",
   },
   "/app/tasks": {
     labelKey: "nav.tasks",
-    labelEn: "Tasks & Habits",
-    labelAr: "المهام والعادات",
+    labelEn: "My Tasks",
+    labelAr: "مهامي",
     groupLabelKey: "nav.group.do",
   },
   "/app/circle": {
     labelKey: "nav.circle",
-    labelEn: "Study Circle",
-    labelAr: "حلقة الدراسة",
+    labelEn: "Knowledge Circle",
+    labelAr: "حلقة المعرفة",
     groupLabelKey: "nav.group.do",
-  },
-  "/app/opportunities": {
-    labelKey: "nav.radar",
-    labelEn: "Opportunity Radar",
-    labelAr: "رادار الفرص",
-    groupLabelKey: "nav.group.do",
-  },
-  "/app/level-up": {
-    labelKey: "nav.levelup",
-    labelEn: "Level Up",
-    labelAr: "التحديات والمستوى",
-    groupLabelKey: "nav.group.self",
-  },
-  "/app/care": {
-    labelKey: "nav.care",
-    labelEn: "Wellbeing Care",
-    labelAr: "العناية والتوازن",
-    groupLabelKey: "nav.group.self",
   },
   "/app/quran": {
     labelKey: "nav.quran",
-    labelEn: "Qur'an Audio",
+    labelEn: "Quran & Islamic",
     labelAr: "القرآن الكريم",
-    groupLabelKey: "nav.group.self",
-  },
-  "/app/rahmah": {
-    labelKey: "nav.rahmah",
-    labelEn: "Rahmah Hub",
-    labelAr: "واحة الرحمة",
-    groupLabelKey: "nav.group.self",
-  },
-  "/app/martial-arts": {
-    labelKey: "nav.martialArts",
-    labelEn: "Martial Arts Dojo",
-    labelAr: "دوجو الأخلاق والانضباط",
     groupLabelKey: "nav.group.self",
   },
   "/app/settings": { labelKey: "nav.settings", labelEn: "Settings", labelAr: "الإعدادات" },
@@ -274,7 +187,7 @@ export const NAV_LAYOUT = {
   mobile: {
     style: "floating" as "floating" | "docked",
     /** item ids shown in the bar; others go into the "More" sheet */
-    tabs: ["home", "study", "tasks", "levelup"],
+    tabs: ["home", "study", "tasks", "circle", "quran"],
     /** item id for the raised center button (null to disable) */
     centerAction: "ai" as string | null,
     moreColumns: 3,

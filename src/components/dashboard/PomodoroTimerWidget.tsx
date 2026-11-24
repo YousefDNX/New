@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { useToast } from "@/components/common/ToastProvider";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { useFocusActions, useFocusSessions } from "@/hooks/use-modules";
@@ -503,11 +504,12 @@ export function PomodoroTimerWidget({ className }: { className?: string }) {
                 <label htmlFor="pomo-linked-task" className="sr-only">
                   {t("prod.linkTask")}
                 </label>
-                <select
+                <ModernSelect
                   id="pomo-linked-task"
+                  ariaLabel={t("prod.linkTask")}
+                  size="sm"
                   value={linkedTaskId}
-                  onChange={(e) => {
-                    const id = e.target.value;
+                  onValueChange={(id) => {
                     setLinkedTaskId(id);
                     const found = openTasks.find((tk) => tk.id === id);
                     if (found) {
@@ -516,15 +518,11 @@ export function PomodoroTimerWidget({ className }: { className?: string }) {
                       if (found.subject) setSubject(found.subject);
                     }
                   }}
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="">{t("prod.linkTaskNone")}</option>
-                  {openTasks.map((tk) => (
-                    <option key={tk.id} value={tk.id}>
-                      {tk.title}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: "", label: t("prod.linkTaskNone") },
+                    ...openTasks.map((tk) => ({ value: tk.id, label: tk.title })),
+                  ]}
+                />
               </div>
             )}
 
@@ -532,37 +530,34 @@ export function PomodoroTimerWidget({ className }: { className?: string }) {
               <label htmlFor="pomo-area-select" className="sr-only">
                 {t("prod.area")}
               </label>
-              <select
+              <ModernSelect
                 id="pomo-area-select"
+                ariaLabel={t("prod.area")}
+                size="sm"
                 value={area}
-                onChange={(e) => setArea(e.target.value as GrowthArea)}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                {AREAS.map((a) => (
-                  <option key={a} value={a}>
-                    {t(AREA_CONFIG[a].labelKey)}
-                  </option>
-                ))}
-              </select>
+                onValueChange={(val) => setArea(val as GrowthArea)}
+                options={AREAS.map((a) => ({
+                  value: a,
+                  label: t(AREA_CONFIG[a].labelKey),
+                }))}
+              />
             </div>
 
             <div>
               <label htmlFor="pomo-subject-select" className="sr-only">
                 {t("pomo.subjectLabel")}
               </label>
-              <select
+              <ModernSelect
                 id="pomo-subject-select"
+                ariaLabel={t("pomo.subjectLabel")}
+                size="sm"
                 value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <option value="">{t("pomo.subjectNone")}</option>
-                {SUBJECT_OPTIONS.map((subj) => (
-                  <option key={subj} value={subj}>
-                    {subj}
-                  </option>
-                ))}
-              </select>
+                onValueChange={setSubject}
+                options={[
+                  { value: "", label: t("pomo.subjectNone") },
+                  ...SUBJECT_OPTIONS.map((subj) => ({ value: subj, label: subj })),
+                ]}
+              />
             </div>
           </div>
 

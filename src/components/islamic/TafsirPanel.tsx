@@ -7,6 +7,7 @@ import {
   VERIFIED_TAFSIR_EDITIONS,
   type FetchedVerseTafsir,
 } from "@/lib/quran-tafsir";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   AlertCircle,
   BookOpen,
@@ -179,61 +180,58 @@ export const TafsirPanel: React.FC<TafsirPanelProps> = ({
 
         {/* Selectors: Surah, Ayah, Tafsir Book */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-stone-100 dark:border-stone-800">
-          <label className="space-y-1 text-xs">
+          <div className="space-y-1 text-xs">
             <span className="font-bold text-stone-700 dark:text-stone-300 block">
               {isAr ? "السورة:" : "Surah:"}
             </span>
-            <select
-              value={surahId}
-              onChange={(e) => {
-                setSurahId(Number(e.target.value));
+            <ModernSelect
+              ariaLabel={isAr ? "السورة" : "Surah"}
+              size="sm"
+              value={String(surahId)}
+              onValueChange={(val) => {
+                setSurahId(Number(val));
                 setAyahNumber(1);
               }}
-              className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
-            >
-              {SURAHS_INDEX.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.id}. {isAr ? s.nameAr : `${s.nameEn} (${s.nameAr})`}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={SURAHS_INDEX.map((s) => ({
+                value: String(s.id),
+                label: `${s.id}. ${isAr ? s.nameAr : `${s.nameEn} (${s.nameAr})`}`,
+              }))}
+            />
+          </div>
 
-          <label className="space-y-1 text-xs">
+          <div className="space-y-1 text-xs">
             <span className="font-bold text-stone-700 dark:text-stone-300 block">
               {isAr ? "رقم الآية:" : "Ayah Number:"}
             </span>
-            <select
-              value={ayahNumber}
-              onChange={(e) => setAyahNumber(Number(e.target.value))}
-              className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-mono"
-            >
-              {ayahNumbers.map((num) => (
-                <option key={num} value={num}>
-                  {surahId}:{num}
-                </option>
-              ))}
-            </select>
-          </label>
+            <ModernSelect
+              ariaLabel={isAr ? "رقم الآية" : "Ayah Number"}
+              size="sm"
+              value={String(ayahNumber)}
+              onValueChange={(val) => setAyahNumber(Number(val))}
+              options={ayahNumbers.map((num) => ({
+                value: String(num),
+                label: `${surahId}:${num}`,
+              }))}
+            />
+          </div>
 
-          <label className="space-y-1 text-xs">
+          <div className="space-y-1 text-xs">
             <span className="font-bold text-stone-700 dark:text-stone-300 block">
               {isAr ? "كتاب التفسير المعتمد:" : "Verified Classical Tafsir Edition:"}
             </span>
-            <select
-              value={editionId}
-              onChange={(e) => setEditionId(Number(e.target.value))}
-              className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
-            >
-              {VERIFIED_TAFSIR_EDITIONS.map((ed) => (
-                <option key={ed.id} value={ed.id}>
-                  {isAr
-                    ? `${ed.nameAr} (${ed.languageLabel})`
-                    : `${ed.nameEn} (${ed.languageLabel})`}
-                </option>
-              ))}
-            </select>
-          </label>
+            <ModernSelect
+              ariaLabel={isAr ? "كتاب التفسير المعتمد" : "Verified Classical Tafsir Edition"}
+              size="sm"
+              value={String(editionId)}
+              onValueChange={(val) => setEditionId(Number(val))}
+              options={VERIFIED_TAFSIR_EDITIONS.map((ed) => ({
+                value: String(ed.id),
+                label: isAr
+                  ? `${ed.nameAr} (${ed.languageLabel})`
+                  : `${ed.nameEn} (${ed.languageLabel})`,
+              }))}
+            />
+          </div>
         </div>
       </div>
 

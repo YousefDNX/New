@@ -17,8 +17,10 @@ import {
   clampString,
   defaultSettingsDoc,
   extractCoreUserSettingsDoc,
+  resolveCommunityGroup,
   USER_SETTINGS_CORE_KEYS,
   type ProfileRow,
+  type StudentGender,
   type UserSettingsRow,
 } from "@/lib/firestore-data";
 import { isSupportedLang } from "@/lib/i18n-dict";
@@ -542,7 +544,7 @@ export function useSaveSettings() {
 }
 
 export function useSaveProfile() {
-  const qc = useQueryClient();
+  const qc = useContext(QueryClientContext);
   return async (patch: {
     language?: string;
     region?: string;
@@ -553,6 +555,8 @@ export function useSaveProfile() {
     preferred_subjects?: string[];
     learning_goals?: string | null;
     phone_number?: string | null;
+    gender?: StudentGender;
+    show_gender_on_profile?: boolean;
   }) => {
     const id = await requireUid();
     if (!id) return;
@@ -590,13 +594,27 @@ export function useSaveProfile() {
     if (patch.phone_number !== undefined) {
       cleanPatch.phone_number = clampString(patch.phone_number, 32);
     }
+    if (typeof patch.show_gender_on_profile === "boolean") {
+      cleanPatch.show_gender_on_profile = patch.show_gender_on_profile;
+    }
+    if (patch.gender === "male" || patch.gender === "female") {
+      const snap = await getDoc(doc(db, "profiles", id));
+      const current = snap.exists() ? (snap.data() as ProfileRow) : null;
+      if (!current?.gender && !current?.community_group) {
+        const group = resolveCommunityGroup(patch.gender);
+        if (group) {
+          cleanPatch.gender = patch.gender;
+          cleanPatch.community_group = group;
+        }
+      }
+    }
 
     try {
       await updateDoc(doc(db, "profiles", id), cleanPatch);
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `profiles/${id}`);
     }
-    await qc.invalidateQueries({ queryKey: ["profile"] });
+    await qc?.invalidateQueries({ queryKey: ["profile"] });
   };
 }
 

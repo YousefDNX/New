@@ -26,6 +26,7 @@ import { AdaptiveFormView, type AdaptiveFormStep } from "@/components/adaptive/A
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   Dialog,
   DialogContent,
@@ -244,18 +245,20 @@ export function TasksWidget({
                           <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
                               <Label htmlFor="t-priority">{t("dash.tasks.priority")}</Label>
-                              <select
+                              <ModernSelect
                                 id="t-priority"
+                                ariaLabel={t("dash.tasks.priority")}
+                                size="sm"
                                 value={newPriority}
-                                onChange={(e) =>
-                                  setNewPriority(e.target.value as "low" | "medium" | "high")
+                                onValueChange={(val) =>
+                                  setNewPriority(val as "low" | "medium" | "high")
                                 }
-                                className="h-9 w-full rounded-md border border-input bg-surface-2 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                              >
-                                <option value="high">{t("dash.tasks.priority.high")}</option>
-                                <option value="medium">{t("dash.tasks.priority.medium")}</option>
-                                <option value="low">{t("dash.tasks.priority.low")}</option>
-                              </select>
+                                options={[
+                                  { value: "high", label: t("dash.tasks.priority.high") },
+                                  { value: "medium", label: t("dash.tasks.priority.medium") },
+                                  { value: "low", label: t("dash.tasks.priority.low") },
+                                ]}
+                              />
                             </div>
 
                             <div className="space-y-1.5">
@@ -282,53 +285,52 @@ export function TasksWidget({
                           <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
                               <Label htmlFor="t-area">{t("prod.area")}</Label>
-                              <select
+                              <ModernSelect
                                 id="t-area"
+                                ariaLabel={t("prod.area")}
+                                size="sm"
                                 value={activeAreaConfig ? activeAreaConfig.id : newArea}
-                                onChange={(e) => setNewArea(e.target.value as GrowthArea)}
-                                className="h-9 w-full rounded-md border border-input bg-surface-2 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                              >
-                                {AREAS.map((areaKey) => (
-                                  <option key={areaKey} value={areaKey}>
-                                    {t(AREA_CONFIG[areaKey].labelKey)}
-                                  </option>
-                                ))}
-                              </select>
+                                onValueChange={(val) => setNewArea(val as GrowthArea)}
+                                options={AREAS.map((areaKey) => ({
+                                  value: areaKey,
+                                  label: t(AREA_CONFIG[areaKey].labelKey),
+                                }))}
+                              />
                             </div>
 
                             <div className="space-y-1.5">
                               <Label htmlFor="t-rec">{t("prod.recurrence")}</Label>
-                              <select
+                              <ModernSelect
                                 id="t-rec"
+                                ariaLabel={t("prod.recurrence")}
+                                size="sm"
                                 value={newRecurrence}
-                                onChange={(e) =>
-                                  setNewRecurrence(e.target.value as "none" | "daily" | "weekly")
+                                onValueChange={(val) =>
+                                  setNewRecurrence(val as "none" | "daily" | "weekly")
                                 }
-                                className="h-9 w-full rounded-md border border-input bg-surface-2 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                              >
-                                <option value="none">{t("prod.rec.none")}</option>
-                                <option value="daily">{t("prod.rec.daily")}</option>
-                                <option value="weekly">{t("prod.rec.weekly")}</option>
-                              </select>
+                                options={[
+                                  { value: "none", label: t("prod.rec.none") },
+                                  { value: "daily", label: t("prod.rec.daily") },
+                                  { value: "weekly", label: t("prod.rec.weekly") },
+                                ]}
+                              />
                             </div>
                           </div>
 
                           {goals.length > 0 && (
                             <div className="space-y-1.5">
                               <Label htmlFor="t-goal">{t("tasks.goalLink")}</Label>
-                              <select
+                              <ModernSelect
                                 id="t-goal"
+                                ariaLabel={t("tasks.goalLink")}
+                                size="sm"
                                 value={newGoalId}
-                                onChange={(e) => setNewGoalId(e.target.value)}
-                                className="h-9 w-full rounded-md border border-input bg-surface-2 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                              >
-                                <option value="">{t("tasks.noGoal")}</option>
-                                {goals.map((g) => (
-                                  <option key={g.id} value={g.id}>
-                                    {g.title}
-                                  </option>
-                                ))}
-                              </select>
+                                onValueChange={setNewGoalId}
+                                options={[
+                                  { value: "", label: t("tasks.noGoal") },
+                                  ...goals.map((g) => ({ value: g.id, label: g.title })),
+                                ]}
+                              />
                             </div>
                           )}
                         </>

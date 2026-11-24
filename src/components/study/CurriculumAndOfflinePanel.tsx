@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { CURRICULUM_UNITS } from "@/data/curriculum-and-challenges";
 import {
   INITIAL_OFFLINE_LEARNING_PACKS,
@@ -203,77 +204,67 @@ export function CurriculumAndOfflinePanel() {
             <label htmlFor="cur-country" className="font-semibold text-foreground">
               Country / System Track
             </label>
-            <select
+            <ModernSelect
               id="cur-country"
+              ariaLabel="Country / System Track"
+              size="sm"
               value={state.curriculumSelection.country}
-              onChange={(e) =>
+              onValueChange={(val) =>
                 update((prev) => ({
                   ...prev,
                   curriculumSelection: {
                     ...prev.curriculumSelection,
-                    country: e.target.value,
+                    country: val,
                   },
                 }))
               }
-              className="h-9 w-full rounded-md border border-input bg-surface-2 px-2.5 text-xs text-foreground"
-            >
-              {countries.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+              options={countries.map((c) => ({ value: c, label: c }))}
+            />
           </div>
           <div className="space-y-1">
             <label htmlFor="cur-grade" className="font-semibold text-foreground">
               Grade Level
             </label>
-            <select
+            <ModernSelect
               id="cur-grade"
+              ariaLabel="Grade Level"
+              size="sm"
               value={state.curriculumSelection.grade}
-              onChange={(e) =>
+              onValueChange={(val) =>
                 update((prev) => ({
                   ...prev,
                   curriculumSelection: {
                     ...prev.curriculumSelection,
-                    grade: e.target.value,
+                    grade: val,
                   },
                 }))
               }
-              className="h-9 w-full rounded-md border border-input bg-surface-2 px-2.5 text-xs text-foreground"
-            >
-              <option value="All Grades">All Grades</option>
-              {grades.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "All Grades", label: "All Grades" },
+                ...grades.map((g) => ({ value: g, label: g })),
+              ]}
+            />
           </div>
           <div className="space-y-1">
             <label htmlFor="cur-subject" className="font-semibold text-foreground">
               Subject
             </label>
-            <select
+            <ModernSelect
               id="cur-subject"
+              ariaLabel="Subject"
+              size="sm"
               value={state.curriculumSelection.subject}
-              onChange={(e) =>
+              onValueChange={(val) =>
                 update((prev) => ({
                   ...prev,
                   curriculumSelection: {
                     ...prev.curriculumSelection,
-                    subject: e.target.value,
+                    subject: val,
                   },
                 }))
               }
-              className="h-9 w-full rounded-md border border-input bg-surface-2 px-2.5 text-xs text-foreground"
-            >
-              {subjects.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+              options={subjects.map((s) => ({ value: s, label: s }))}
+            />
           </div>
         </div>
 

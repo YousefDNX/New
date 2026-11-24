@@ -11,16 +11,15 @@ import {
   Map as MapIcon,
   Sparkles,
   Trophy,
+  Users,
 } from "lucide-react";
 import { usePrefs } from "@/lib/preferences";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { GlossyBadgesDisplay, type StudentBadge } from "@/components/growth/GlossyBadgesDisplay";
 import { TasksWidget } from "@/components/dashboard/TasksWidget";
-import { GrowthMapExperience } from "@/components/growth/GrowthMapExperience";
 import { useProfile, useStats, useTasks, useUser } from "@/hooks/use-nexora";
 import { Button } from "@/components/ui/button";
 import { BRAND } from "@/config/brand";
-import { AlternativeHomeDashboard } from "@/components/dashboard/AlternativeHomeDashboard";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   validateSearch: (search: Record<string, unknown>): { tab?: string } => {
@@ -39,10 +38,7 @@ export const Route = createFileRoute("/_authenticated/app/")({
 });
 
 function StudentHomePage() {
-  const { t, lang, effectiveBtcVisualTheme } = usePrefs();
-  if (effectiveBtcVisualTheme === "btc_alternative") {
-    return <AlternativeHomeDashboard />;
-  }
+  const { t, lang } = usePrefs();
   return <OriginalStudentHomePage t={t} lang={lang} />;
 }
 
@@ -58,7 +54,6 @@ function OriginalStudentHomePage({
   const { data: profile } = useProfile();
   const { data: stats } = useStats();
   const { data: tasks = [] } = useTasks();
-  const [showFullGrowthMap, setShowFullGrowthMap] = useState(false);
 
   const name =
     profile?.display_name ||
@@ -76,56 +71,55 @@ function OriginalStudentHomePage({
   const quickLaunchCards = [
     {
       to: "/app/study" as const,
-      search: { tab: "unit3_vocab" },
       icon: BookOpen,
-      titleEn: "Study & Grade 9 Unit 3",
-      titleAr: "الدراسة والوحدة الثالثة",
-      descEn: "24 Unit 3 words, flashcards, notes & practice quiz",
-      descAr: "24 كلمة أساسية، بطاقات، ملاحظات واختبار قصير",
+      titleEn: "Study — Grade 9 Units",
+      titleAr: "الدراسة — وحدات الصف التاسع",
+      descEn: "Grade 9 vocabulary flashcards Units 1–4",
+      descAr: "بطاقات مفردات الصف التاسع للوحدات 1 إلى 4",
       tone: "text-blue-500 bg-blue-500/10",
-    },
-    {
-      to: "/app/english" as const,
-      icon: Languages,
-      titleEn: "English World",
-      titleAr: "عالم الإنجليزية",
-      descEn: "Guided lessons, listening & skill academies",
-      descAr: "دروس تفاعلية وتدريب مهارات اللغة الإنجليزية",
-      tone: "text-emerald-500 bg-emerald-500/10",
     },
     {
       to: "/app/ai" as const,
       icon: Sparkles,
-      titleEn: "BTC AI Tutor",
-      titleAr: "مساعد BTC الذكي",
-      descEn: "Ask study questions in English or Arabic",
-      descAr: "اسأل عن أي مفهوم دراسي بالعربية أو الإنجليزية",
+      titleEn: "BTC AI",
+      titleAr: "BTC الذكي",
+      descEn: "Direct AI answers for your study questions",
+      descAr: "إجابات فورية ومباشرة لأسئلتك الدراسية",
       tone: "text-purple-500 bg-purple-500/10",
-    },
-    {
-      to: "/app/quran" as const,
-      icon: BookOpenCheck,
-      titleEn: "Quran",
-      titleAr: "القرآن الكريم",
-      descEn: "Listen to verified reciters & read the Uthmani Mushaf",
-      descAr: "استماع لقراء معتمدين وقراءة المصحف العثماني",
-      tone: "text-teal-500 bg-teal-500/10",
     },
     {
       to: "/app/tasks" as const,
       icon: CheckSquare,
-      titleEn: "Tasks & Focus",
-      titleAr: "المهام ومؤقت التركيز",
-      descEn: `${openCount} open tasks · calm focus timer`,
-      descAr: `${openCount} مهام متبقية · مؤقت تركيز هادئ`,
+      titleEn: "My Tasks",
+      titleAr: "مهامي",
+      descEn: `${openCount} ${isAr ? "مهام متبقية" : "open tasks"}`,
+      descAr: `${openCount} ${isAr ? "مهام متبقية" : "open tasks"}`,
       tone: "text-amber-500 bg-amber-500/10",
+    },
+    {
+      to: "/app/circle" as const,
+      icon: Users,
+      titleEn: "Knowledge Circle",
+      titleAr: "حلقة المعرفة",
+      descEn: "Peer study groups & collaborative sharing",
+      descAr: "مجموعات الدراسة ومشاركة الأسئلة والملخصات",
+      tone: "text-emerald-500 bg-emerald-500/10",
+    },
+    {
+      to: "/app/quran" as const,
+      icon: BookOpenCheck,
+      titleEn: "Quran & Islamic",
+      titleAr: "القرآن الكريم والإسلاميات",
+      descEn: "Authentic reciters, Uthmani Mushaf & Adhkar",
+      descAr: "تلاوات موثقة، المصحف العثماني، والأذكار",
+      tone: "text-teal-500 bg-teal-500/10",
     },
     {
       to: "/app/support" as const,
       icon: LifeBuoy,
       titleEn: "Support & Help",
       titleAr: "الدعم والمساعدة",
-      descEn: "Report an issue or read quick student guides",
+      descEn: "Report an issue or read student guides",
       descAr: "أرسل طلب دعم أو تصفح أدلة المساعدة",
       tone: "text-sky-500 bg-sky-500/10",
     },
@@ -145,8 +139,8 @@ function OriginalStudentHomePage({
             </h1>
             <p className="max-w-xl text-sm text-muted-foreground">
               {isAr
-                ? "ابدأ اليوم بمفردات الوحدة الثالثة للصف التاسع أو اختر أي مساحة أدناه."
-                : "Start with Grade 9 Unit 3 vocabulary today, or pick any core workspace below."}
+                ? "مرحباً بك في BTC. اختر وحدة الصف التاسع للدراسة أو تابع مهامك اليومية."
+                : "Welcome to BTC. Choose a Grade 9 unit to study or manage your daily tasks."}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -157,9 +151,9 @@ function OriginalStudentHomePage({
               variant="glow"
               className="min-h-[48px] w-full sm:w-auto gap-2 px-6"
             >
-              <Link to="/app/study" search={{ tab: "unit3_vocab" }}>
+              <Link to="/app/study">
                 <BookOpen className="size-4" />
-                <span>{isAr ? "افتح الوحدة 3 للصف التاسع" : "Open Grade 9 Unit 3"}</span>
+                <span>{isAr ? "بدء دراسة الصف التاسع" : "Start Grade 9 Study"}</span>
                 <ArrowRight className="size-4 rtl-flip" />
               </Link>
             </Button>
@@ -167,46 +161,28 @@ function OriginalStudentHomePage({
         </div>
       </section>
 
-      {/* Growth Map Lite */}
+      {/* Student Progress Overview */}
       <section
-        data-testid="growth-map-lite"
-        aria-label={isAr ? "ملخص التقدم" : "Growth Map Lite"}
+        data-testid="student-progress-card"
+        aria-label={isAr ? "ملخص التقدم" : "Progress Summary"}
         className="surface-card p-5 space-y-4"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <MapIcon className="size-4.5" />
+              <Trophy className="size-4.5" />
             </span>
             <div>
               <h2 className="font-display text-base font-bold text-foreground">
-                {isAr ? "خريطة النمو المبسطة" : "Growth Map Lite"}
+                {isAr ? "التقدم والإنجازات" : "Progress & Achievements"}
               </h2>
               <p className="text-xs text-muted-foreground">
                 {isAr
-                  ? "تقدّمك الشخصي عبر الدراسة والمهام اليومية"
-                  : "Your live study progress across lessons and daily tasks"}
+                  ? "نقاط الخبرة ورتبة الطالب وإحصائيات التعلم"
+                  : "XP, Student Rank, and learning statistics"}
               </p>
             </div>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFullGrowthMap((v) => !v)}
-            className="min-h-[40px] gap-1.5 text-xs"
-          >
-            <MapIcon className="size-3.5 text-primary" />
-            <span>
-              {showFullGrowthMap
-                ? isAr
-                  ? "إخفاء الخريطة التفصيلية"
-                  : "Hide Detailed Map"
-                : isAr
-                  ? "عرض الخريطة التفصيلية"
-                  : "View Full Map"}
-            </span>
-          </Button>
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -219,7 +195,7 @@ function OriginalStudentHomePage({
           </div>
           <div className="rounded-xl border border-border bg-surface-2 p-3">
             <div className="text-[11px] text-muted-foreground">
-              {isAr ? "نقاط التقدم" : "Total XP"}
+              {isAr ? "نقاط الخبرة (XP)" : "Total XP"}
             </div>
             <div className="mt-0.5 font-display text-xl font-bold text-primary tabular-nums">
               {xp}
@@ -262,12 +238,6 @@ function OriginalStudentHomePage({
             />
           </div>
         </div>
-
-        {showFullGrowthMap && (
-          <div className="border-t border-border/70 pt-4">
-            <GrowthMapExperience />
-          </div>
-        )}
       </section>
 
       {/* Glossy Milestone Badges Showcase */}

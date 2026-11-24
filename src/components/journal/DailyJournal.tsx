@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { useToast } from "@/components/common/ToastProvider";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { useJournalActions, useJournalEntries, useStudyActions } from "@/hooks/use-modules";
@@ -528,18 +529,13 @@ export function DailyJournal() {
               <Label htmlFor="jn-area" className="text-xs">
                 {t("journal.field.area")}
               </Label>
-              <select
+              <ModernSelect
                 id="jn-area"
                 value={area}
-                onChange={(e) => setArea(e.target.value as GrowthArea)}
-                className="h-9 w-full rounded-md border border-input bg-surface-2 px-2.5 text-xs text-foreground"
-              >
-                {AREAS.map((a) => (
-                  <option key={a} value={a}>
-                    {t(AREA_CONFIG[a].labelKey)}
-                  </option>
-                ))}
-              </select>
+                onValueChange={(v) => setArea(v as GrowthArea)}
+                ariaLabel={t("journal.field.area")}
+                options={AREAS.map((a) => ({ value: a, label: t(AREA_CONFIG[a].labelKey) }))}
+              />
             </div>
             <div className="space-y-1">
               <Label htmlFor="jn-subject" className="text-xs">
@@ -717,32 +713,26 @@ export function DailyJournal() {
                 className="ps-8 text-xs"
               />
             </div>
-            <select
-              aria-label={t("journal.field.area")}
+            <ModernSelect
+              ariaLabel={t("journal.field.area")}
               value={filterArea}
-              onChange={(e) => setFilterArea(e.target.value as GrowthArea | "all")}
-              className="h-9 rounded-md border border-input bg-surface-2 px-2.5 text-xs text-foreground"
-            >
-              <option value="all">{t("journal.filter.allAreas")}</option>
-              {AREAS.map((a) => (
-                <option key={a} value={a}>
-                  {t(AREA_CONFIG[a].labelKey)}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label={t("journal.field.mood")}
+              onValueChange={(v) => setFilterArea(v as GrowthArea | "all")}
+              className="w-auto min-w-[130px]"
+              options={[
+                { value: "all", label: t("journal.filter.allAreas") },
+                ...AREAS.map((a) => ({ value: a, label: t(AREA_CONFIG[a].labelKey) })),
+              ]}
+            />
+            <ModernSelect
+              ariaLabel={t("journal.field.mood")}
               value={filterMood}
-              onChange={(e) => setFilterMood(e.target.value as JournalMood | "all")}
-              className="h-9 rounded-md border border-input bg-surface-2 px-2.5 text-xs text-foreground"
-            >
-              <option value="all">{t("journal.filter.allMoods")}</option>
-              {JOURNAL_MOODS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {t(m.labelKey)}
-                </option>
-              ))}
-            </select>
+              onValueChange={(v) => setFilterMood(v as JournalMood | "all")}
+              className="w-auto min-w-[130px]"
+              options={[
+                { value: "all", label: t("journal.filter.allMoods") },
+                ...JOURNAL_MOODS.map((m) => ({ value: m.id, label: t(m.labelKey) })),
+              ]}
+            />
             <div className="flex items-center gap-1">
               <Input
                 type="date"

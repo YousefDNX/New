@@ -304,7 +304,9 @@ export const IslamicCenterWorkspace: React.FC<IslamicCenterWorkspaceProps> = ({
                     <Icon
                       className={`w-3.5 h-3.5 shrink-0 ${isCurrent ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`}
                     />
-                    <span className="truncate">{isAr ? item.nameAr : item.nameEn}</span>
+                    <span className="leading-snug break-words">
+                      {isAr ? item.nameAr : item.nameEn}
+                    </span>
                   </button>
                 );
               })}
@@ -317,49 +319,7 @@ export const IslamicCenterWorkspace: React.FC<IslamicCenterWorkspaceProps> = ({
       <div className="w-full">
         {activeTab === "mushaf" && (
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-2 text-xs">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setMushafViewMode("interactive")}
-                  className={`min-h-[44px] rounded-lg px-3.5 py-2 font-bold transition-colors ${
-                    mushafViewMode === "interactive"
-                      ? "bg-emerald-700 text-white"
-                      : "text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800"
-                  }`}
-                >
-                  {isAr
-                    ? "المصحف التفاعلي والآيات والترجمة"
-                    : "Interactive Mushaf, Ayahs & Translation"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMushafViewMode("pages")}
-                  className={`min-h-[44px] rounded-lg px-3.5 py-2 font-bold transition-colors ${
-                    mushafViewMode === "pages"
-                      ? "bg-emerald-700 text-white"
-                      : "text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800"
-                  }`}
-                >
-                  {isAr ? "مصحف المدينة المنورة (٦٠٤ صفحة)" : "Madinah Mushaf (604 Pages)"}
-                </button>
-              </div>
-              <span className="px-2 text-[11px] text-stone-500 dark:text-stone-400">
-                {isAr
-                  ? "الرسم العثماني الموثق — مجمع الملك فهد"
-                  : "Verified Uthmani Script · King Fahd Complex"}
-              </span>
-            </div>
-
-            {mushafViewMode === "interactive" ? (
-              <DigitalQuranReader />
-            ) : (
-              <QuranMushafReader
-                initialPage={targetMushafPage}
-                onPageChange={(p) => setTargetMushafPage(p)}
-                lang={lang}
-              />
-            )}
+            <DigitalQuranReader />
           </div>
         )}
 

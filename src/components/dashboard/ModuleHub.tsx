@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Map, PanelRightOpen, Search } from "lucide-react";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import {
-  CANONICAL_MODULES,
+  APPROVED_BTC_MODULES,
   GROWTH_MAP_ORCHESTRATOR,
   MODULE_CATEGORIES,
   type ModuleCategoryKey,
@@ -19,7 +19,7 @@ export function ModuleHub() {
   const isAr = lang === "ar";
 
   const filteredModules = useMemo(() => {
-    let list = CANONICAL_MODULES;
+    let list = APPROVED_BTC_MODULES;
     if (selectedCategory !== "all") {
       list = list.filter((m) => m.category === selectedCategory);
     }
@@ -42,9 +42,9 @@ export function ModuleHub() {
   }, [selectedCategory, searchQuery]);
 
   const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: CANONICAL_MODULES.length };
+    const counts: Record<string, number> = { all: APPROVED_BTC_MODULES.length };
     for (const cat of MODULE_CATEGORIES) {
-      counts[cat.id] = CANONICAL_MODULES.filter((m) => m.category === cat.id).length;
+      counts[cat.id] = APPROVED_BTC_MODULES.filter((m) => m.category === cat.id).length;
     }
     return counts;
   }, []);
@@ -55,12 +55,12 @@ export function ModuleHub() {
       <div className="flex flex-col gap-3 border-b border-border/80 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="font-display text-base font-bold text-foreground">
-            {isAr ? "الوحدات الأساسية (٢٠ وحدة)" : "All Study & Growth Modules"}
+            {isAr ? "مساحات ومنظومة BTC المعتمدة" : "All Study & Growth Modules"}
           </h2>
           <p className="text-xs text-muted-foreground">
             {isAr
-              ? "المنظومة التعليمية الشاملة المقسمة إلى 6 مجالات مع خارطة النمو المركزية"
-              : "20 learning, productivity, STEM, and personal growth workspaces connected by your Growth Map."}
+              ? "مساحات التعلّم والإنتاجية والعلوم والإنجليزية والقرآن الكريم وحلقة المعرفة المرتبطة بخريطة النمو"
+              : "Approved learning, productivity, STEM, Quran, and community workspaces connected by your Growth Map."}
           </p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -96,14 +96,6 @@ export function ModuleHub() {
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0 self-end sm:self-center">
           <FeatureGuideTrigger featureId={GROWTH_MAP_ORCHESTRATOR.guideId} iconOnly />
-          <Link
-            to="/app"
-            search={{ tab: "legacy" }}
-            className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-surface-2 px-3 text-xs font-medium text-foreground transition hover:border-primary/50 hover:text-primary"
-          >
-            <span>{isAr ? "الأثر والمكتبة المفتوحة" : "Community Impact"}</span>
-            <ArrowUpRight className="size-3.5 rtl-flip" />
-          </Link>
           <Link
             to={GROWTH_MAP_ORCHESTRATOR.to}
             className="inline-flex h-8 items-center gap-1 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
@@ -144,7 +136,7 @@ export function ModuleHub() {
           >
             {isAr ? "الكل" : "All"} ({categoryCounts["all"]})
           </button>
-          {MODULE_CATEGORIES.map((cat) => {
+          {MODULE_CATEGORIES.filter((cat) => (categoryCounts[cat.id] ?? 0) > 0).map((cat) => {
             const isSelected = selectedCategory === cat.id;
             const count = categoryCounts[cat.id] ?? 0;
             return (

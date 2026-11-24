@@ -175,7 +175,7 @@ export const CANONICAL_MODULES: CanonicalModule[] = [
     descriptionAr:
       "إتقان المفردات، تدريبات النطق والصوت، الطلاقة اللغوية، الحوارات السياقية، وتبسيط القواعد النحوية.",
     category: "learn",
-    to: "/app/study?tab=unit3_vocab",
+    to: "/app/english",
     icon: Languages,
     guideId: "unit3-vocab",
     badge: "Languages",
@@ -244,7 +244,7 @@ export const CANONICAL_MODULES: CanonicalModule[] = [
     descriptionAr:
       "متابعة الحالة المزاجية، سجل النوم والماء، تمارين التنفس الموجه، مفكرة الامتنان، ومؤشر التوازن النفسي والجسدي.",
     category: "grow",
-    to: "/app/care",
+    to: "/app",
     icon: HeartPulse,
     guideId: "care-wellness",
     badge: "Wellness",
@@ -267,7 +267,7 @@ export const CANONICAL_MODULES: CanonicalModule[] = [
     descriptionAr:
       "مخططات المسارات المهنية المستقبلية، مقياس الميول ونقاط القوة، دليل التخصصات الجامعية، وشبكة الإرشاد المهني.",
     category: "grow",
-    to: "/app/future?tab=pathways",
+    to: "/app/level-up",
     icon: Compass,
     guideId: "future-pathways",
     badge: "Pathways",
@@ -359,7 +359,7 @@ export const CANONICAL_MODULES: CanonicalModule[] = [
     descriptionAr:
       "رادار المسابقات الطلابية المعتمدة، الهاكاثونات، أولمبياد العلوم والرياضيات، المنح الدراسية العالمية، وجوائز التميز.",
     category: "explore",
-    to: "/app/opportunities",
+    to: "/app/level-up",
     icon: Radar,
     guideId: "opportunities-radar",
     badge: "Opportunities",
@@ -497,7 +497,7 @@ export const CANONICAL_MODULES: CanonicalModule[] = [
     descriptionAr:
       "معرض مشاريع العلوم والبيئة، مبادرات أهداف التنمية المستدامة (SDGs)، توثيق ساعات التطوع، ومشاريع الخدمة المجتمعية.",
     category: "connect_contribute",
-    to: "/app/future?tab=science_impact",
+    to: "/app/circle",
     icon: HeartHandshake,
     guideId: "science-fair-impact",
     badge: "Civic Impact",
@@ -543,7 +543,7 @@ export const CANONICAL_MODULES: CanonicalModule[] = [
     descriptionAr:
       "منشئ ملف الإنجاز الجامعي، محاكي دبلوماسية نموذج الأمم المتحدة (MUN)، ومخطط مشاريع التخرج والابتكارات الطلابية.",
     category: "create",
-    to: "/app/future?tab=projects",
+    to: "/app/study?tab=research",
     icon: Lightbulb,
     guideId: "university-projects",
     badge: "Innovation",
@@ -654,4 +654,22 @@ export function searchModules(query: string, lang: "en" | "ar" = "en"): Canonica
   });
 }
 
-export const MODULES_CATALOG = CANONICAL_MODULES;
+/**
+ * Approved active BTC module directory: strictly removes legacy Wellbeing/Care,
+ * Future & Careers, Opportunity Radar, Rahmah/Martial Arts, and redundant cards
+ * while keeping CANONICAL_MODULES intact for architecture validation.
+ */
+export const EXCLUDED_LEGACY_MODULE_IDS = new Set([
+  "wellbeing-healthy-habits",
+  "future-careers",
+  "opportunity-radar",
+  "community-impact",
+  "projects-innovation",
+  "skills-academy",
+]);
+
+export const APPROVED_BTC_MODULES: CanonicalModule[] = CANONICAL_MODULES.filter(
+  (m) => !EXCLUDED_LEGACY_MODULE_IDS.has(m.id),
+);
+
+export const MODULES_CATALOG = APPROVED_BTC_MODULES;

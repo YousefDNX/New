@@ -449,21 +449,23 @@ export function SettingsRow({
   return (
     <div
       id={rowId}
-      className={`scroll-mt-24 flex flex-col gap-3 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-5 ${
-        highlighted ? "settings-search-hit bg-primary/8 px-2.5" : ""
+      className={`scroll-mt-24 flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 ${
+        highlighted ? "settings-search-hit bg-primary/8 px-3 rounded-lg" : ""
       }`}
     >
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 pe-2">
         {id ? (
-          <Label htmlFor={id} className="text-sm font-medium leading-snug">
+          <Label htmlFor={id} className="text-sm font-semibold leading-normal break-words">
             {label}
           </Label>
         ) : (
-          <p className="text-sm font-medium leading-snug">{label}</p>
+          <p className="text-sm font-semibold leading-normal break-words">{label}</p>
         )}
-        {desc && <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{desc}</p>}
+        {desc && (
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground break-words">{desc}</p>
+        )}
       </div>
-      <div className="shrink-0">{children}</div>
+      <div className="shrink-0 flex items-center">{children}</div>
     </div>
   );
 }
@@ -525,7 +527,7 @@ export function SegmentedChoice<T extends string>({
             aria-checked={active}
             onClick={() => onChange(o.v)}
             className={
-              "min-h-[34px] whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm " +
+              "min-h-[34px] flex-1 text-center whitespace-normal break-words rounded-md px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm " +
               (active
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground")

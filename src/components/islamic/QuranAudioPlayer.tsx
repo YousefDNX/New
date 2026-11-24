@@ -29,6 +29,7 @@ import {
   useQuranAudio,
 } from "@/contexts/QuranAudioContext";
 import { SurahBrowserPanel } from "./SurahBrowserPanel";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   ArrowLeft,
   ArrowRight,
@@ -991,18 +992,21 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
                   >
                     {isAr ? "المميزون فقط" : "Featured Only"}
                   </button>
-                  <select
+                  <ModernSelect
                     value={countrySort}
-                    onChange={(e) => setCountrySort(e.target.value as typeof countrySort)}
-                    aria-label={isAr ? "ترتيب القراء" : "Sort reciters"}
-                    className="min-h-[40px] px-2.5 py-1.5 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-xs text-stone-700 dark:text-stone-200"
-                  >
-                    <option value="featured">{isAr ? "الأبرز أولاً" : "Featured First"}</option>
-                    <option value={isAr ? "name_ar" : "name_en"}>
-                      {isAr ? "أبجدي (أ–ي)" : "Alphabetical (A–Z)"}
-                    </option>
-                    <option value="recordings">{isAr ? "الأكثر إصدارات" : "Most Editions"}</option>
-                  </select>
+                    onValueChange={(val) => setCountrySort(val as typeof countrySort)}
+                    ariaLabel={isAr ? "ترتيب القراء" : "Sort reciters"}
+                    size="sm"
+                    className="w-40"
+                    options={[
+                      { value: "featured", label: isAr ? "الأبرز أولاً" : "Featured First" },
+                      {
+                        value: isAr ? "name_ar" : "name_en",
+                        label: isAr ? "أبجدي (أ–ي)" : "Alphabetical (A–Z)",
+                      },
+                      { value: "recordings", label: isAr ? "الأكثر إصدارات" : "Most Editions" },
+                    ]}
+                  />
                 </div>
               </div>
 

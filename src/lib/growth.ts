@@ -1018,14 +1018,7 @@ export interface StudentLibrarySearchResult {
   kind: SearchResultKind;
   title: string;
   subtitle: string;
-  to:
-    | "/app/tasks"
-    | "/app"
-    | "/app/study"
-    | "/app/future"
-    | "/app/opportunities"
-    | "/app/level-up"
-    | "/app/circle";
+  to: "/app/tasks" | "/app" | "/app/study" | "/app/level-up" | "/app/circle";
 }
 
 const STATIC_ECOSYSTEM_EXPERIENCES: StudentLibrarySearchResult[] = [
@@ -1201,15 +1194,15 @@ const STATIC_ECOSYSTEM_EXPERIENCES: StudentLibrarySearchResult[] = [
     id: "exp:sci_fair",
     kind: "study",
     title: "Science Fair Investigation Planner",
-    subtitle: "Future Workbench #36",
-    to: "/app/future",
+    subtitle: "Science & Discovery",
+    to: "/app/study",
   },
   {
     id: "exp:com_impact",
     kind: "civic",
     title: "Supervised Community Impact Initiative Planner",
-    subtitle: "Future Workbench #38",
-    to: "/app/future",
+    subtitle: "Knowledge Circle",
+    to: "/app/circle",
   },
   {
     id: "exp:mus_world",
@@ -1320,7 +1313,7 @@ export function searchStudentLibrary(
         kind: "future",
         title: f.title,
         subtitle: f.status,
-        to: "/app/future",
+        to: "/app/level-up",
       });
     }
   }
@@ -1336,7 +1329,7 @@ export function searchStudentLibrary(
         kind: "opportunity",
         title: o.title,
         subtitle: `${o.organizer} • ${o.category}`,
-        to: "/app/opportunities",
+        to: "/app/circle",
       });
     }
   }

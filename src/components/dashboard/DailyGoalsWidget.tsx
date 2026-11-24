@@ -24,6 +24,7 @@ import { useToast } from "@/components/common/ToastProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   Dialog,
   DialogContent,
@@ -238,18 +239,16 @@ export function DailyGoalsWidget() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="g-area">{t("dash.areas")}</Label>
-                    <select
+                    <ModernSelect
                       id="g-area"
+                      size="sm"
                       value={newArea}
-                      onChange={(e) => setNewArea(e.target.value as Area)}
-                      className="h-9 w-full rounded-md border border-input bg-surface-2 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    >
-                      {AREAS.map((areaKey) => (
-                        <option key={areaKey} value={areaKey}>
-                          {t(AREA_CONFIG[areaKey].labelKey)}
-                        </option>
-                      ))}
-                    </select>
+                      onValueChange={(val) => setNewArea(val as Area)}
+                      options={AREAS.map((areaKey) => ({
+                        value: areaKey,
+                        label: t(AREA_CONFIG[areaKey].labelKey),
+                      }))}
+                    />
                   </div>
 
                   <div className="space-y-1.5">
@@ -484,18 +483,16 @@ export function DailyGoalsWidget() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="eg-area">{t("dash.areas")}</Label>
-                <select
+                <ModernSelect
                   id="eg-area"
+                  size="sm"
                   value={editArea}
-                  onChange={(e) => setEditArea(e.target.value as Area)}
-                  className="h-9 w-full rounded-md border border-input bg-surface-2 px-3 text-sm text-foreground"
-                >
-                  {AREAS.map((areaKey) => (
-                    <option key={areaKey} value={areaKey}>
-                      {t(AREA_CONFIG[areaKey].labelKey)}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={(val) => setEditArea(val as Area)}
+                  options={AREAS.map((areaKey) => ({
+                    value: areaKey,
+                    label: t(AREA_CONFIG[areaKey].labelKey),
+                  }))}
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -520,16 +517,17 @@ export function DailyGoalsWidget() {
                 <span>{t("dash.goals.dailyToggle")}</span>
               </label>
 
-              <select
-                aria-label={t("goals.edit")}
+              <ModernSelect
+                ariaLabel={t("goals.edit")}
+                size="sm"
                 value={editStatus}
-                onChange={(e) => setEditStatus(e.target.value as GoalStatus)}
-                className="h-9 rounded-md border border-input bg-surface-2 px-3 text-xs text-foreground"
-              >
-                <option value="active">{t("goals.resume")}</option>
-                <option value="paused">{t("goals.paused")}</option>
-                <option value="completed">{t("tasks.status.done")}</option>
-              </select>
+                onValueChange={(val) => setEditStatus(val as GoalStatus)}
+                options={[
+                  { value: "active", label: t("goals.resume") },
+                  { value: "paused", label: t("goals.paused") },
+                  { value: "completed", label: t("tasks.status.done") },
+                ]}
+              />
             </div>
 
             {/* Goal Milestones */}

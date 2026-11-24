@@ -8,6 +8,7 @@ import {
   type PrayerTimesResult,
 } from "@/data/islamic-center";
 import { toArabicIndicDigits } from "@/lib/quran";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   Clock,
   Compass,
@@ -134,26 +135,27 @@ export const PrayerTimesCard: React.FC<PrayerTimesCardProps> = ({ lang = "ar" })
           <MapPin className="w-5 h-5 text-emerald-600 shrink-0" />
           <div className="space-y-0.5">
             <div className="text-[10px] text-stone-500 font-bold uppercase">المدينة / الدولة</div>
-            <select
+            <ModernSelect
               value={customCoords ? "custom" : selectedCityId}
-              onChange={(e) => {
-                if (e.target.value === "custom") {
+              onValueChange={(val) => {
+                if (val === "custom") {
                   handleUseGeolocation();
                 } else {
                   setCustomCoords(null);
-                  setSelectedCityId(e.target.value);
+                  setSelectedCityId(val);
                 }
               }}
-              className="text-xs font-bold bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-2.5 py-1.5 text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              aria-label="تحديد المدينة لمواقيت الصلاة"
-            >
-              {customCoords && <option value="custom">موقعي الجغرافي الحالي</option>}
-              {VERIFIED_PRAYER_CITIES.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nameAr} ({c.countryAr})
-                </option>
-              ))}
-            </select>
+              ariaLabel="تحديد المدينة لمواقيت الصلاة"
+              size="sm"
+              className="w-52"
+              options={[
+                ...(customCoords ? [{ value: "custom", label: "موقعي الجغرافي الحالي" }] : []),
+                ...VERIFIED_PRAYER_CITIES.map((c) => ({
+                  value: c.id,
+                  label: `${c.nameAr} (${c.countryAr})`,
+                })),
+              ]}
+            />
           </div>
 
           <button
@@ -173,18 +175,17 @@ export const PrayerTimesCard: React.FC<PrayerTimesCardProps> = ({ lang = "ar" })
             <div className="text-[10px] text-stone-500 font-bold uppercase">
               طريقة الحساب الفلكي
             </div>
-            <select
+            <ModernSelect
               value={selectedMethod}
-              onChange={(e) => setSelectedMethod(e.target.value as PrayerCalculationMethodKey)}
-              className="text-xs bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-2.5 py-1.5 text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              aria-label="تحديد طريقة حساب مواقيت الصلاة"
-            >
-              {Object.entries(PRAYER_CALCULATION_METHODS).map(([k, m]) => (
-                <option key={k} value={k}>
-                  {m.nameAr}
-                </option>
-              ))}
-            </select>
+              onValueChange={(val) => setSelectedMethod(val as PrayerCalculationMethodKey)}
+              ariaLabel="تحديد طريقة حساب مواقيت الصلاة"
+              size="sm"
+              className="w-56"
+              options={Object.entries(PRAYER_CALCULATION_METHODS).map(([k, m]) => ({
+                value: k,
+                label: m.nameAr,
+              }))}
+            />
           </div>
         </div>
 

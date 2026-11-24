@@ -12,7 +12,9 @@ import {
   Globe,
   GraduationCap,
   Loader2,
+  Lock,
   Palette,
+  ShieldCheck,
   Sidebar,
   Sparkles,
   User,
@@ -22,31 +24,47 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Switch } from "@/components/ui/switch";
 import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
 import { Logo } from "@/components/app/Logo";
 import { useOptionalAuth } from "@/lib/auth.tsx";
 import {
   clearCachedBootstrappedProfile,
+  clearPendingRegistrationGender,
   deriveDisplayName,
   ensureFirebaseUserBootstrap,
+  getPendingRegistrationGender,
 } from "@/lib/auth-bootstrap";
 import { maskEmail, maskPhone } from "@/lib/auth-state";
 import { validateFullName } from "@/lib/auth-validation";
 import { db, handleFirestoreError, OperationType } from "@/lib/firebase";
-import { clampString, generateSafeDocId, type GoalRow } from "@/lib/firestore-data";
+import {
+  clampString,
+  generateSafeDocId,
+  resolveCommunityGroup,
+  type GoalRow,
+  type StudentGender,
+} from "@/lib/firestore-data";
 import { ageBand } from "@/lib/growth";
 import { usePrefs } from "@/lib/preferences";
 import { SUBJECT_OPTIONS } from "@/lib/settings";
 import { BRAND } from "@/config/brand";
 
+import { redirect } from "@tanstack/react-router";
+
 export const Route = createFileRoute("/_authenticated/onboarding")({
+  beforeLoad: async ({ context }) => {
+    if (context.user?.isAnonymous) {
+      throw redirect({ to: "/app" });
+    }
+  },
   head: () => ({
     meta: [
       { title: `Get started — ${BRAND.name}` },
-      { name: "description", content: `Set up your ${BRAND.name} Growth Map.` },
+      { name: "description", content: `Set up your ${BRAND.name} profile.` },
       { property: "og:title", content: `Get started — ${BRAND.name}` },
-      { property: "og:description", content: "Set up your Growth Map." },
+      { property: "og:description", content: "Set up your profile." },
     ],
   }),
   component: Onb,
@@ -77,6 +95,11 @@ function Onb() {
   const [dob, setDob] = useState("");
   const [region, setRegion] = useState<"kuwait" | "gcc" | "global">("kuwait");
   const [gradeLevel, setGradeLevel] = useState("high");
+  const [gender, setGender] = useState<StudentGender | "">(
+    () => getPendingRegistrationGender() ?? "",
+  );
+  const [genderLocked, setGenderLocked] = useState(false);
+  const [showGenderOnProfile, setShowGenderOnProfile] = useState(false);
   const [learningGoals, setLearningGoals] = useState("");
   const [preferredSubjects, setPreferredSubjects] = useState<string[]>(["Mathematics", "English"]);
   const [consent, setConsent] = useState(false);
@@ -90,6 +113,29 @@ function Onb() {
         if (profile?.display_name) setDisplayName(profile.display_name);
         if (profile?.preferred_subjects?.length) {
           setPreferredSubjects(profile.preferred_subjects.slice(0, 12));
+        }
+        if (
+          profile?.region === "kuwait" ||
+          profile?.region === "gcc" ||
+          profile?.region === "global"
+        ) {
+          setRegion(profile.region);
+        }
+        if (profile?.grade_level) {
+          setGradeLevel(profile.grade_level);
+        }
+        if (profile?.gender === "male" || profile?.gender === "female") {
+          setGender(profile.gender);
+          setGenderLocked(true);
+        } else if (profile?.community_group) {
+          setGender(profile.community_group === "girls" ? "female" : "male");
+          setGenderLocked(true);
+        } else {
+          const pending = getPendingRegistrationGender();
+          if (pending) setGender(pending);
+        }
+        if (typeof profile?.show_gender_on_profile === "boolean") {
+          setShowGenderOnProfile(profile.show_gender_on_profile);
         }
         if (profile?.onboarded) navigate({ to: "/app", replace: true });
       })
@@ -121,6 +167,14 @@ function Onb() {
     const band = ageBand(dob);
     if (band === "under13") {
       toast.error(t("onb.age.error"));
+      return false;
+    }
+    if (gender !== "male" && gender !== "female") {
+      toast.error(
+        isAr
+          ? "يرجى اختيار الجنس لتحديد مجتمع حلقة المعرفة الخاص بك (يُحفظ بخصوصية تامة)"
+          : "Please select your gender to assign your Knowledge Circle community (kept private).",
+      );
       return false;
     }
     return true;
@@ -157,6 +211,9 @@ function Onb() {
       const trimmedGoals = learningGoals.trim().slice(0, 280);
       const cleanSubjects = preferredSubjects.slice(0, 12);
 
+      const resolvedGroup =
+        gender === "male" || gender === "female" ? resolveCommunityGroup(gender) : undefined;
+
       try {
         await setDoc(
           doc(db, "profiles", user.uid),
@@ -170,11 +227,16 @@ function Onb() {
             preferred_subjects: cleanSubjects,
             learning_goals: trimmedGoals,
             parental_consent: band === "18+" ? true : consent,
+            show_gender_on_profile: showGenderOnProfile,
+            ...(!genderLocked && (gender === "male" || gender === "female") && resolvedGroup
+              ? { gender, community_group: resolvedGroup }
+              : {}),
             onboarded: true,
             updated_at: now,
           },
           { merge: true },
         );
+        clearPendingRegistrationGender();
         clearCachedBootstrappedProfile(user.uid);
       } catch (err) {
         handleFirestoreError(err, OperationType.UPDATE, `profiles/${user.uid}`);
@@ -364,22 +426,17 @@ function Onb() {
                     <Globe className="size-3.5 text-primary" />
                     <span>{t("onb.region")}</span>
                   </Label>
-                  <select
+                  <ModernSelect
                     id="rg"
+                    ariaLabel={t("onb.region")}
                     value={region}
-                    onChange={(e) => setRegion(e.target.value as "kuwait" | "gcc" | "global")}
-                    className="h-11 w-full rounded-xl border border-input bg-surface-2/60 px-3 text-sm text-foreground"
-                  >
-                    <option value="kuwait" className="bg-card text-foreground">
-                      {t("region.kuwait")}
-                    </option>
-                    <option value="gcc" className="bg-card text-foreground">
-                      {t("region.gcc")}
-                    </option>
-                    <option value="global" className="bg-card text-foreground">
-                      {t("region.global")}
-                    </option>
-                  </select>
+                    onValueChange={(val) => setRegion(val as "kuwait" | "gcc" | "global")}
+                    options={[
+                      { value: "kuwait", label: t("region.kuwait") },
+                      { value: "gcc", label: t("region.gcc") },
+                      { value: "global", label: t("region.global") },
+                    ]}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label
@@ -389,28 +446,98 @@ function Onb() {
                     <GraduationCap className="size-3.5 text-primary" />
                     <span>{t("set.grade")}</span>
                   </Label>
-                  <select
+                  <ModernSelect
                     id="onb-grade"
+                    ariaLabel={t("set.grade")}
                     value={gradeLevel}
-                    onChange={(e) => setGradeLevel(e.target.value)}
-                    className="h-11 w-full rounded-xl border border-input bg-surface-2/60 px-3 text-sm text-foreground"
-                  >
-                    <option value="middle" className="bg-card text-foreground">
-                      {t("set.grade.middle")}
-                    </option>
-                    <option value="high" className="bg-card text-foreground">
-                      {t("set.grade.high")}
-                    </option>
-                    <option value="prep" className="bg-card text-foreground">
-                      {t("set.grade.prep")}
-                    </option>
-                    <option value="undergrad" className="bg-card text-foreground">
-                      {t("set.grade.undergrad")}
-                    </option>
-                    <option value="self" className="bg-card text-foreground">
-                      {t("set.grade.self")}
-                    </option>
-                  </select>
+                    onValueChange={setGradeLevel}
+                    options={[
+                      { value: "middle", label: t("set.grade.middle") },
+                      { value: "high", label: t("set.grade.high") },
+                      { value: "prep", label: t("set.grade.prep") },
+                      { value: "undergrad", label: t("set.grade.undergrad") },
+                      { value: "self", label: t("set.grade.self") },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Respectful & Private Gender Selection for Knowledge Circle Community */}
+              <div className="space-y-2 rounded-xl border border-border bg-surface-2/50 p-3.5 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                    <ShieldCheck className="size-3.5 text-primary" />
+                    <span>
+                      {isAr
+                        ? "مجتمع حلقة المعرفة (خاص ومعتمد)"
+                        : "Knowledge Circle Community (Private)"}
+                    </span>
+                  </Label>
+                  {genderLocked && (
+                    <span className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                      <Lock className="size-3" />
+                      <span>
+                        {gender === "female"
+                          ? isAr
+                            ? "مجتمع البنات"
+                            : "Girls' Community"
+                          : isAr
+                            ? "مجتمع البنين"
+                            : "Boys' Community"}
+                      </span>
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                  {isAr
+                    ? "يُحدِّد هذا الاختيار القسم المخصص لك داخل حلقة المعرفة (بنين / بنات). يُحفظ بخصوصية تامة ولا يظهر في ملفك العام إلا إذا فعّلت ذلك اختيارياً."
+                    : "This determines which Knowledge Circle community area your account accesses. Your selection is kept private and is never shown publicly unless you choose to enable it in Settings."}
+                </p>
+                <div
+                  className="grid grid-cols-2 gap-2.5 pt-1"
+                  role="radiogroup"
+                  aria-label={isAr ? "الجنس" : "Gender"}
+                >
+                  {[
+                    {
+                      value: "male" as const,
+                      en: "Male",
+                      ar: "ذكر",
+                      descEn: "Access Boys' Community",
+                      descAr: "دخول مجتمع البنين",
+                    },
+                    {
+                      value: "female" as const,
+                      en: "Female",
+                      ar: "أنثى",
+                      descEn: "Access Girls' Community",
+                      descAr: "دخول مجتمع البنات",
+                    },
+                  ].map((opt) => {
+                    const active = gender === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        disabled={genderLocked}
+                        onClick={() => {
+                          if (!genderLocked) setGender(opt.value);
+                        }}
+                        className={`rounded-xl border px-3 py-2.5 text-start transition-colors ${
+                          active
+                            ? "border-primary bg-primary/15 text-foreground"
+                            : "border-border bg-surface text-muted-foreground hover:text-foreground"
+                        } ${genderLocked ? "cursor-not-allowed opacity-75" : "cursor-pointer"}`}
+                      >
+                        <div className="text-xs font-bold">{isAr ? opt.ar : opt.en}</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {isAr ? opt.descAr : opt.descEn}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -505,8 +632,8 @@ function Onb() {
                     {isAr ? "وضع التباين العالي" : "High-Contrast Borders & Text"}
                   </span>
                   <Switch
-                    checked={a11y.highContrast}
-                    onCheckedChange={(v) => setA11y({ highContrast: v })}
+                    checked={a11y.contrast}
+                    onCheckedChange={(v) => setA11y({ contrast: v })}
                   />
                 </label>
 
@@ -611,7 +738,7 @@ function Onb() {
                     type="button"
                     onClick={() => {
                       setBtcNavLayout("classic");
-                      setLayoutMode("sidebar");
+                      setLayoutMode("classic");
                     }}
                     className={`rounded-xl border p-4 text-start transition-all cursor-pointer ${
                       btcNavLayout === "classic"

@@ -1,26 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { DeferredModuleNotice } from "@/components/common/DeferredModuleNotice";
-import { BRAND } from "@/config/brand";
+import { createFileRoute, Navigate, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/app/future")({
-  head: () => ({
-    meta: [
-      { title: `Future Pathways — ${BRAND.name}` },
-      {
-        name: "description",
-        content: `Explore educational and career pathways on ${BRAND.name}.`,
-      },
-      { property: "og:title", content: `Future Pathways — ${BRAND.name}` },
-      {
-        property: "og:description",
-        content: `Explore educational and career pathways on ${BRAND.name}.`,
-      },
-    ],
-  }),
-  component: () => (
-    <DeferredModuleNotice
-      titleEn="Future Pathways & Career Navigator"
-      titleAr="مسارات المستقبل والتوجيه الأكاديمي"
-    />
-  ),
+  beforeLoad: () => {
+    throw redirect({ to: "/app" });
+  },
+  component: () => <Navigate to="/app" replace />,
 });

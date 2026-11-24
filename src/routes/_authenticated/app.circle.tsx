@@ -8,7 +8,6 @@ const VALID_SECTIONS = new Set<CircleHubSection>([
   "matcher",
   "classrooms",
   "library",
-  "girls_space",
 ]);
 
 export const Route = createFileRoute("/_authenticated/app/circle")({
@@ -22,12 +21,12 @@ export const Route = createFileRoute("/_authenticated/app/circle")({
       { title: `Knowledge Circle — ${BRAND.name}` },
       {
         name: "description",
-        content: `Knowledge Circle Q&A, study cohorts, and privacy-protected Girls' Space on ${BRAND.name}.`,
+        content: `Unified Knowledge Circle Q&A, study teams, notes library, and privacy-protected Boys' and Girls' learning communities on ${BRAND.name}.`,
       },
       { property: "og:title", content: `Knowledge Circle — ${BRAND.name}` },
       {
         property: "og:description",
-        content: `Knowledge Circle Q&A, study cohorts, and privacy-protected Girls' Space on ${BRAND.name}.`,
+        content: `Unified Knowledge Circle Q&A, study teams, notes library, and privacy-protected Boys' and Girls' learning communities on ${BRAND.name}.`,
       },
     ],
   }),

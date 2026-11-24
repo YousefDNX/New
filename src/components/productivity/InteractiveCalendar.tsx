@@ -27,6 +27,7 @@ import {
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { useToast } from "@/components/common/ToastProvider";
 import { downloadTextFile } from "@/lib/safe-file";
 import {
@@ -451,16 +452,18 @@ export function InteractiveCalendar() {
                 {formatNumber(weeklyProgress.targetMinutes, lang)} {t("pomo.minutesUnit")} (
                 {formatNumber(weeklyProgress.pct, lang)}%)
               </span>
-              <select
-                aria-label={t("cal.weeklyGoal")}
-                value={weeklyTargetMinutes}
-                onChange={(e) => setWeeklyTargetMinutes(Number(e.target.value))}
-                className="h-7 rounded border border-input bg-surface-2 px-2 text-[0.7rem] text-foreground"
-              >
-                <option value={120}>120 {t("pomo.minutesUnit")}</option>
-                <option value={180}>180 {t("pomo.minutesUnit")}</option>
-                <option value={300}>300 {t("pomo.minutesUnit")}</option>
-              </select>
+              <ModernSelect
+                size="sm"
+                ariaLabel={t("cal.weeklyGoal")}
+                value={String(weeklyTargetMinutes)}
+                onValueChange={(v) => setWeeklyTargetMinutes(Number(v))}
+                className="w-auto min-w-[100px]"
+                options={[
+                  { value: "120", label: `120 ${t("pomo.minutesUnit")}` },
+                  { value: "180", label: `180 ${t("pomo.minutesUnit")}` },
+                  { value: "300", label: `300 ${t("pomo.minutesUnit")}` },
+                ]}
+              />
             </div>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-sm bg-surface-2">
@@ -898,16 +901,18 @@ export function InteractiveCalendar() {
                   aria-label={t("cal.quickAddTitle")}
                   className="h-8 text-xs"
                 />
-                <select
-                  aria-label={t("cal.priority")}
+                <ModernSelect
+                  size="sm"
+                  ariaLabel={t("cal.priority")}
                   value={quickPriority}
-                  onChange={(e) => setQuickPriority(e.target.value as "low" | "medium" | "high")}
-                  className="h-8 rounded-md border border-input bg-surface-2 px-1.5 text-[0.7rem] text-foreground"
-                >
-                  <option value="high">{t("dash.tasks.priority.high")}</option>
-                  <option value="medium">{t("dash.tasks.priority.medium")}</option>
-                  <option value="low">{t("dash.tasks.priority.low")}</option>
-                </select>
+                  onValueChange={(v) => setQuickPriority(v as "low" | "medium" | "high")}
+                  className="w-auto min-w-[96px]"
+                  options={[
+                    { value: "high", label: t("dash.tasks.priority.high") },
+                    { value: "medium", label: t("dash.tasks.priority.medium") },
+                    { value: "low", label: t("dash.tasks.priority.low") },
+                  ]}
+                />
                 <Button
                   type="submit"
                   size="sm"

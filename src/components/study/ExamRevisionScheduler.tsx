@@ -19,6 +19,7 @@ import { StudyPlannerSuite } from "@/components/study/StudyPlannerSuite";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   Select,
   SelectContent,
@@ -571,16 +572,17 @@ export function ExamRevisionScheduler() {
                   onChange={(e) => setNewSubDate(e.target.value)}
                   className="h-8 text-xs"
                 />
-                <select
+                <ModernSelect
                   value={newSubDiff}
-                  onChange={(e) => setNewSubDiff(e.target.value as typeof newSubDiff)}
-                  aria-label="Subject difficulty"
-                  className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                >
-                  <option value="foundation">Foundation</option>
-                  <option value="medium">Medium</option>
-                  <option value="challenging">Challenging</option>
-                </select>
+                  onValueChange={(v) => setNewSubDiff(v as typeof newSubDiff)}
+                  ariaLabel="Subject difficulty"
+                  size="sm"
+                  options={[
+                    { value: "foundation", label: "Foundation" },
+                    { value: "medium", label: "Medium" },
+                    { value: "challenging", label: "Challenging" },
+                  ]}
+                />
                 <Button type="submit" size="sm" className="h-8 text-xs">
                   <Plus className="size-3.5 me-1" />
                   Add Subject

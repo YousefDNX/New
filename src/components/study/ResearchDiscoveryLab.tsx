@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { usePrefs } from "@/lib/preferences";
 import { downloadTextFile } from "@/lib/safe-file";
@@ -437,33 +438,34 @@ export function ResearchDiscoveryLab() {
               </div>
 
               <div className="grid gap-2 sm:grid-cols-3">
-                <select
-                  aria-label="Evidence stance"
+                <ModernSelect
+                  ariaLabel="Evidence stance"
+                  size="sm"
                   value={evStance}
-                  onChange={(e) =>
-                    setEvStance(e.target.value as "supporting" | "contradicting" | "neutral")
+                  onValueChange={(v) =>
+                    setEvStance(v as "supporting" | "contradicting" | "neutral")
                   }
-                  className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                >
-                  <option value="supporting">
-                    {isAr ? "يدعم الفرضية" : "Supporting Evidence"}
-                  </option>
-                  <option value="contradicting">
-                    {isAr ? "يعارض / يقيد الفرضية" : "Contradicting / Limiting"}
-                  </option>
-                  <option value="neutral">{isAr ? "سياق محايد" : "Neutral Context"}</option>
-                </select>
-                <select
-                  aria-label="Source reliability"
+                  options={[
+                    { value: "supporting", label: isAr ? "يدعم الفرضية" : "Supporting Evidence" },
+                    {
+                      value: "contradicting",
+                      label: isAr ? "يعارض / يقيد الفرضية" : "Contradicting / Limiting",
+                    },
+                    { value: "neutral", label: isAr ? "سياق محايد" : "Neutral Context" },
+                  ]}
+                />
+                <ModernSelect
+                  ariaLabel="Source reliability"
+                  size="sm"
                   value={evReliability}
-                  onChange={(e) => setEvReliability(e.target.value as SourceReliabilityTier)}
-                  className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-                >
-                  <option value="peer_reviewed">Peer-Reviewed</option>
-                  <option value="primary">Primary Source</option>
-                  <option value="secondary">Secondary Summary</option>
-                  <option value="unverified">Unverified Claim</option>
-                </select>
+                  onValueChange={(v) => setEvReliability(v as SourceReliabilityTier)}
+                  options={[
+                    { value: "peer_reviewed", label: "Peer-Reviewed" },
+                    { value: "primary", label: "Primary Source" },
+                    { value: "secondary", label: "Secondary Summary" },
+                    { value: "unverified", label: "Unverified Claim" },
+                  ]}
+                />
                 <Input
                   value={evYearOrUrl}
                   onChange={(e) => setEvYearOrUrl(e.target.value)}
@@ -635,17 +637,19 @@ export function ResearchDiscoveryLab() {
                 {style}
               </button>
             ))}
-            <select
-              aria-label="Citation reliability tier"
+            <ModernSelect
+              ariaLabel="Citation reliability tier"
+              size="sm"
               value={citReliability}
-              onChange={(e) => setCitReliability(e.target.value as SourceReliabilityTier)}
-              className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-            >
-              <option value="peer_reviewed">Peer-Reviewed</option>
-              <option value="primary">Primary Source</option>
-              <option value="secondary">Secondary Review</option>
-              <option value="unverified">Needs Verification</option>
-            </select>
+              onValueChange={(v) => setCitReliability(v as SourceReliabilityTier)}
+              className="w-44"
+              options={[
+                { value: "peer_reviewed", label: "Peer-Reviewed" },
+                { value: "primary", label: "Primary Source" },
+                { value: "secondary", label: "Secondary Review" },
+                { value: "unverified", label: "Needs Verification" },
+              ]}
+            />
           </div>
           <Button type="button" size="sm" variant="glow" onClick={handleSaveCitation}>
             <BookOpenCheck className="size-3.5" />

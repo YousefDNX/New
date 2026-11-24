@@ -33,6 +33,18 @@ import type { LayoutMode, UiMode } from "./theme-catalog";
 export type AppRole = "admin" | "moderator" | "user";
 export type GrowthArea =
   "academic" | "productivity" | "growth" | "wellbeing" | "career" | "community";
+export type StudentGender = "male" | "female";
+export type CommunityGroup = "boys" | "girls";
+
+export function resolveCommunityGroup(
+  gender: StudentGender | string | null | undefined,
+  explicitGroup?: CommunityGroup | string | null | undefined,
+): CommunityGroup | null {
+  if (gender === "male") return "boys";
+  if (gender === "female") return "girls";
+  if (explicitGroup === "boys" || explicitGroup === "girls") return explicitGroup;
+  return null;
+}
 
 export interface ProfileRow {
   id: string;
@@ -42,6 +54,9 @@ export interface ProfileRow {
   region: "kuwait" | "gcc" | "global";
   date_of_birth: string | null;
   age_band: string | null;
+  gender?: StudentGender | null;
+  community_group?: CommunityGroup | null;
+  show_gender_on_profile?: boolean;
   grade_level?: string | null;
   school_name?: string | null;
   preferred_subjects?: string[];
@@ -415,6 +430,7 @@ export interface CircleTeamRow {
   name: string;
   description: string | null;
   subject: string | null;
+  community_group?: CommunityGroup | null;
   invite_code: string;
   owner_id: string;
   shared_goal: string | null;
@@ -428,6 +444,7 @@ export interface CircleInviteRow {
   circle_id: string;
   circle_name: string;
   subject: string | null;
+  community_group?: CommunityGroup | null;
   owner_id: string;
   created_at: string;
 }
@@ -446,6 +463,7 @@ export interface CircleMemberRow {
 export interface CirclePostRow {
   id: string;
   circle_id: string;
+  community_group?: CommunityGroup | null;
   author_id: string;
   author_name: string;
   kind: "discussion" | "resource" | "task";
@@ -463,6 +481,7 @@ export interface ModerationReportRow {
   id: string;
   reporter_id: string;
   circle_id: string | null;
+  community_group?: CommunityGroup | null;
   target_type: "post" | "resource" | "task" | "team";
   target_id: string;
   reason: "harassment" | "spam" | "pii_exposed" | "inappropriate" | "cheating" | "other";

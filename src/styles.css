@@ -109,7 +109,7 @@
   --nav-active-bg: rgba(45, 212, 191, 0.13);
   --nav-active-fg: #5eead4;
   --nav-blur: 16px;
-  --nav-sidebar-width: 15.25rem;
+  --nav-sidebar-width: 16.75rem;
   --nav-sidebar-collapsed: 4.25rem;
   --nav-item-height: 2.25rem;
   --nav-item-radius: 0.625rem;
@@ -1606,10 +1606,10 @@
 
 /* Sidebar width mode */
 [data-sidebar-mode="compact"] {
-  --nav-sidebar-width: 13.5rem;
+  --nav-sidebar-width: 15.25rem;
 }
 [data-sidebar-mode="simplified"] {
-  --nav-sidebar-width: 14rem;
+  --nav-sidebar-width: 15.25rem;
 }
 
 /* ============================================================================
@@ -2141,7 +2141,7 @@ html.light.a11y-contrast,
 
 [data-layout-mode="compact"],
 [data-layout-mode="split_study"] {
-  --nav-sidebar-width: 13.25rem;
+  --nav-sidebar-width: 15.25rem;
 }
 
 [data-layout-mode="zen_focus"] main#main-content {

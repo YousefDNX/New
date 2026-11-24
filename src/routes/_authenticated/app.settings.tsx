@@ -381,7 +381,7 @@ function SettingsPage() {
   return (
     <div
       data-testid={isAltTheme ? "btc-alternative-settings" : undefined}
-      className="mx-auto max-w-6xl space-y-6"
+      className="mx-auto max-w-7xl space-y-6"
     >
       {isAltTheme ? (
         <header className="rounded-2xl border border-border bg-surface p-6">
@@ -529,16 +529,16 @@ function SettingsPage() {
       )}
 
       {/* Main Split Layout: Category Rail + Settings Sections */}
-      <div className="grid gap-6 lg:grid-cols-12">
+      <div className="grid gap-6 lg:grid-cols-[17.5rem_minmax(0,1fr)] lg:items-start">
         {/* Category Navigation */}
         <nav
           aria-label={t("set.title")}
-          className="flex gap-1.5 overflow-x-auto pb-1 lg:col-span-3 lg:flex-col lg:overflow-visible lg:pb-0"
+          className="flex gap-1.5 overflow-x-auto pb-1 lg:sticky lg:top-20 lg:flex-col lg:overflow-visible lg:pb-0"
         >
           <button
             type="button"
             onClick={() => setActiveTab("all")}
-            className={`min-h-[44px] shrink-0 whitespace-nowrap rounded-xl px-3 py-2 text-start text-sm font-medium transition-colors ${
+            className={`min-h-[44px] shrink-0 whitespace-nowrap lg:whitespace-normal leading-snug rounded-xl px-3.5 py-2.5 text-start text-sm font-medium transition-colors ${
               activeTab === "all" && !normalizedQuery
                 ? "bg-primary/15 text-foreground"
                 : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
@@ -557,7 +557,7 @@ function SettingsPage() {
                   setSearchQuery("");
                   setActiveTab(id);
                 }}
-                className={`flex min-h-[44px] shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2 text-start text-sm font-medium transition-colors ${
+                className={`flex min-h-[44px] shrink-0 items-center gap-2.5 whitespace-nowrap lg:whitespace-normal leading-snug rounded-xl px-3.5 py-2.5 text-start text-sm font-medium transition-colors ${
                   active
                     ? "bg-primary/15 text-foreground"
                     : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
@@ -571,7 +571,7 @@ function SettingsPage() {
         </nav>
 
         {/* Active Sections */}
-        <div className="space-y-5 lg:col-span-9">
+        <div className="min-w-0 space-y-5">
           {shouldShowSection("appearance") && (
             <AppearanceSection runSave={runSave} highlightedRowId={highlightedRowId} />
           )}
