@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usePrefs } from "@/lib/preferences";
+import { useOptionalPrefs } from "@/lib/preferences";
 import { cn } from "@/lib/utils";
 
 const EMPTY_VALUE_SENTINEL = "__btc_select_empty__";
@@ -54,7 +54,8 @@ export function ModernSelect({
   size = "md",
   "data-testid": dataTestId,
 }: ModernSelectProps) {
-  const { dir } = usePrefs();
+  const prefs = useOptionalPrefs();
+  const dir = prefs?.dir ?? "ltr";
   const safeOptions = React.useMemo(() => (Array.isArray(options) ? options : []), [options]);
 
   const encode = React.useCallback((raw: string) => (raw === "" ? EMPTY_VALUE_SENTINEL : raw), []);

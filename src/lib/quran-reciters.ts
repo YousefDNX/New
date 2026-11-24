@@ -60,9 +60,14 @@ export function getReciterSurahUrl(
   const selectedEdition =
     (recordingId ? reciter.recordings.find((r) => r.recordingId === recordingId) : undefined) ??
     reciter.recordings[0];
+  const customUrl = selectedEdition?.customSurahUrls?.[surahNumber];
+  if (customUrl && /^https:\/\//i.test(customUrl)) {
+    return customUrl;
+  }
+  const ext = selectedEdition?.audioFormat === "m4a" ? "m4a" : "mp3";
   const rawBase = selectedEdition?.serverBaseUrl ?? reciter.serverBaseUrl;
   const base = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
-  return `${base}${padded}.mp3`;
+  return `${base}${padded}.${ext}`;
 }
 
 export * from "./quran-reciters-directory";

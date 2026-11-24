@@ -13,7 +13,7 @@ const GUEST_TASKS_KEY = "btc_guest_simple_tasks_v1";
 interface SimpleTask {
   id: string;
   title: string;
-  description?: string;
+  description?: string | undefined;
   completed: boolean;
   createdAt: string;
 }
@@ -124,7 +124,7 @@ export function SimpleTasksWorkspace() {
       const match = remoteTasks.find((rt) => rt.id === task.id);
       if (match) {
         try {
-          await toggleRemoteTask(match, 0);
+          await toggleRemoteTask(match);
           if (nextCompleted) {
             toast.success(isAr ? "تم إكمال المهمة" : "Task marked as completed");
           } else {

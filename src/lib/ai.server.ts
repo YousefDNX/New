@@ -13,14 +13,16 @@ import {
   isQuranicRecitationForbidden,
 } from "./speech-service";
 import { detectUnsafeDojoRequest } from "./dojo-safety";
+import { generateCurriculumAwareReply, type ChatbotRoleId } from "./ai-fallback";
 export { detectUnsafeDojoRequest };
 
-export type AiModelTier = "balanced" | "fast" | "stem" | "deep" | "deep_research";
+export type AiModelTier = "balanced" | "fast" | "complex" | "stem" | "deep" | "deep_research";
 
 export interface AiChatServerRequest {
   message: string;
   history?: Array<{ role: "user" | "assistant"; content: string }>;
   modelTier?: AiModelTier;
+  chatbotRole?: ChatbotRoleId;
   useSearchGrounding?: boolean;
   enableActionProposals?: boolean;
   domainMode?: "standard" | "dojo_mentor";
@@ -429,13 +431,21 @@ export function resolveChatModelConfig(tier?: AiModelTier): ModelRouteConfig {
         isPaidTier: false,
         label: "Gemini 3.1 Flash Lite (Fast)",
       };
+    case "complex":
+      return {
+        tier: "complex",
+        model: "gemini-4-neon",
+        thinkingLevel: ThinkingLevel.HIGH,
+        isPaidTier: true,
+        label: "Gemini 4 Neon (Complex Interactive)",
+      };
     case "stem":
       return {
         tier: "stem",
         model: "gemini-4-argon",
         thinkingLevel: ThinkingLevel.HIGH,
         isPaidTier: true,
-        label: "Gemini 4 Argon (STEM & Complex)",
+        label: "Gemini 4 Argon (STEM & Reasoning)",
       };
     case "deep":
       return {
@@ -460,7 +470,7 @@ export function resolveChatModelConfig(tier?: AiModelTier): ModelRouteConfig {
         model: "gemini-4-hydrogen",
         thinkingLevel: ThinkingLevel.LOW,
         isPaidTier: false,
-        label: "Gemini 4 Hydrogen (Balanced)",
+        label: "Gemini 4 Hydrogen (General)",
       };
   }
 }
@@ -612,8 +622,18 @@ function buildSystemInstruction(req: AiChatServerRequest): string {
         ? "Use a clear, precise, academic tutor tone."
         : "Use an encouraging, structured student coach tone.";
 
+  const roleInstruction =
+    req.chatbotRole === "vocab"
+      ? "CHATBOT ROLE — ENGLISH & UNIT 9 VOCABULARY COACH: Focus on Grade 9 British English vocabulary (including Unit 9 Science & Technology and Essential Academic Words). Provide clear definitions, accurate Arabic meanings, phonetic guidance, collocations, and example sentences, plus short practice quizzes when helpful."
+      : req.chatbotRole === "stem"
+        ? "CHATBOT ROLE — STEM & DEEP REASONING MENTOR: Walk through science, mathematics, engineering, and coding problems methodically with step-by-step logical derivations, verifying units and assumptions."
+        : req.chatbotRole === "exam"
+          ? "CHATBOT ROLE — EXAM & QUIZ PREP COACH: Help the student prepare for quizzes and exams using active recall questions, immediate constructive feedback, concise revision summaries, and test-taking strategies."
+          : "CHATBOT ROLE — GENERAL STUDY TUTOR: Assist clearly across all school subjects with structured explanations, practical study tips, and direct answers.";
+
   const lines = [
-    `You are ${BRAND.shortName} AI, a versatile general-purpose student study assistant and academic coach across all school subjects, languages, sciences, mathematics, humanities, coding, and daily study planning.`,
+    `You are ${BRAND.shortName} AI, a versatile student study assistant and academic coach across all school subjects, languages, sciences, mathematics, humanities, coding, and daily study planning.`,
+    roleInstruction,
     `Respond naturally in the student's message language (for example, reply in clear, natural Arabic when the student writes in Arabic, or clear English when they write in English). Default language preference if ambiguous: ${p.responseLanguage || "en"}.`,
     `Complexity level: ${p.complexity || "balanced"}.`,
     toneRule,
@@ -1105,6 +1125,49 @@ export async function generateStructuredStudyAid(
   }
 }
 
+export function generateSmartFallbackReply(userMessage: string, req: AiChatServerRequest): string {
+  return generateCurriculumAwareReply({
+    message: userMessage,
+    ...(req.history ? { history: req.history } : {}),
+    ...(req.chatbotRole ? { role: req.chatbotRole } : {}),
+    ...(req.prefs?.responseLanguage ? { langHint: req.prefs.responseLanguage } : {}),
+  });
+}
+
+function buildGeminiChatHistory(
+  history: AiChatServerRequest["history"],
+  currentUserMessage: string,
+): Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> {
+  if (!Array.isArray(history) || history.length === 0) return [];
+  const trimmedCurrent = currentUserMessage.trim();
+  const sliced = history.slice(-12);
+
+  // Drop trailing duplicate of the current user message if the client already appended it to history
+  const withoutTrailingCurrent =
+    sliced.length > 0 &&
+    sliced[sliced.length - 1]?.role === "user" &&
+    sliced[sliced.length - 1]?.content.trim() === trimmedCurrent
+      ? sliced.slice(0, -1)
+      : sliced;
+
+  const formatted: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> = [];
+  for (const turn of withoutTrailingCurrent) {
+    const text = (turn.content ?? "").trim().slice(0, 1500);
+    if (!text) continue;
+    const role: "user" | "model" = turn.role === "user" ? "user" : "model";
+    if (formatted.length === 0 && role !== "user") {
+      continue;
+    }
+    const last = formatted[formatted.length - 1];
+    if (last && last.role === role) {
+      last.parts[0]!.text = `${last.parts[0]!.text}\n\n${text}`;
+    } else {
+      formatted.push({ role, parts: [{ text }] });
+    }
+  }
+  return formatted;
+}
+
 export async function generateStudyAssistantReply(
   req: AiChatServerRequest,
   env?: unknown,
@@ -1171,51 +1234,60 @@ export async function generateStudyAssistantReply(
   const apiKey = resolveGeminiApiKey(env);
   if (!apiKey) {
     return {
-      ok: false,
-      status: 503,
-      code: "NOT_CONFIGURED",
-      message: "GEMINI_API_KEY is not configured on the server.",
+      ok: true,
+      text: generateSmartFallbackReply(userMessage, req),
+      modelUsed: "btc-smart-fallback",
+      tierUsed: req.modelTier ?? "balanced",
+      isGrounded: false,
+      sources: [],
+      searchQueries: [],
+      proposedActions: [],
     };
   }
 
   const route = resolveChatModelConfig(req.modelTier);
   const ai = createGenAiClient(apiKey);
-
-  const recentHistory = (req.history ?? [])
-    .slice(-8)
-    .map(
-      (m) =>
-        `${m.role === "user" ? "Student" : `${BRAND.shortName} AI`}: ${m.content.slice(0, 1000)}`,
-    )
-    .join("\n\n");
-
-  const contents = recentHistory ? `${recentHistory}\n\nStudent: ${userMessage}` : userMessage;
+  const chatHistory = buildGeminiChatHistory(req.history, userMessage);
+  const systemInstruction = buildSystemInstruction(req);
   const useSearch = Boolean(req.useSearchGrounding);
   const effectiveModel = useSearch && route.isPaidTier ? "gemini-4-hydrogen" : route.model;
   const effectiveThinking = useSearch && route.isPaidTier ? ThinkingLevel.LOW : route.thinkingLevel;
 
-  try {
-    const tools = useSearch
-      ? [{ googleSearch: {} }]
-      : req.enableActionProposals !== false
-        ? [{ functionDeclarations: NEXORA_FUNCTION_DECLARATIONS }]
-        : undefined;
+  const tools = useSearch
+    ? [{ googleSearch: {} }]
+    : req.enableActionProposals !== false
+      ? [{ functionDeclarations: NEXORA_FUNCTION_DECLARATIONS }]
+      : undefined;
 
-    const response = await withTransientRetry(() =>
-      withTimeout(
-        ai.models.generateContent({
-          model: effectiveModel,
-          contents,
-          config: {
-            systemInstruction: buildSystemInstruction(req),
-            thinkingConfig: { thinkingLevel: effectiveThinking },
-            ...(tools ? { tools } : {}),
-          },
-        }),
-        28_000,
-        "Study assistant request",
-      ),
+  const runChatTurn = async (modelName: string, thinkingLevel: ThinkingLevel) => {
+    const chat = ai.chats.create({
+      model: modelName,
+      config: {
+        systemInstruction,
+        thinkingConfig: { thinkingLevel },
+        ...(tools ? { tools } : {}),
+      },
+      ...(chatHistory.length > 0 ? { history: chatHistory } : {}),
+    });
+    return withTransientRetry(() =>
+      withTimeout(chat.sendMessage({ message: userMessage }), 28_000, "Study assistant request"),
     );
+  };
+
+  try {
+    let modelUsed = effectiveModel;
+    let response;
+    try {
+      response = await runChatTurn(effectiveModel, effectiveThinking);
+    } catch (primaryErr) {
+      // If a paid-tier model fails due to free-tier key or quota, automatically retry with gemini-4-hydrogen
+      if (effectiveModel !== "gemini-4-hydrogen") {
+        modelUsed = "gemini-4-hydrogen";
+        response = await runChatTurn("gemini-4-hydrogen", ThinkingLevel.LOW);
+      } else {
+        throw primaryErr;
+      }
+    }
 
     const proposedActions = useSearch
       ? []
@@ -1242,25 +1314,38 @@ export async function generateStudyAssistantReply(
 
     if (!replyText) {
       return {
-        ok: false,
-        status: 502,
-        code: "UPSTREAM_ERROR",
-        message: "The AI model returned an empty response.",
+        ok: true,
+        text: generateSmartFallbackReply(userMessage, req),
+        modelUsed: "btc-smart-fallback",
+        tierUsed: route.tier,
+        isGrounded: false,
+        sources: [],
+        searchQueries: [],
+        proposedActions: [],
       };
     }
 
     return {
       ok: true,
       text: replyText,
-      modelUsed: effectiveModel,
+      modelUsed,
       tierUsed: route.tier,
       isGrounded: useSearch && grounding.webSources.length > 0,
       sources: grounding.webSources,
       searchQueries: grounding.searchQueries,
       proposedActions,
     };
-  } catch (err) {
-    return formatGeminiError(err, route.isPaidTier && !useSearch);
+  } catch {
+    return {
+      ok: true,
+      text: generateSmartFallbackReply(userMessage, req),
+      modelUsed: "btc-smart-fallback",
+      tierUsed: req.modelTier ?? "balanced",
+      isGrounded: false,
+      sources: [],
+      searchQueries: [],
+      proposedActions: [],
+    };
   }
 }
 

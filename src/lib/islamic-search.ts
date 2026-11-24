@@ -36,7 +36,6 @@ import {
 import {
   EMOTIONAL_STYLES_META,
   TRADITIONAL_FORMATS_META,
-  VERIFIED_RECITER_SIGNATURES,
   VERIFIED_RECORDING_CLASSIFICATIONS,
   VOCAL_QUALITIES_META,
 } from "@/lib/quran-recitation-styles";
@@ -176,33 +175,6 @@ export function searchUnifiedIslamicCenter(
   }
 
   if (want("style")) {
-    // 1. Reciter distinctive signatures
-    for (const sig of Object.values(VERIFIED_RECITER_SIGNATURES)) {
-      if (
-        matchesAllSearchTokens(
-          `${sig.nameAr} ${sig.nameEn} ${sig.descriptionAr} ${sig.descriptionEn} ${sig.listenerContextAr} ${sig.listenerContextEn}`,
-          q,
-        )
-      ) {
-        const rec = GLOBAL_RECITERS_DIRECTORY.find((r) => r.id === sig.reciterId);
-        results.push({
-          id: `sig-${sig.id}`,
-          category: "style",
-          titleAr: `${sig.nameAr} (${rec?.nameAr ?? ""})`,
-          titleEn: `${sig.nameEn} (${rec?.nameEn ?? ""})`,
-          subtitleAr: sig.descriptionAr,
-          subtitleEn: sig.descriptionEn,
-          sourceRef: "Verified Vocal Signature",
-          targetTab: "listening",
-          payload: {
-            reciterId: sig.reciterId,
-            ...(rec?.countryCode ? { countryCode: rec.countryCode } : {}),
-            styleId: sig.id,
-          },
-        });
-      }
-    }
-
     // 2. Traditional recitation formats
     for (const fmt of Object.values(TRADITIONAL_FORMATS_META)) {
       if (
@@ -284,10 +256,6 @@ export function searchUnifiedIslamicCenter(
             `${s} ${EMOTIONAL_STYLES_META[s]?.nameAr ?? ""} ${EMOTIONAL_STYLES_META[s]?.nameEn ?? ""}`,
         ),
         ...cls.vocalQualities.map((v) => `${v} ${VOCAL_QUALITIES_META[v]?.nameAr ?? ""}`),
-        ...cls.signatures.map(
-          (s) =>
-            `${s} ${VERIFIED_RECITER_SIGNATURES[s]?.nameAr ?? ""} ${VERIFIED_RECITER_SIGNATURES[s]?.nameEn ?? ""}`,
-        ),
         cls.editorialReviewNoteAr ?? "",
         cls.editorialReviewNoteEn ?? "",
       ].join(" ");

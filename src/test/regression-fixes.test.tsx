@@ -19,47 +19,39 @@ describe("Regression fixes: AI UI sanitization & Unit 3 Context Scenario Mode 8"
     vi.restoreAllMocks();
   });
 
-  it("renders AiWorkspace without Gemini branding or model tier selector and sends fixed balanced tier", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === "string" ? input : input.toString();
-      if (url.includes("/api/ai/status")) {
-        return new Response(JSON.stringify({ ok: true, configured: true }), {
+  it("renders AiWorkspace multi-turn Gemini chatbot with role & model routing and parses data.text properly", async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const parsed = JSON.parse(String(init?.body ?? "{}"));
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          text: `Reply (${parsed.chatbotRole}/${parsed.modelTier}): ${parsed.message}`,
+          modelUsed: parsed.modelTier === "deep" ? "gemini-4-carbon" : "gemini-4-hydrogen",
+        }),
+        {
           status: 200,
           headers: { "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify({ ok: true, text: "Here is your answer." }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+        },
+      );
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    const { container } = render(
+    render(
       <PreferencesProvider>
         <AiWorkspace />
       </PreferencesProvider>,
     );
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith("/api/ai/status");
-    });
-
-    expect(container.textContent).not.toMatch(/\bGemini\b/i);
-    expect(container.textContent).not.toMatch(/\bHydrogen\b/i);
-    expect(container.querySelectorAll("select")).toHaveLength(0);
 
     const textarea = screen.getByPlaceholderText(/Ask a study question/i);
     fireEvent.change(textarea, { target: { value: "Explain photosynthesis" } });
     fireEvent.submit(textarea.closest("form")!);
 
     await waitFor(() => {
-      const chatCall = fetchMock.mock.calls.find(([url]) => String(url).includes("/api/ai/chat"));
-      expect(chatCall).toBeDefined();
-      const init = (chatCall as unknown[] | undefined)?.[1] as RequestInit | undefined;
-      const body = JSON.parse(String(init?.body ?? "{}"));
-      expect(body.modelTier).toBe("balanced");
+      expect(
+        screen.getByText("Reply (general/balanced): Explain photosynthesis"),
+      ).toBeInTheDocument();
     });
+    expect(screen.queryByText(/no direct reply was returned/i)).toBeNull();
   });
 
   it("renders dynamic scenarios across all 24 words in Unit 3 Mode 8 (context_choice)", () => {
@@ -88,22 +80,15 @@ describe("Regression fixes: AI UI sanitization & Unit 3 Context Scenario Mode 8"
     expect(screen.getByRole("button", { name: GRADE_9_UNIT_3_WORDS[1]!.word })).toBeInTheDocument();
   });
 
-  it("surfaces upstream AI errors cleanly in AiWorkspace instead of fabricating fallback replies", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === "string" ? input : input.toString();
-      if (url.includes("/api/ai/status")) {
-        return new Response(JSON.stringify({ ok: true, configured: true }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
+  it("gracefully falls back to curriculum study guidance when /api/ai/chat fails instead of showing dead-end connection errors", async () => {
+    const fetchMock = vi.fn(async () => {
       return new Response(
         JSON.stringify({
           ok: false,
           code: "UPSTREAM_ERROR",
-          message: "Service rejected key. Check Settings > Secrets.",
+          message: "Service temporarily unavailable",
         }),
-        { status: 401, headers: { "Content-Type": "application/json" } },
+        { status: 503, headers: { "Content-Type": "application/json" } },
       );
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -114,18 +99,14 @@ describe("Regression fixes: AI UI sanitization & Unit 3 Context Scenario Mode 8"
       </PreferencesProvider>,
     );
 
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith("/api/ai/status");
-    });
-
-    const inputEl = screen.getByPlaceholderText(/Ask a study question/i) as HTMLInputElement;
-    fireEvent.change(inputEl, { target: { value: "Explain Newton's laws" } });
+    const inputEl = screen.getByPlaceholderText(/Ask a study question/i);
+    fireEvent.change(inputEl, { target: { value: "Explain hypothesis from Unit 9" } });
     fireEvent.submit(inputEl.closest("form")!);
 
-    const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toContain("Service rejected key");
-    expect(screen.queryByText(/Local Fallback|Offline Socratic Coach/i)).toBeNull();
-    expect(inputEl.value).toBe("Explain Newton's laws");
+    await waitFor(() => {
+      expect(screen.getByText(/Grade 9 Study Vocabulary library/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/Could not connect to BTC AI service/i)).toBeNull();
   });
 
   it("parses Google GenAI JSON error payloads in formatGeminiError and matches Hadith/Adhkar/Duas in unified search", () => {

@@ -29,6 +29,7 @@ import {
   useQuranAudio,
 } from "@/contexts/QuranAudioContext";
 import { SurahBrowserPanel } from "./SurahBrowserPanel";
+import { SoundCloudAudioHub } from "./SoundCloudAudioHub";
 import { ModernSelect } from "@/components/ui/modern-select";
 import {
   ArrowLeft,
@@ -39,8 +40,8 @@ import {
   Compass,
   Disc,
   Edit3,
-  ExternalLink,
   Globe,
+  Headphones,
   Heart,
   History,
   Info,
@@ -76,7 +77,14 @@ import {
   type RecordingStyleClassification,
 } from "@/lib/quran-recitation-styles";
 
-type DirectoryViewTab = "countries" | "surahs" | "styles" | "search" | "discover" | "library";
+type DirectoryViewTab =
+  | "countries"
+  | "surahs"
+  | "soundcloud"
+  | "search"
+  | "discover"
+  | "library"
+  | "styles";
 
 interface QuranAudioPlayerProps {
   initialSurahId?: number;
@@ -404,14 +412,25 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
               <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
-                {isAr ? "التلاوة الحالية · ١.٠×" : "Now Playing · 1.0x Original Speed"}
+                {audioCtx.activeCustomTrack
+                  ? `${isAr ? "التلاوة الحالية" : "Now Playing"} · 1.0x · ${audioCtx.activeCustomTrack.format.toUpperCase()}`
+                  : isAr
+                    ? "التلاوة الحالية · ١.٠×"
+                    : "Now Playing · 1.0x Original Speed"}
               </span>
               <h4 className="text-lg sm:text-xl font-bold font-serif text-stone-900 dark:text-stone-100">
-                {isAr ? `سورة ${currentSurahMeta.nameAr}` : `Surah ${currentSurahMeta.nameEn}`}
+                {audioCtx.activeCustomTrack
+                  ? isAr
+                    ? audioCtx.activeCustomTrack.titleAr
+                    : audioCtx.activeCustomTrack.titleEn
+                  : isAr
+                    ? `سورة ${currentSurahMeta.nameAr}`
+                    : `Surah ${currentSurahMeta.nameEn}`}
               </h4>
               <p className="text-xs text-stone-600 dark:text-stone-300">
-                {isAr ? selectedReciter.nameAr : selectedReciter.nameEn} ·{" "}
-                {isAr ? activeRecording.collectionTitleAr : activeRecording.collectionTitleEn}
+                {audioCtx.activeCustomTrack
+                  ? `${isAr ? audioCtx.activeCustomTrack.reciterNameAr : audioCtx.activeCustomTrack.reciterNameEn} · ${audioCtx.activeCustomTrack.sourceLabel ?? audioCtx.activeCustomTrack.format.toUpperCase()}`
+                  : `${isAr ? selectedReciter.nameAr : selectedReciter.nameEn} · ${isAr ? activeRecording.collectionTitleAr : activeRecording.collectionTitleEn}`}
               </p>
             </div>
 
@@ -584,9 +603,19 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
           </div>
 
           <div className="text-[11px] text-stone-500 dark:text-stone-400 border-t border-stone-100 dark:border-stone-800 pt-2.5 flex flex-wrap items-center justify-between gap-2">
-            <span>{isAr ? activeRecording.attributionAr : activeRecording.attributionEn}</span>
+            <span>
+              {audioCtx.activeCustomTrack
+                ? (audioCtx.activeCustomTrack.sourceLabel ?? audioCtx.activeCustomTrack.audioUrl)
+                : isAr
+                  ? activeRecording.attributionAr
+                  : activeRecording.attributionEn}
+            </span>
             <span className="font-medium text-stone-700 dark:text-stone-300">
-              {isAr ? selectedReciter.primaryRiwayahAr : selectedReciter.primaryRiwayahEn}
+              {audioCtx.activeCustomTrack
+                ? audioCtx.activeCustomTrack.format.toUpperCase()
+                : isAr
+                  ? selectedReciter.primaryRiwayahAr
+                  : selectedReciter.primaryRiwayahEn}
             </span>
           </div>
         </div>
@@ -713,16 +742,22 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
                 icon: Globe,
               },
               {
+                id: "styles",
+                labelAr: `الأنماط الصوتية (${styleStats.totalClassifiedRecordings})`,
+                labelEn: `Recitation Styles (${styleStats.totalClassifiedRecordings})`,
+                icon: SlidersHorizontal,
+              },
+              {
                 id: "surahs",
                 labelAr: "السور (١١٤)",
                 labelEn: "Surahs (114)",
                 icon: BookOpen,
               },
               {
-                id: "styles",
-                labelAr: `الأنماط الصوتية (${styleStats.totalClassifiedRecordings})`,
-                labelEn: `Styles (${styleStats.totalClassifiedRecordings})`,
-                icon: Sparkles,
+                id: "soundcloud",
+                labelAr: "SoundCloud · MP3 · M4A",
+                labelEn: "SoundCloud · MP3 · M4A",
+                icon: Headphones,
               },
               {
                 id: "search",
@@ -1127,6 +1162,9 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
           }}
         />
       )}
+
+      {/* TAB 1C: SOUNDCLOUD, MOHAMMED AL-LUHAIDAN ALL 114 SURAHS & M4A/MP3 LIBRARY */}
+      {viewTab === "soundcloud" && <SoundCloudAudioHub isAr={isAr} />}
 
       {/* TAB 2: RECITATION STYLES & DISTINCTIVE SIGNATURES DISCOVERY */}
       {viewTab === "styles" && (
@@ -1780,12 +1818,12 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
         </div>
       )}
 
-      {/* SELECTED RECITER RECORDINGS & PROFILE */}
+      {/* COMPACT ACTIVE RECITER CARD */}
       <div
-        className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5 space-y-4 shadow-sm"
+        className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-4 sm:p-5 shadow-xs"
         data-testid="active-reciter-profile"
       >
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-stone-100 dark:border-stone-800 pb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="space-y-1 max-w-3xl">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-lg">
@@ -1811,222 +1849,123 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
                 </strong>
               </span>
               <span>
-                {availableSurahsForReciter.length}/114 {isAr ? "سورة" : "Surahs"} ·{" "}
-                {selectedReciter.recordings.length} {isAr ? "تسجيل" : "edition(s)"}
+                {availableSurahsForReciter.length}/114 {isAr ? "سورة" : "Surahs"}
               </span>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => audioCtx.toggleFavoriteReciter(selectedReciter.id)}
-            className={`min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold whitespace-nowrap transition-colors shrink-0 ${
-              isReciterFav
-                ? "bg-rose-500/10 border-rose-500/40 text-rose-600 dark:text-rose-400"
-                : "border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800"
-            }`}
-          >
-            <Heart className={`w-3.5 h-3.5 ${isReciterFav ? "fill-current" : ""}`} />
-            <span>
-              {isReciterFav ? (isAr ? "قارئ مفضل" : "Favorited") : isAr ? "حفظ القارئ" : "Favorite"}
-            </span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {surahRecordings.length > 1 && (
+              <select
+                aria-label={isAr ? "اختر الرواية أو النسخة" : "Select edition"}
+                value={activeRecording.recordingId}
+                onChange={(e) => audioCtx.selectRecordingId(e.target.value)}
+                className="min-h-[42px] rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 px-3 py-1.5 text-xs font-semibold text-stone-800 dark:text-stone-200"
+              >
+                {surahRecordings.map((ed) => (
+                  <option key={ed.recordingId} value={ed.recordingId}>
+                    {isAr ? ed.collectionTitleAr : ed.collectionTitleEn}
+                  </option>
+                ))}
+              </select>
+            )}
+            <button
+              type="button"
+              onClick={() => audioCtx.toggleFavoriteReciter(selectedReciter.id)}
+              className={`min-h-[42px] inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold whitespace-nowrap transition-colors shrink-0 ${
+                isReciterFav
+                  ? "bg-rose-500/10 border-rose-500/40 text-rose-600 dark:text-rose-400"
+                  : "border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800"
+              }`}
+            >
+              <Heart className={`w-3.5 h-3.5 ${isReciterFav ? "fill-current" : ""}`} />
+              <span>
+                {isReciterFav
+                  ? isAr
+                    ? "قارئ مفضل"
+                    : "Favorited"
+                  : isAr
+                    ? "حفظ القارئ"
+                    : "Favorite"}
+              </span>
+            </button>
+          </div>
         </div>
 
-        {/* Clean Single-Row Style Summary (No pill clutter) */}
+        {/* Reciter Style Characteristics & Signatures */}
         <div
-          className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50/70 dark:bg-stone-800/30 p-3 space-y-2"
           data-testid="reciter-style-characteristics"
+          className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800 space-y-2.5"
         >
-          {!reciterStyleMeta.hasVerifiedClassifications ? (
-            <p className="text-[11px] text-stone-500 dark:text-stone-400">
-              {isAr
-                ? "لا توجد ملاحظات أسلوبية إضافية لهذا القارئ."
-                : "No extra vocal notes recorded for this reciter."}
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {reciterStyleMeta.signatures.map((sig) => (
-                <div
-                  key={sig.id}
-                  data-testid={`reciter-signature-banner-${sig.id}`}
-                  className="text-xs space-y-1"
-                >
-                  <div className="font-bold text-stone-900 dark:text-stone-100">
-                    {isAr ? sig.nameAr : sig.nameEn}
-                  </div>
-                  <p className="text-[11px] text-stone-600 dark:text-stone-300 leading-relaxed">
-                    {isAr ? sig.descriptionAr : sig.descriptionEn}
-                  </p>
+          {reciterStyleMeta.signatures.map((sig) => (
+            <div
+              key={sig.id}
+              data-testid={`reciter-signature-banner-${sig.id}`}
+              className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between gap-2"
+            >
+              <div className="space-y-0.5">
+                <div className="font-bold flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span>{isAr ? sig.nameAr : sig.nameEn}</span>
                 </div>
-              ))}
-
-              <div className="flex flex-wrap items-center gap-1.5 text-[11px] pt-1">
-                <button
-                  type="button"
-                  onClick={() => setActiveReciterStyleFilter("all")}
-                  className={`px-2 py-0.5 rounded-md font-semibold transition-colors ${
-                    activeReciterStyleFilter === "all"
-                      ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900"
-                      : "bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300"
-                  }`}
-                >
-                  {isAr ? "الكل" : "All"}
-                </button>
-                {reciterStyleMeta.formats.map((fmtId) => {
-                  const meta = TRADITIONAL_FORMATS_META[fmtId];
-                  const filterKey = `fmt:${fmtId}`;
-                  return (
-                    <button
-                      key={filterKey}
-                      type="button"
-                      onClick={() =>
-                        setActiveReciterStyleFilter((prev) =>
-                          prev === filterKey ? "all" : filterKey,
-                        )
-                      }
-                      className={`px-2 py-0.5 rounded-md border font-semibold transition-colors ${
-                        activeReciterStyleFilter === filterKey
-                          ? "bg-emerald-700 text-white border-emerald-700"
-                          : "bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300"
-                      }`}
-                    >
-                      {isAr ? meta.nameAr : meta.nameEn}
-                    </button>
-                  );
-                })}
+                <p className="text-[11px] text-stone-600 dark:text-stone-300 leading-relaxed">
+                  {isAr ? sig.descriptionAr : sig.descriptionEn}
+                </p>
               </div>
             </div>
-          )}
+          ))}
+          <div className="flex flex-wrap gap-1.5 items-center">
+            {reciterStyleMeta.formats.map((fmt) => (
+              <span
+                key={fmt}
+                className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${TRADITIONAL_FORMATS_META[fmt].badgeClass}`}
+              >
+                {isAr ? TRADITIONAL_FORMATS_META[fmt].nameAr : TRADITIONAL_FORMATS_META[fmt].nameEn}
+              </span>
+            ))}
+            {reciterStyleMeta.emotionalStyles.map((em) => (
+              <span
+                key={em}
+                className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${EMOTIONAL_STYLES_META[em].colorClass}`}
+              >
+                {isAr ? EMOTIONAL_STYLES_META[em].nameAr : EMOTIONAL_STYLES_META[em].nameEn}
+              </span>
+            ))}
+          </div>
         </div>
 
-        {/* ONE RECITER -> ONE SURAH -> MULTIPLE RECORDINGS SELECTOR */}
-        <div className="space-y-2" data-testid="surah-recordings-list">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-emerald-600" />
-              <span>
-                {isAr
-                  ? `التسجيلات المتوفرة لسورة ${currentSurahMeta.nameAr} (${surahRecordings.length})`
-                  : `Recordings for Surah ${currentSurahMeta.nameEn} (${surahRecordings.length})`}
-              </span>
+        {/* Surah Multi-Recording selector when multiple recordings are available */}
+        {surahRecordings.length > 1 && (
+          <div
+            className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800 space-y-2"
+            data-testid="surah-recordings-list"
+          >
+            <div className="flex items-center justify-between text-xs font-bold text-stone-700 dark:text-stone-300">
+              <span>{isAr ? "التسجيلات والروايات المتاحة:" : "Available Recitation Editions:"}</span>
             </div>
-            {activeReciterStyleFilter !== "all" && (
-              <button
-                type="button"
-                onClick={() => setActiveReciterStyleFilter("all")}
-                className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold hover:underline"
-              >
-                {isAr ? "إظهار الكل" : "Show all"}
-              </button>
-            )}
-          </div>
-
-          {(() => {
-            const visibleSurahRecordings = surahRecordings.filter((ed) => {
-              if (activeReciterStyleFilter === "all") return true;
-              const cls = getEffectiveRecordingClassification(ed.recordingId, userStyleOverrides);
-              if (!cls) return false;
-              if (activeReciterStyleFilter.startsWith("fmt:")) {
-                return cls.format === activeReciterStyleFilter.slice(4);
-              }
-              if (activeReciterStyleFilter.startsWith("em:")) {
-                return cls.emotionalStyles.includes(
-                  activeReciterStyleFilter.slice(3) as RecitationEmotionalStyle,
-                );
-              }
-              return true;
-            });
-
-            if (visibleSurahRecordings.length === 0) {
-              return (
-                <div className="p-4 rounded-xl border border-dashed border-stone-300 dark:border-stone-700 text-xs text-stone-500 flex items-center justify-between gap-2">
-                  <span>
-                    {isAr
-                      ? "لا يوجد تسجيل مطابق لهذا الفلتر."
-                      : "No recording matches this filter."}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setActiveReciterStyleFilter("all")}
-                    className="text-emerald-700 font-bold hover:underline shrink-0"
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              {surahRecordings.map((ed) => {
+                const isSelected = activeRecording.recordingId === ed.recordingId;
+                const cls = getEffectiveRecordingClassification(ed.recordingId, userStyleOverrides);
+                return (
+                  <div
+                    key={ed.recordingId}
+                    data-testid={`recording-option-${ed.recordingId}`}
+                    className={`p-3 rounded-xl border text-start transition-all flex flex-col justify-between gap-2 ${
+                      isSelected
+                        ? "bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-500 shadow-xs ring-1 ring-emerald-500"
+                        : "bg-stone-50 dark:bg-stone-800/60 border-stone-200 dark:border-stone-700 hover:border-emerald-400"
+                    }`}
                   >
-                    {isAr ? "إعادة ضبط" : "Reset"}
-                  </button>
-                </div>
-              );
-            }
-
-            return (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                {visibleSurahRecordings.map((ed) => {
-                  const isEdActive = activeRecording.recordingId === ed.recordingId;
-                  const edFavKey = `${selectedReciter.id}:${ed.recordingId}:${selectedSurah}`;
-                  const isEdFav = userState.favoriteRecordingKeys.includes(edFavKey);
-                  const cls = getEffectiveRecordingClassification(
-                    ed.recordingId,
-                    userStyleOverrides,
-                  );
-                  const fmtMeta = cls ? TRADITIONAL_FORMATS_META[cls.format] : null;
-                  const durLabel = formatVerifiedDuration(
-                    ed.surahDurationsSeconds?.[selectedSurah],
-                  );
-                  const surahHighlight = getSurahHighlight(ed, selectedSurah);
-                  const inferDefaultFormat = (): TraditionalRecitationFormat => {
-                    const low = ed.style.toLowerCase();
-                    if (low.includes("mujawwad")) return "mujawwad";
-                    if (low.includes("muallim") || low.includes("mu'allim")) return "muallim";
-                    if (low.includes("archive")) return "archive";
-                    return "murattal";
-                  };
-                  const styleSummary = cls
-                    ? cls.emotionalStyles
-                        .map((id) =>
-                          isAr
-                            ? EMOTIONAL_STYLES_META[id]?.nameAr
-                            : EMOTIONAL_STYLES_META[id]?.nameEn,
-                        )
-                        .filter(Boolean)
-                        .join(" · ")
-                    : "";
-
-                  return (
-                    <div
-                      key={ed.recordingId}
-                      data-testid={`recording-option-${ed.recordingId}`}
-                      className={`rounded-xl border p-3.5 flex items-start justify-between gap-2 transition-all ${
-                        isEdActive
-                          ? "bg-emerald-50/80 dark:bg-emerald-950/50 border-emerald-500 ring-1 ring-emerald-500"
-                          : "bg-stone-50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 hover:border-emerald-400"
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => audioCtx.selectRecordingId(ed.recordingId)}
-                        className="text-start flex-1 space-y-1 min-w-0"
-                      >
-                        <div className="font-bold text-xs text-stone-900 dark:text-stone-100">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <button
+                          type="button"
+                          onClick={() => audioCtx.selectRecordingId(ed.recordingId)}
+                          className="font-bold text-xs text-stone-900 dark:text-stone-100 hover:text-emerald-700 text-start"
+                        >
                           {isAr ? ed.collectionTitleAr : ed.collectionTitleEn}
-                        </div>
-                        <div className="text-[11px] text-stone-600 dark:text-stone-300">
-                          {isAr ? ed.riwayahAr : ed.riwayahEn} ·{" "}
-                          {fmtMeta ? (isAr ? fmtMeta.nameAr : fmtMeta.nameEn) : ed.style}
-                          {durLabel ? ` · ${durLabel}` : ""}
-                          {ed.verifiedDate ? ` · ${ed.verifiedDate}` : ""}
-                        </div>
-                        {styleSummary && (
-                          <div className="text-[11px] text-stone-500 dark:text-stone-400">
-                            {styleSummary}
-                          </div>
-                        )}
-                        {surahHighlight && (
-                          <div className="text-[11px] font-serif text-amber-800 dark:text-amber-300 pt-0.5">
-                            ﴿{surahHighlight.verseArabicExcerpt}﴾ ({surahHighlight.verseRange})
-                          </div>
-                        )}
-                      </button>
-
-                      <div className="flex items-center gap-1 shrink-0">
+                        </button>
                         <button
                           type="button"
                           data-testid={`edit-style-${ed.recordingId}`}
@@ -2035,49 +1974,41 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
                               cls ?? {
                                 recordingId: ed.recordingId,
                                 reciterId: selectedReciter.id,
-                                format: inferDefaultFormat(),
+                                format: "murattal",
                                 emotionalStyles: [],
                                 vocalQualities: [],
                                 signatures: [],
-                                editorialReviewNoteAr: "",
-                                editorialReviewNoteEn: "",
-                                verifiedByReviewer: true,
                               },
                             )
                           }
-                          aria-label={isAr ? "تعديل التصنيف" : "Edit style classification"}
-                          title={isAr ? "تعديل التصنيف" : "Review / Edit Classification"}
-                          className="min-h-[36px] min-w-[36px] flex items-center justify-center p-1 text-stone-400 hover:text-emerald-600"
+                          className="p-1 rounded text-stone-400 hover:text-stone-700 dark:hover:text-stone-200"
+                          title={isAr ? "تعديل النمط" : "Edit Style"}
                         >
-                          <Edit3 className="w-3.5 h-3.5" />
+                          <SlidersHorizontal className="w-3.5 h-3.5" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => audioCtx.toggleFavoriteRecording(edFavKey)}
-                          aria-label={isAr ? "تفضيل التسجيل" : "Favorite recording"}
-                          className="min-h-[36px] min-w-[36px] flex items-center justify-center p-1 text-stone-400 hover:text-rose-500"
-                        >
-                          <Heart
-                            className={`w-3.5 h-3.5 ${isEdFav ? "fill-rose-500 text-rose-500" : ""}`}
-                          />
-                        </button>
-                        <a
-                          href={ed.sourceUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label={isAr ? "المصدر" : "Source"}
-                          className="min-h-[36px] min-w-[36px] flex items-center justify-center text-stone-400 hover:text-emerald-600"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
                       </div>
+                      <div className="text-[11px] text-stone-500 dark:text-stone-400">
+                        {isAr ? ed.riwayahNameAr : ed.riwayahNameEn} · {isAr ? TRADITIONAL_FORMATS_META[ed.format]?.nameAr ?? ed.format : TRADITIONAL_FORMATS_META[ed.format]?.nameEn ?? ed.format}
+                      </div>
+                      {cls && cls.emotionalStyles.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1 text-[10px]">
+                          {cls.emotionalStyles.map((s) => (
+                            <span
+                              key={s}
+                              className="px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-medium"
+                            >
+                              {isAr ? EMOTIONAL_STYLES_META[s]?.nameAr : EMOTIONAL_STYLES_META[s]?.nameEn}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
-        </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Compact Quick-Play Bar for Featured Passages (Tucked calmly below primary workflow) */}
@@ -2116,6 +2047,14 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
           >
             <Play className="w-3 h-3 fill-current" />
             <span>{isAr ? "البقرة كاملة" : "Al-Baqarah"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewTab("soundcloud")}
+            className="min-h-[36px] inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-orange-300 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 font-semibold text-xs text-orange-800 dark:text-orange-300 hover:bg-orange-100/70"
+          >
+            <Headphones className="w-3 h-3" />
+            <span>{isAr ? "SoundCloud و ١١٤ سورة · M4A" : "SoundCloud · 114 MP3 & M4A"}</span>
           </button>
         </div>
       </div>

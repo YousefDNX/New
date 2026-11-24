@@ -80,6 +80,8 @@ export interface VerifiedRecordingEdition {
   sourceName: string;
   sourceUrl: string;
   serverBaseUrl: string;
+  audioFormat?: "mp3" | "m4a";
+  customSurahUrls?: Readonly<Record<number, string>>;
   availableSurahIds: readonly number[] | "all";
   qualityNoteAr: string | null;
   qualityNoteEn: string | null;
@@ -3306,11 +3308,16 @@ export function getRecordingAudioUrl(
   recording: VerifiedRecordingEdition,
   surahNumber: number,
 ): string {
+  const customUrl = recording.customSurahUrls?.[surahNumber];
+  if (customUrl && /^https:\/\//i.test(customUrl)) {
+    return customUrl;
+  }
   const padded = padGlobalSurahNumber(surahNumber);
+  const ext = recording.audioFormat === "m4a" ? "m4a" : "mp3";
   const base = recording.serverBaseUrl.endsWith("/")
     ? recording.serverBaseUrl
     : `${recording.serverBaseUrl}/`;
-  return `${base}${padded}.mp3`;
+  return `${base}${padded}.${ext}`;
 }
 
 export function getGlobalRecitersByCountry(

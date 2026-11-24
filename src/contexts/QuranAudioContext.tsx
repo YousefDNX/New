@@ -35,11 +35,24 @@ export interface QuranAudioErrorState {
   messageEn: string;
 }
 
+export interface CustomQuranAudioMeta {
+  id: string;
+  titleAr: string;
+  titleEn: string;
+  reciterNameAr: string;
+  reciterNameEn: string;
+  format: "mp3" | "m4a";
+  audioUrl: string;
+  surahId?: number;
+  sourceLabel?: string;
+}
+
 export interface QuranAudioContextValue {
   track: ActiveQuranTrack;
   activeReciter: AuthenticReciter;
   activeRecording: VerifiedRecordingEdition;
   activeSurah: SurahPageEntry;
+  activeCustomTrack: CustomQuranAudioMeta | null;
   surahRecordings: VerifiedRecordingEdition[];
   availableSurahs: number[];
   isPlaying: boolean;
@@ -59,6 +72,7 @@ export interface QuranAudioContextValue {
     recordingId?: string;
     autoPlay?: boolean;
   }) => void;
+  playCustomAudio: (custom: CustomQuranAudioMeta, autoPlay?: boolean) => void;
   selectRecordingId: (recordingId: string) => void;
   selectSurah: (surahId: number) => void;
   play: () => void;
@@ -156,6 +170,7 @@ export const QuranAudioProvider: React.FC<{
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasStartedSession, setHasStartedSession] = useState(false);
+  const [activeCustomTrack, setActiveCustomTrack] = useState<CustomQuranAudioMeta | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolumeState] = useState(0.9);
@@ -281,6 +296,7 @@ export const QuranAudioProvider: React.FC<{
     (params: { reciterId: string; surahId?: number; recordingId?: string; autoPlay?: boolean }) => {
       const nextTrack = resolveSafeTrack(params);
       const isSameSource =
+        !activeCustomTrack &&
         trackRef.current.reciterId === nextTrack.reciterId &&
         trackRef.current.recordingId === nextTrack.recordingId &&
         trackRef.current.surahId === nextTrack.surahId &&
@@ -290,6 +306,7 @@ export const QuranAudioProvider: React.FC<{
       const shouldContinuePlaying =
         params.autoPlay === true || (params.autoPlay !== false && isPlayingRef.current);
 
+      setActiveCustomTrack(null);
       setTrack(nextTrack);
       trackRef.current = nextTrack;
 
@@ -312,6 +329,37 @@ export const QuranAudioProvider: React.FC<{
       }
 
       if (shouldContinuePlaying) {
+        attemptPlay(audio, nextTrack);
+      }
+    },
+    [activeCustomTrack, attemptPlay, ensureAudioElement],
+  );
+
+  const playCustomAudio = useCallback(
+    (custom: CustomQuranAudioMeta, autoPlay = true) => {
+      const nextTrack: ActiveQuranTrack = {
+        reciterId: custom.id.startsWith("mp3-luhaidan")
+          ? "al-luhaidan"
+          : trackRef.current.reciterId,
+        recordingId: custom.id,
+        surahId: custom.surahId ?? trackRef.current.surahId,
+        audioUrl: custom.audioUrl,
+      };
+      setActiveCustomTrack(custom);
+      setTrack(nextTrack);
+      trackRef.current = nextTrack;
+      setCurrentTime(0);
+      setDuration(0);
+      setAudioError(null);
+
+      const audio = ensureAudioElement();
+      if (!audio) return;
+      audio.pause();
+      audio.src = custom.audioUrl;
+      loadedSrcRef.current = custom.audioUrl;
+      audio.load();
+      audio.playbackRate = 1.0;
+      if (autoPlay) {
         attemptPlay(audio, nextTrack);
       }
     },
@@ -604,6 +652,7 @@ export const QuranAudioProvider: React.FC<{
       activeReciter,
       activeRecording,
       activeSurah,
+      activeCustomTrack,
       surahRecordings,
       availableSurahs,
       isPlaying,
@@ -618,6 +667,7 @@ export const QuranAudioProvider: React.FC<{
       userState,
       mediaSessionSupported,
       loadTrack,
+      playCustomAudio,
       selectRecordingId,
       selectSurah,
       play,
@@ -638,6 +688,7 @@ export const QuranAudioProvider: React.FC<{
       activeReciter,
       activeRecording,
       activeSurah,
+      activeCustomTrack,
       surahRecordings,
       availableSurahs,
       isPlaying,
@@ -652,6 +703,7 @@ export const QuranAudioProvider: React.FC<{
       userState,
       mediaSessionSupported,
       loadTrack,
+      playCustomAudio,
       selectRecordingId,
       selectSurah,
       play,

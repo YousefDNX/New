@@ -27,6 +27,7 @@ import {
   type Unit3QuizTier,
   type Unit3VocabItem,
 } from "@/data/grade9-unit3-vocab";
+import { GRADE_9_UNIT_9_WORDS, UNIT_9_QUIZZES } from "@/data/grade9-unit9-vocab";
 import { useUser, awardXpIfUnique } from "@/hooks/use-nexora";
 import { speakEnglishText } from "@/lib/english-speech";
 import { speakArabicText } from "@/lib/speech-service";
@@ -186,6 +187,10 @@ const UNIT_3_SCENARIOS: Record<string, string> = {
 
 export function Unit3VocabWorkspace() {
   const { data: user } = useUser();
+  const [selectedUnit, setSelectedUnit] = useState<3 | 9>(3);
+  const activeWords = selectedUnit === 9 ? GRADE_9_UNIT_9_WORDS : GRADE_9_UNIT_3_WORDS;
+  const activeQuizzes = selectedUnit === 9 ? UNIT_9_QUIZZES : UNIT_3_QUIZZES;
+
   const [activeMode, setActiveMode] = useState<PracticeMode>("flashcards");
   const [selectedWordIndex, setSelectedWordIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -243,7 +248,7 @@ export function Unit3VocabWorkspace() {
     }
   }, [mistakes]);
 
-  const currentWord = GRADE_9_UNIT_3_WORDS[selectedWordIndex];
+  const currentWord = activeWords[selectedWordIndex % activeWords.length];
 
   // Audio pronunciation via unified bilingual speech service (en-GB for English, ar-SA for Arabic)
   const speakWord = (text: string) => {
@@ -279,31 +284,33 @@ export function Unit3VocabWorkspace() {
   };
 
   // Generate 4 multiple-choice options for current practice question
-  const currentPracticeWord =
-    GRADE_9_UNIT_3_WORDS[practiceQuestionIndex % GRADE_9_UNIT_3_WORDS.length];
+  const currentPracticeWord = activeWords[practiceQuestionIndex % activeWords.length];
 
   const practiceOptions = useMemo<Unit3VocabItem[]>(() => {
     const correct = currentPracticeWord;
     if (!correct) return [];
-    const others = GRADE_9_UNIT_3_WORDS.filter((w) => w.id !== correct.id)
+    const others = activeWords
+      .filter((w) => w.id !== correct.id)
       .sort(() => 0.5 - Math.random())
       .slice(0, 3);
     return [correct, ...others].sort(() => 0.5 - Math.random());
-  }, [currentPracticeWord]);
+  }, [currentPracticeWord, activeWords]);
 
   const handleNextPracticeQuestion = () => {
     setSelectedOption(null);
     setIsAnswerChecked(false);
     setSpellingInput("");
     setShowSpellingHint(false);
-    setPracticeQuestionIndex((i) => (i + 1) % GRADE_9_UNIT_3_WORDS.length);
+    setPracticeQuestionIndex((i) => (i + 1) % activeWords.length);
   };
 
-  // Match grid pairs (3 sets of 8 words covering all 24 words)
+  // Match grid pairs
   const matchWords = useMemo(() => {
-    const start = (matchSetIndex % 3) * 8;
-    return GRADE_9_UNIT_3_WORDS.slice(start, start + 8);
-  }, [matchSetIndex]);
+    const pageSize = Math.min(8, activeWords.length);
+    const setsCount = Math.max(1, Math.floor(activeWords.length / pageSize));
+    const start = (matchSetIndex % setsCount) * pageSize;
+    return activeWords.slice(start, start + pageSize);
+  }, [matchSetIndex, activeWords]);
 
   const shuffledEnglish = useMemo(() => {
     return [...matchWords].sort(() => 0.5 - Math.random());
@@ -387,15 +394,55 @@ export function Unit3VocabWorkspace() {
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-2 rounded-md bg-primary/15 px-2.5 py-1 text-xs font-bold text-primary">
               <GraduationCap className="size-4" />
-              <span>GRADE 9 — UNIT 3 VOCABULARY LIBRARY</span>
+              <span>
+                {selectedUnit === 9
+                  ? "GRADE 9 — UNIT 9 VOCABULARY & SCIENCE LIBRARY"
+                  : "GRADE 9 — UNIT 3 VOCABULARY LIBRARY"}
+              </span>
             </div>
             <h1 className="font-display text-2xl md:text-3xl font-extrabold text-foreground">
-              Food, Culture & Healthy Living
+              {selectedUnit === 9
+                ? "Science, Technology & Future Innovations"
+                : "Food, Culture & Healthy Living"}
             </h1>
             <p className="text-xs md:text-sm text-muted-foreground max-w-2xl leading-relaxed">
-              Master all 24 official British vocabulary words with accurate Arabic definitions,
-              audio pronunciation, 10 practice modes, and 5 interactive quizzes.
+              {selectedUnit === 9
+                ? "Master Unit 9 scientific terms, algorithms, sustainable systems, and innovation vocabulary with interactive quizzes and practice tests."
+                : "Master all 24 official British vocabulary words with accurate Arabic definitions, audio pronunciation, practice modes, and quizzes."}
             </p>
+
+            {/* Unit Switcher */}
+            <div className="flex flex-wrap items-center gap-2 pt-2">
+              <span className="text-xs font-semibold text-muted-foreground">Select Unit:</span>
+              <Button
+                type="button"
+                size="sm"
+                variant={selectedUnit === 3 ? "glow" : "outline"}
+                onClick={() => {
+                  setSelectedUnit(3);
+                  setSelectedWordIndex(0);
+                  setPracticeQuestionIndex(0);
+                  setActiveQuizTier(UNIT_3_QUIZZES[0] ?? null);
+                }}
+                className="h-7 text-xs font-bold cursor-pointer"
+              >
+                Unit 3 (24 Words)
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={selectedUnit === 9 ? "glow" : "outline"}
+                onClick={() => {
+                  setSelectedUnit(9);
+                  setSelectedWordIndex(0);
+                  setPracticeQuestionIndex(0);
+                  setActiveQuizTier(UNIT_9_QUIZZES[0] ?? null);
+                }}
+                className="h-7 text-xs font-bold cursor-pointer"
+              >
+                Unit 9 — Science &amp; Tech (24 Words &amp; Tests)
+              </Button>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
@@ -403,7 +450,9 @@ export function Unit3VocabWorkspace() {
             <div className="rounded-xl border border-border/70 bg-background/70 px-4 py-2.5 text-center">
               <div className="text-2xl font-black font-display text-primary">
                 {knownWords.size}
-                <span className="text-sm font-normal text-muted-foreground">/24</span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  /{activeWords.length}
+                </span>
               </div>
               <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Words Mastered
@@ -437,7 +486,7 @@ export function Unit3VocabWorkspace() {
                   setSpellingInput("");
                   setShowSpellingHint(false);
                   if (mode.id === "quiz" && !activeQuizTier) {
-                    setActiveQuizTier(UNIT_3_QUIZZES[0] ?? null);
+                    setActiveQuizTier(activeQuizzes[0] ?? null);
                   }
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${

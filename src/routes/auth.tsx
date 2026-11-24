@@ -45,7 +45,7 @@ function AuthPage() {
     if (busy) return;
     setBusy(true);
     try {
-      await signInAsAnonymousGuest();
+      await signInAsAnonymousGuest(lang);
       await qc.invalidateQueries();
       void navigate({ to: redirectTo as never });
     } catch (err) {

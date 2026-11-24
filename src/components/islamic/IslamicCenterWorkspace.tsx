@@ -31,7 +31,6 @@ import {
   Bell,
   HelpCircle,
   ShieldCheck,
-  Compass,
   ScrollText,
   Scale,
   Search,
@@ -213,57 +212,45 @@ export const IslamicCenterWorkspace: React.FC<IslamicCenterWorkspaceProps> = ({
       dir={isAr ? "rtl" : "ltr"}
       data-testid="islamic-center-workspace"
     >
-      {/* Platform Section Brand Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950 via-teal-950 to-slate-950 p-6 sm:p-8 text-white shadow-lg border border-emerald-500/30">
-        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-200 text-xs font-semibold border border-emerald-400/30">
-              <Compass className="w-3.5 h-3.5 text-emerald-300" />
-              <span>{isAr ? "المركز الإسلامي الشامل" : "Islamic Center · Study & Worship"}</span>
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold font-serif tracking-tight">
-              {isAr ? "المركز الإسلامي الشامل" : "Islamic Center & Quranic Heritage"}
-            </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/85 max-w-2xl leading-relaxed">
-              {isAr
-                ? "تجربة إسلامية قرآنية متكاملة وموثقة: مصحف المدينة برسم عثماني أصيل، تلاوات بأصوات كبار المشايخ، مواقيت الصلاة الفلكية، الأذكار اليومية، والأربعون النووية."
-                : "Authentic Quran recitation & Uthmani script Mushaf, scholarly reciters, astronomical prayer times, verified daily Adhkar, and the Forty Nawawi Hadith."}
-            </p>
-          </div>
+      {/* Clean Compact Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 dark:border-stone-800 pb-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-bold font-serif tracking-tight text-stone-900 dark:text-stone-100">
+            {isAr ? "المركز الإسلامي" : "Islamic Center"}
+          </h1>
+          <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 max-w-2xl">
+            {isAr
+              ? "مصحف المدينة المنورة، تلاوات MP3 لجميع السور، التفسير، مواقيت الصلاة، والأذكار."
+              : "Uthmani Quran Mushaf, direct MP3 recitations, Tafsir, Prayer Times, and daily worship tools."}
+          </p>
+        </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => setActiveTab("search")}
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition-colors whitespace-nowrap"
-            >
-              <Search className="w-4 h-4" />
-              <span>{isAr ? "البحث في المركز الإسلامي" : "Search Islamic Center"}</span>
-            </button>
-
-            <div className="flex items-center gap-2 text-xs bg-black/35 px-4 py-2.5 rounded-xl border border-emerald-500/30 text-emerald-100">
-              <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
-              <div className="text-start">
-                <div className="font-bold">
-                  {isAr ? "محتوى شرعي موثق" : "Verified Authentic Texts"}
-                </div>
-                <div className="text-[11px] text-emerald-200/80">
-                  {isAr
-                    ? "بدون أصوات ذكاء اصطناعي أو تحريف"
-                    : "No AI-fabricated verses, hadith, or synthetic recitation"}
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setActiveTab("listening")}
+            className="inline-flex min-h-[42px] items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-semibold transition-colors whitespace-nowrap"
+          >
+            <Headphones className="w-4 h-4" />
+            <span>{isAr ? "تلاوات MP3" : "Quran MP3s"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("search")}
+            className="inline-flex min-h-[42px] items-center gap-1.5 px-3.5 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 hover:border-emerald-600 text-stone-800 dark:text-stone-200 text-xs font-semibold transition-colors whitespace-nowrap"
+          >
+            <Search className="w-4 h-4" />
+            <span>{isAr ? "بحث" : "Search"}</span>
+          </button>
         </div>
       </div>
 
-      {/* Humble Theological & Privacy Safeguard Notice */}
+      {/* Quiet Sincerity & Privacy Note */}
       <div
         data-testid="islamic-sincerity-notice"
-        className="flex items-start gap-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xs text-stone-800 dark:text-emerald-100"
+        className="flex items-start gap-2 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50/70 dark:bg-stone-900/60 px-3.5 py-2.5 text-xs text-stone-600 dark:text-stone-300"
       >
-        <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+        <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-700 dark:text-emerald-400 mt-0.5" />
         <span>
           {isAr
             ? "تنبيه الإخلاص والخصوصية: لا تقيس المنصة الأجر الإلهي ولا تمنح نقاطاً على العبادات، فالأجر والقبول عند الله وحده. وتبقى سجلات عبادتك الشخصية وأذكارك خاصة بك على جهازك ولا تُعرض في أي لوحة عامة."
@@ -271,48 +258,38 @@ export const IslamicCenterWorkspace: React.FC<IslamicCenterWorkspaceProps> = ({
         </span>
       </div>
 
-      {/* Structured 4-Category Navigation Grid */}
+      {/* Simple Flat Section Tabs */}
       <nav
         aria-label={isAr ? "أقسام المركز الإسلامي" : "Islamic Center Sections"}
-        className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4"
+        className="space-y-2"
         data-testid="islamic-center-nav"
       >
-        {navGroups.map((group) => (
-          <div
-            key={group.id}
-            className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50/80 dark:bg-stone-900/80 p-2.5 space-y-1.5"
-          >
-            <div className="px-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
-              {isAr ? group.titleAr : group.titleEn}
-            </div>
-            <div className="grid grid-cols-2 gap-1">
-              {group.items.map((item) => {
-                const isCurrent = activeTab === item.id;
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setActiveTab(item.id)}
-                    aria-pressed={isCurrent}
-                    className={`flex min-h-[44px] items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-semibold transition-colors text-start ${
-                      isCurrent
-                        ? "bg-emerald-700 text-white shadow-sm"
-                        : "text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-stone-200/70 dark:hover:bg-stone-800"
-                    }`}
-                  >
-                    <Icon
-                      className={`w-3.5 h-3.5 shrink-0 ${isCurrent ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`}
-                    />
-                    <span className="leading-snug break-words">
-                      {isAr ? item.nameAr : item.nameEn}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {navGroups
+            .flatMap((g) => g.items)
+            .map((item) => {
+              const isCurrent = activeTab === item.id;
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveTab(item.id)}
+                  aria-pressed={isCurrent}
+                  className={`inline-flex min-h-[40px] items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap ${
+                    isCurrent
+                      ? "bg-emerald-700 text-white shadow-xs"
+                      : "bg-stone-100/90 dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200/70 dark:hover:bg-stone-800"
+                  }`}
+                >
+                  <Icon
+                    className={`w-3.5 h-3.5 shrink-0 ${isCurrent ? "text-white" : "text-emerald-700 dark:text-emerald-400"}`}
+                  />
+                  <span>{isAr ? item.nameAr : item.nameEn}</span>
+                </button>
+              );
+            })}
+        </div>
       </nav>
 
       {/* Subsection Content Renderers */}

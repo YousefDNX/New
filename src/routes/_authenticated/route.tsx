@@ -6,6 +6,7 @@ import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
 import { ProtectedRoute, useAuth } from "@/lib/auth";
 import {
   resolveUserSignInProvider,
+  signInAsAnonymousGuest,
   userRequiresEmailVerification,
   waitForAuthReady,
 } from "@/lib/firebase-auth";
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/_authenticated")({
     let user = await waitForAuthReady();
     if (!user) {
       try {
-        user = await signInAsAnonymousGuest();
+        user = await signInAsAnonymousGuest("en");
       } catch (err) {
         console.warn("Auto-guest signIn failed:", err);
       }
