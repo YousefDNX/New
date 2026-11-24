@@ -1,0 +1,51 @@
+{
+  "name": "BTC — BE THE CHANGE",
+  "short_name": "BTC",
+  "description": "BTC — BE THE CHANGE | International Student Technology & Innovation Platform",
+  "id": "/app",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "dir": "auto",
+  "background_color": "#0e1522",
+  "theme_color": "#0e1522",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Growth Map",
+      "short_name": "Growth",
+      "url": "/app"
+    },
+    {
+      "name": "Study Hub",
+      "short_name": "Study",
+      "url": "/app/study"
+    },
+    {
+      "name": "Settings & Themes",
+      "short_name": "Settings",
+      "url": "/app/settings"
+    }
+  ]
+}

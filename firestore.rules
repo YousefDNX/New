@@ -1,0 +1,2185 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Reusable Hardened Primitives
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isEligibleUser() {
+      return isSignedIn() && (
+        request.auth.token.firebase.sign_in_provider == 'google.com' ||
+        request.auth.token.firebase.sign_in_provider == 'anonymous' ||
+        request.auth.token.firebase.sign_in_provider == 'phone' ||
+        request.auth.token.email_verified == true
+      );
+    }
+
+    function isOwner(userId) {
+      return isEligibleUser() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isEligibleUser() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email_verified == true && request.auth.token.email == 'alshbrawe7373@gmail.com')
+      );
+    }
+
+    function hasStaffRole(allowedRoles) {
+      return isEligibleUser()
+        && exists(/databases/$(database)/documents/staff_roles/$(request.auth.uid))
+        && get(/databases/$(database)/documents/staff_roles/$(request.auth.uid)).data.role in allowedRoles;
+    }
+
+    function isStaff() {
+      return isAdmin() || hasStaffRole(['founder', 'admin', 'support', 'moderator', 'content_manager']);
+    }
+
+    function canManageHelp() {
+      return isAdmin() || hasStaffRole(['founder', 'admin', 'content_manager']);
+    }
+
+    function isCircleMember(circleId) {
+      return isEligibleUser()
+        && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
+    }
+
+    function isCircleOwner(circleId) {
+      return isEligibleUser()
+        && exists(/databases/$(database)/documents/circles/$(circleId))
+        && get(/databases/$(database)/documents/circles/$(circleId)).data.owner_id == request.auth.uid;
+    }
+
+    function isOptionalString(data, field, maxLen) {
+      return !(field in data) || data[field] == null || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function isOptionalBool(data, field) {
+      return !(field in data) || data[field] is bool;
+    }
+
+    function isOptionalNumberRange(data, field, minVal, maxVal) {
+      return !(field in data) || data[field] == null || (data[field] is number && data[field] >= minVal && data[field] <= maxVal);
+    }
+
+    function isOptionalEnum(data, field, allowed) {
+      return !(field in data) || data[field] == null || data[field] in allowed;
+    }
+
+    function isOptionalList(data, field, maxItems) {
+      return !(field in data) || data[field] == null || (data[field] is list && data[field].size() <= maxItems);
+    }
+
+    function isBoundedStringList(data, field, maxItems) {
+      return !(field in data) || (
+        data[field] is list
+        && data[field].size() <= maxItems
+        && (data[field].size() == 0 || data[field][0] is string)
+      );
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidProfile(data, userId) {
+      return data.keys().hasAll([
+          'id',
+          'display_name',
+          'language',
+          'region',
+          'onboarded',
+          'parental_consent',
+          'is_anonymous'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'display_name',
+          'avatar_url',
+          'language',
+          'region',
+          'date_of_birth',
+          'age_band',
+          'grade_level',
+          'school_name',
+          'preferred_subjects',
+          'learning_goals',
+          'parental_consent',
+          'onboarded',
+          'is_anonymous',
+          'auth_provider',
+          'email_verified',
+          'phone_number',
+          'created_at',
+          'updated_at'
+        ])
+        && data.id == userId
+        && isValidId(data.id)
+        && data.display_name is string
+        && data.display_name.size() >= 1
+        && data.display_name.size() <= 60
+        && data.language in ['en', 'ar', 'ja', 'fr', 'de', 'zh-CN', 'ko']
+        && data.region in ['kuwait', 'gcc', 'global']
+        && data.onboarded is bool
+        && data.parental_consent is bool
+        && data.is_anonymous is bool
+        && isOptionalString(data, 'avatar_url', 512)
+        && isOptionalString(data, 'date_of_birth', 20)
+        && isOptionalString(data, 'age_band', 20)
+        && isOptionalString(data, 'grade_level', 60)
+        && isOptionalString(data, 'school_name', 120)
+        && isBoundedStringList(data, 'preferred_subjects', 12)
+        && isOptionalString(data, 'learning_goals', 300)
+        && isOptionalString(data, 'auth_provider', 64)
+        && isOptionalBool(data, 'email_verified')
+        && isOptionalString(data, 'phone_number', 32)
+        && isOptionalString(data, 'created_at', 40)
+        && isOptionalString(data, 'updated_at', 40);
+    }
+
+    function isValidUserSettingsKeys(data) {
+      return data.keys().hasAll([
+          'user_id',
+          'theme',
+          'font_scale',
+          'dyslexia_font',
+          'high_contrast',
+          'reduced_motion',
+          'ai_share_profile',
+          'ai_share_tasks',
+          'ai_share_growth',
+          'notify_reminders',
+          'notify_community'
+        ])
+        && data.keys().hasOnly([
+          'user_id',
+          'theme',
+          'font_scale',
+          'dyslexia_font',
+          'high_contrast',
+          'reduced_motion',
+          'focus_ring',
+          'simplified_ui',
+          'clear_language',
+          'read_aloud',
+          'read_aloud_rate',
+          'voice_input',
+          'captions_preferred',
+          'accent_color',
+          'custom_accent_hex',
+          'density',
+          'corner_style',
+          'font_family',
+          'reduce_visual_effects',
+          'reading_layout',
+          'default_home_tab',
+          'dashboard_hidden_widgets',
+          'dashboard_widget_order',
+          'ui_theme',
+          'card_style',
+          'border_style',
+          'shadow_level',
+          'animation_level',
+          'bg_style',
+          'heading_scale',
+          'line_height',
+          'letter_spacing',
+          'font_weight',
+          'readability_preset',
+          'layout_workspace',
+          'sidebar_mode',
+          'show_quick_actions',
+          'timezone',
+          'date_format',
+          'time_format',
+          'first_day_of_week',
+          'calendar_type',
+          'measurement_units',
+          'opportunity_scope',
+          'study_explanation_lang',
+          'study_complexity',
+          'study_detail_level',
+          'study_step_by_step',
+          'study_examples_first',
+          'study_visual_aids',
+          'study_practice_questions',
+          'study_flashcard_style',
+          'study_quiz_difficulty',
+          'study_session_minutes',
+          'study_break_minutes',
+          'study_revision_reminders',
+          'ai_response_lang',
+          'ai_response_length',
+          'ai_tone',
+          'ai_clarifying_questions',
+          'ai_share_profile',
+          'ai_share_tasks',
+          'ai_share_growth',
+          'ai_remember_preferences',
+          'ai_save_history',
+          'ai_proactive_suggestions',
+          'ai_notifications',
+          'notify_reminders',
+          'notify_tasks',
+          'notify_calendar',
+          'notify_streak',
+          'notify_opportunities',
+          'notify_community',
+          'notify_teams',
+          'notify_email_enabled',
+          'notify_push_enabled',
+          'notify_frequency',
+          'quiet_hours_enabled',
+          'quiet_hours_start',
+          'quiet_hours_end',
+          'keep_signed_in',
+          'profile_visibility',
+          'show_in_circle',
+          'ui_mode',
+          'theme_preset_id',
+          'layout_mode',
+          'updated_at'
+        ]);
+    }
+
+    function isValidUserSettingsCore(data, userId) {
+      return data.user_id == userId
+        && isValidId(data.user_id)
+        && data.theme in ['dark', 'light', 'system']
+        && data.font_scale is number && data.font_scale >= 0.8 && data.font_scale <= 1.6
+        && data.dyslexia_font is bool
+        && data.high_contrast is bool
+        && data.reduced_motion is bool
+        && isOptionalBool(data, 'focus_ring')
+        && isOptionalBool(data, 'simplified_ui')
+        && isOptionalBool(data, 'clear_language')
+        && isOptionalBool(data, 'read_aloud')
+        && isOptionalNumberRange(data, 'read_aloud_rate', 0.5, 2.0)
+        && isOptionalBool(data, 'voice_input')
+        && isOptionalBool(data, 'captions_preferred')
+        && isOptionalString(data, 'updated_at', 40);
+    }
+
+    function isValidUserSettingsAppearance(data) {
+      return isOptionalEnum(data, 'accent_color', ['teal', 'indigo', 'emerald', 'amber', 'rose', 'custom'])
+        && isOptionalString(data, 'custom_accent_hex', 16)
+        && isOptionalEnum(data, 'density', ['compact', 'comfortable', 'spacious'])
+        && isOptionalEnum(data, 'corner_style', ['sharp', 'rounded', 'soft'])
+        && isOptionalEnum(data, 'font_family', ['nexora', 'humanist', 'compact', 'serif', 'arabic', 'cjk', 'accessible'])
+        && isOptionalBool(data, 'reduce_visual_effects')
+        && isOptionalEnum(data, 'reading_layout', ['standard', 'focused'])
+        && isOptionalEnum(data, 'default_home_tab', ['dashboard', 'growthmap', 'history', 'journal', 'overview'])
+        && isOptionalList(data, 'dashboard_hidden_widgets', 10)
+        && isOptionalList(data, 'dashboard_widget_order', 10)
+        && isOptionalEnum(data, 'ui_theme', ['classic', 'minimal', 'focus', 'creative', 'aurora_glass', 'aurora', 'soft_modern', 'creative_neon', 'nordic_frost', 'sepia_study', 'cyber_matrix', 'midnight_purple'])
+        && isOptionalEnum(data, 'card_style', ['elevated', 'flat', 'glass'])
+        && isOptionalEnum(data, 'border_style', ['subtle', 'crisp', 'minimal'])
+        && isOptionalEnum(data, 'shadow_level', ['none', 'soft', 'rich'])
+        && isOptionalEnum(data, 'animation_level', ['full', 'subtle', 'none'])
+        && isOptionalEnum(data, 'bg_style', ['ambient', 'solid', 'grid']);
+    }
+
+    function isValidUserSettingsTypographyLayout(data) {
+      return isOptionalNumberRange(data, 'heading_scale', 0.85, 1.35)
+        && isOptionalNumberRange(data, 'line_height', 1.25, 2.1)
+        && isOptionalNumberRange(data, 'letter_spacing', -0.03, 0.08)
+        && isOptionalEnum(data, 'font_weight', ['regular', 'medium'])
+        && isOptionalEnum(data, 'readability_preset', ['standard', 'comfortable', 'large', 'compact', 'accessibility', 'custom'])
+        && isOptionalEnum(data, 'layout_workspace', ['balanced', 'study', 'productivity', 'minimal'])
+        && isOptionalEnum(data, 'sidebar_mode', ['expanded', 'compact', 'simplified'])
+        && isOptionalBool(data, 'show_quick_actions')
+        && isOptionalEnum(data, 'ui_mode', ['simplified', 'advanced'])
+        && isOptionalString(data, 'theme_preset_id', 64)
+        && isOptionalEnum(data, 'layout_mode', ['classic', 'compact', 'floating', 'right_rail', 'dual_rail', 'mini_drawer', 'top_nav', 'double_header', 'breadcrumb_bar', 'command_dock', 'zen_focus', 'split_study', 'cinema_wide', 'flashcard_stage', 'exam_proctor', 'bento', 'masonry_flow', 'kanban_columns', 'executive_kpi', 'compact_dense', 'bottom_dock', 'thumb_zone', 'prime_academy', 'scholar_codex']);
+    }
+
+    function isValidUserSettingsStudyLocale(data) {
+      return isOptionalString(data, 'timezone', 64)
+        && isOptionalEnum(data, 'date_format', ['auto', 'dmy', 'mdy', 'ymd'])
+        && isOptionalEnum(data, 'time_format', ['12h', '24h'])
+        && isOptionalEnum(data, 'first_day_of_week', ['sunday', 'monday', 'saturday'])
+        && isOptionalEnum(data, 'calendar_type', ['gregorian', 'hijri'])
+        && isOptionalEnum(data, 'measurement_units', ['metric', 'imperial'])
+        && isOptionalEnum(data, 'opportunity_scope', ['local', 'gcc', 'global'])
+        && isOptionalEnum(data, 'study_explanation_lang', ['ui', 'en', 'ar', 'ja', 'fr', 'de', 'zh-CN', 'ko'])
+        && isOptionalEnum(data, 'study_complexity', ['simple', 'balanced', 'advanced'])
+        && isOptionalEnum(data, 'study_detail_level', ['concise', 'standard', 'detailed'])
+        && isOptionalBool(data, 'study_step_by_step')
+        && isOptionalBool(data, 'study_examples_first')
+        && isOptionalBool(data, 'study_visual_aids')
+        && isOptionalBool(data, 'study_practice_questions')
+        && isOptionalEnum(data, 'study_flashcard_style', ['recall', 'spaced', 'cloze'])
+        && isOptionalEnum(data, 'study_quiz_difficulty', ['adaptive', 'foundation', 'challenge'])
+        && isOptionalNumberRange(data, 'study_session_minutes', 5, 180)
+        && isOptionalNumberRange(data, 'study_break_minutes', 1, 60)
+        && isOptionalBool(data, 'study_revision_reminders');
+    }
+
+    function isValidUserSettingsAiPrivacy(data) {
+      return isOptionalEnum(data, 'ai_response_lang', ['ui', 'en', 'ar', 'ja', 'fr', 'de', 'zh-CN', 'ko'])
+        && isOptionalEnum(data, 'ai_response_length', ['concise', 'standard', 'detailed'])
+        && isOptionalEnum(data, 'ai_tone', ['coach', 'calm', 'academic'])
+        && isOptionalBool(data, 'ai_clarifying_questions')
+        && data.ai_share_profile is bool
+        && data.ai_share_tasks is bool
+        && data.ai_share_growth is bool
+        && isOptionalBool(data, 'ai_remember_preferences')
+        && isOptionalBool(data, 'ai_save_history')
+        && isOptionalBool(data, 'ai_proactive_suggestions')
+        && isOptionalBool(data, 'ai_notifications')
+        && data.notify_reminders is bool
+        && isOptionalBool(data, 'notify_tasks')
+        && isOptionalBool(data, 'notify_calendar')
+        && isOptionalBool(data, 'notify_streak')
+        && isOptionalBool(data, 'notify_opportunities')
+        && data.notify_community is bool
+        && isOptionalBool(data, 'notify_teams')
+        && isOptionalBool(data, 'notify_email_enabled')
+        && isOptionalBool(data, 'notify_push_enabled')
+        && isOptionalEnum(data, 'notify_frequency', ['instant', 'daily', 'weekly'])
+        && isOptionalBool(data, 'quiet_hours_enabled')
+        && isOptionalString(data, 'quiet_hours_start', 10)
+        && isOptionalString(data, 'quiet_hours_end', 10)
+        && isOptionalBool(data, 'keep_signed_in')
+        && isOptionalEnum(data, 'profile_visibility', ['private', 'team'])
+        && isOptionalBool(data, 'show_in_circle');
+    }
+
+    function isValidUserSettings(data, userId) {
+      return isValidUserSettingsKeys(data)
+        && isValidUserSettingsCore(data, userId)
+        && isValidUserSettingsAppearance(data)
+        && isValidUserSettingsTypographyLayout(data)
+        && isValidUserSettingsStudyLocale(data)
+        && isValidUserSettingsAiPrivacy(data);
+    }
+
+    function isValidUserStats(data, userId) {
+      return data.keys().hasAll(['user_id', 'xp', 'level', 'current_streak', 'longest_streak'])
+        && data.keys().hasOnly(['user_id', 'xp', 'level', 'current_streak', 'longest_streak', 'last_active_date', 'updated_at'])
+        && data.user_id == userId
+        && isValidId(data.user_id)
+        && data.xp is number && data.xp >= 0 && data.xp <= 1000000
+        && data.level is number && data.level >= 1 && data.level <= 200
+        && data.current_streak is number && data.current_streak >= 0 && data.current_streak <= 5000
+        && data.longest_streak is number && data.longest_streak >= 0 && data.longest_streak <= 5000
+        && isOptionalString(data, 'last_active_date', 20)
+        && isOptionalString(data, 'updated_at', 40);
+    }
+
+    function isValidTask(data, taskId) {
+      return data.keys().hasAll(['id', 'user_id', 'title', 'priority', 'status', 'created_at'])
+        && data.keys().hasOnly([
+          'id',
+          'user_id',
+          'title',
+          'details',
+          'priority',
+          'status',
+          'area',
+          'subject',
+          'recurrence',
+          'subtasks',
+          'due_at',
+          'goal_id',
+          'completed_at',
+          'created_at'
+        ])
+        && data.id == taskId
+        && isValidId(data.id)
+        && data.user_id == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && isOptionalString(data, 'details', 2000)
+        && data.priority in ['low', 'medium', 'high']
+        && data.status in ['todo', 'in_progress', 'done', 'cancelled']
+        && isOptionalEnum(data, 'area', ['academic', 'productivity', 'growth', 'wellbeing', 'career', 'community'])
+        && isOptionalString(data, 'subject', 60)
+        && isOptionalEnum(data, 'recurrence', ['none', 'daily', 'weekly'])
+        && isOptionalList(data, 'subtasks', 15)
+        && isOptionalString(data, 'due_at', 40)
+        && isOptionalString(data, 'goal_id', 128)
+        && isOptionalString(data, 'completed_at', 40)
+        && data.created_at is string && data.created_at.size() <= 40;
+    }
+
+    function isValidGoal(data, goalId) {
+      return data.keys().hasAll(['id', 'user_id', 'title', 'area', 'status', 'created_at'])
+        && data.keys().hasOnly([
+          'id',
+          'user_id',
+          'title',
+          'area',
+          'status',
+          'is_daily',
+          'last_reset_date',
+          'target_date',
+          'milestones',
+          'completed_at',
+          'created_at'
+        ])
+        && data.id == goalId
+        && isValidId(data.id)
+        && data.user_id == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.area in ['academic', 'productivity', 'growth', 'wellbeing', 'career', 'community']
+        && data.status in ['active', 'paused', 'completed']
+        && isOptionalBool(data, 'is_daily')
+        && isOptionalString(data, 'last_reset_date', 20)
+        && isOptionalString(data, 'target_date', 40)
+        && isOptionalList(data, 'milestones', 12)
+        && isOptionalString(data, 'completed_at', 40)
+        && data.created_at is string && data.created_at.size() <= 40;
+    }
+
+    function isValidActivityEvent(data, eventId) {
+      return data.keys().hasAll(['id', 'user_id', 'event_type', 'area', 'xp', 'created_at'])
+        && data.keys().hasOnly(['id', 'user_id', 'event_type', 'area', 'xp', 'ref_id', 'created_at'])
+        && data.id == eventId
+        && isValidId(data.id)
+        && data.user_id == request.auth.uid
+        && data.event_type is string && data.event_type.size() >= 1 && data.event_type.size() <= 64
+        && data.area in ['academic', 'productivity', 'growth', 'wellbeing', 'career', 'community']
+        && data.xp is number && data.xp >= 0 && data.xp <= 100
+        && isOptionalString(data, 'ref_id', 128)
+        && data.created_at is string && data.created_at.size() <= 40;
+    }
+
+    function isValidStudyItem(data, itemId) {
+      return data.keys().hasAll(['id', 'user_id', 'kind', 'subject', 'title', 'content', 'created_at', 'updated_at'])
+        && data.keys().hasOnly([
+          'id',
+          'user_id',
+          'kind',
+          'subject',
+          'topic',
+          'deck',
+          'title',
+          'content',
+          'simplified_content',
+          'answer',
+          'difficulty',
+          'study_status',
+          'mistake_reason',
+          'mistake_status',
+          'review_count',
+          'next_review_at',
+          'created_at',
+          'updated_at'
+        ])
+        && data.id == itemId
+        && isValidId(data.id)
+        && data.user_id == request.auth.uid
+        && data.kind in ['note', 'flashcard', 'mistake']
+        && data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 60
+        && isOptionalString(data, 'topic', 80)
+        && isOptionalString(data, 'deck', 60)
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.content is string && data.content.size() <= 4000
+        && isOptionalString(data, 'simplified_content', 4000)
+        && isOptionalString(data, 'answer', 2000)
+        && isOptionalEnum(data, 'difficulty', ['easy', 'medium', 'hard'])
+        && isOptionalEnum(data, 'study_status', ['not_started', 'learning', 'needs_review', 'practicing', 'comfortable', 'completed'])
+        && isOptionalString(data, 'mistake_reason', 500)
+        && isOptionalEnum(data, 'mistake_status', ['open', 'reviewed', 'mastered', 'recorded', 'understanding_needed', 'explanation_viewed', 'practice_pending', 'review_scheduled', 'comfortable'])
+        && isOptionalNumberRange(data, 'review_count', 0, 10000)
+        && isOptionalString(data, 'next_review_at', 40)
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidQuizAttempt(data, attemptId) {
+      return data.keys().hasAll(['id', 'user_id', 'subject', 'total_questions', 'correct_count', 'score_pct', 'created_at'])
+        && data.keys().hasOnly(['id', 'user_id', 'subject', 'total_questions', 'correct_count', 'score_pct', 'wrong_item_ids', 'created_at'])
+        && data.id == attemptId
+        && isValidId(data.id)
+        && data.user_id == request.auth.uid
+        && data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 60
+        && data.total_questions is number && data.total_questions >= 1 && data.total_questions <= 100
+        && data.correct_count is number && data.correct_count >= 0 && data.correct_count <= 100
+        && data.score_pct is number && data.score_pct >= 0 && data.score_pct <= 100
+        && isOptionalList(data, 'wrong_item_ids', 50)
+        && data.created_at is string && data.created_at.size() <= 40;
+    }
+
+    function isValidFocusSession(data, sessionId) {
+      return data.keys().hasAll(['id', 'user_id', 'title', 'area', 'duration_minutes', 'completed', 'created_at'])
+        && data.keys().hasOnly(['id', 'user_id', 'title', 'area', 'subject', 'duration_minutes', 'completed', 'created_at'])
+        && data.id == sessionId
+        && isValidId(data.id)
+        && data.user_id == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.area in ['academic', 'productivity', 'growth', 'wellbeing', 'career', 'community']
+        && isOptionalString(data, 'subject', 60)
+        && data.duration_minutes is number && data.duration_minutes >= 1 && data.duration_minutes <= 180
+        && data.completed is bool
+        && data.created_at is string && data.created_at.size() <= 40;
+    }
+
+    function isValidCareEntry(data, entryId) {
+      return data.keys().hasAll(['id', 'user_id', 'mood', 'energy', 'stress_level', 'created_at'])
+        && data.keys().hasOnly(['id', 'user_id', 'mood', 'energy', 'stress_level', 'sleep_hours', 'prompt', 'note', 'created_at'])
+        && data.id == entryId
+        && isValidId(data.id)
+        && data.user_id == request.auth.uid
+        && data.mood in ['calm', 'okay', 'tired', 'stressed', 'overwhelmed', 'focused']
+        && data.energy is number && data.energy >= 1 && data.energy <= 5
+        && data.stress_level is number && data.stress_level >= 1 && data.stress_level <= 5
+        && isOptionalNumberRange(data, 'sleep_hours', 0, 24)
+        && isOptionalString(data, 'prompt', 200)
+        && isOptionalString(data, 'note', 2000)
+        && data.created_at is string && data.created_at.size() <= 40;
+    }
+
+    function isValidJournalEntry(data, entryId) {
+      return data.keys().hasAll([
+          'id',
+          'user_id',
+          'entry_date',
+          'title',
+          'reflection',
+          'area',
+          'mood',
+          'created_at',
+          'updated_at'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'user_id',
+          'entry_date',
+          'title',
+          'reflection',
+          'key_win',
+          'next_step',
+          'subject',
+          'area',
+          'mood',
+          'study_minutes',
+          'tags',
+          'blocker',
+          'gratitude',
+          'created_at',
+          'updated_at'
+        ])
+        && data.id == entryId
+        && isValidId(data.id)
+        && data.user_id == request.auth.uid
+        && data.entry_date is string && data.entry_date.size() >= 10 && data.entry_date.size() <= 20
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.reflection is string && data.reflection.size() >= 1 && data.reflection.size() <= 4000
+        && isOptionalString(data, 'key_win', 300)
+        && isOptionalString(data, 'next_step', 300)
+        && isOptionalString(data, 'subject', 60)
+        && data.area in ['academic', 'productivity', 'growth', 'wellbeing', 'career', 'community']
+        && data.mood in ['focused', 'curious', 'confident', 'challenged', 'reflective', 'energized']
+        && isOptionalNumberRange(data, 'study_minutes', 0, 720)
+        && isBoundedStringList(data, 'tags', 8)
+        && isOptionalString(data, 'blocker', 300)
+        && isOptionalString(data, 'gratitude', 300)
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidFuturePlan(data, planId) {
+      return data.keys().hasAll(['id', 'user_id', 'pathway_id', 'title', 'status', 'created_at', 'updated_at'])
+        && data.keys().hasOnly([
+          'id',
+          'user_id',
+          'pathway_id',
+          'title',
+          'interests',
+          'strengths',
+          'milestones',
+          'notes',
+          'status',
+          'created_at',
+          'updated_at'
+        ])
+        && data.id == planId
+        && isValidId(data.id)
+        && data.user_id == request.auth.uid
+        && data.pathway_id is string && data.pathway_id.size() >= 1 && data.pathway_id.size() <= 80
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && isBoundedStringList(data, 'interests', 10)
+        && isBoundedStringList(data, 'strengths', 10)
+        && isOptionalList(data, 'milestones', 12)
+        && isOptionalString(data, 'notes', 2000)
+        && data.status in ['exploring', 'active', 'achieved']
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidOpportunity(data, oppId) {
+      return data.keys().hasAll([
+          'id',
+          'user_id',
+          'title',
+          'organizer',
+          'category',
+          'region_scope',
+          'source_kind',
+          'status',
+          'created_at',
+          'updated_at'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'user_id',
+          'title',
+          'organizer',
+          'category',
+          'region_scope',
+          'eligibility',
+          'deadline',
+          'cost',
+          'url',
+          'source',
+          'source_kind',
+          'last_verified_at',
+          'status',
+          'notes',
+          'linked_plan_id',
+          'created_at',
+          'updated_at'
+        ])
+        && data.id == oppId
+        && isValidId(data.id)
+        && data.user_id == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.organizer is string && data.organizer.size() >= 1 && data.organizer.size() <= 120
+        && data.category in ['scholarship', 'competition', 'program', 'course', 'initiative', 'internship']
+        && data.region_scope in ['kuwait', 'gcc', 'global']
+        && isOptionalString(data, 'eligibility', 300)
+        && isOptionalString(data, 'deadline', 40)
+        && isOptionalString(data, 'cost', 120)
+        && isOptionalString(data, 'url', 512)
+        && isOptionalString(data, 'source', 200)
+        && data.source_kind in ['manual', 'reference_catalog']
+        && isOptionalString(data, 'last_verified_at', 40)
+        && data.status in ['saved', 'applied', 'archived']
+        && isOptionalString(data, 'notes', 1000)
+        && isOptionalString(data, 'linked_plan_id', 128)
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidAiConversation(data, convId) {
+      return data.keys().hasAll(['id', 'user_id', 'title', 'messages', 'created_at', 'updated_at'])
+        && data.keys().hasOnly(['id', 'user_id', 'title', 'subject', 'messages', 'created_at', 'updated_at'])
+        && data.id == convId
+        && isValidId(data.id)
+        && data.user_id == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && isOptionalString(data, 'subject', 60)
+        && data.messages is list && data.messages.size() <= 60
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidCircleTeam(data, circleId) {
+      return data.keys().hasAll(['id', 'name', 'invite_code', 'owner_id', 'member_uids', 'created_at', 'updated_at'])
+        && data.keys().hasOnly(['id', 'name', 'description', 'subject', 'invite_code', 'owner_id', 'shared_goal', 'member_uids', 'created_at', 'updated_at'])
+        && data.id == circleId
+        && isValidId(data.id)
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+        && isOptionalString(data, 'description', 400)
+        && isOptionalString(data, 'subject', 60)
+        && data.invite_code is string && data.invite_code.size() >= 6 && data.invite_code.size() <= 16
+        && data.invite_code.matches('^[A-Z0-9]+$')
+        && isValidId(data.owner_id)
+        && isOptionalString(data, 'shared_goal', 200)
+        && data.member_uids is list && data.member_uids.size() >= 1 && data.member_uids.size() <= 25
+        && data.member_uids[0] is string
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidCircleInvite(data, inviteCode) {
+      return data.keys().hasAll(['id', 'circle_id', 'circle_name', 'owner_id', 'created_at'])
+        && data.keys().hasOnly(['id', 'circle_id', 'circle_name', 'subject', 'owner_id', 'created_at'])
+        && data.id == inviteCode
+        && isValidId(data.id)
+        && data.id.size() >= 6 && data.id.size() <= 16
+        && isValidId(data.circle_id)
+        && data.circle_name is string && data.circle_name.size() >= 1 && data.circle_name.size() <= 80
+        && isOptionalString(data, 'subject', 60)
+        && data.owner_id == request.auth.uid
+        && data.created_at is string && data.created_at.size() <= 40;
+    }
+
+    function isValidCircleMember(data, circleId, memberUid) {
+      return data.keys().hasAll(['uid', 'circle_id', 'display_name', 'role', 'show_progress', 'joined_at'])
+        && data.keys().hasOnly(['uid', 'circle_id', 'display_name', 'role', 'show_progress', 'xp_snapshot', 'level_snapshot', 'joined_at'])
+        && data.uid == memberUid
+        && isValidId(data.uid)
+        && data.circle_id == circleId
+        && isValidId(data.circle_id)
+        && data.display_name is string && data.display_name.size() >= 1 && data.display_name.size() <= 60
+        && data.role in ['owner', 'member']
+        && data.show_progress is bool
+        && isOptionalNumberRange(data, 'xp_snapshot', 0, 1000000)
+        && isOptionalNumberRange(data, 'level_snapshot', 1, 200)
+        && data.joined_at is string && data.joined_at.size() <= 40;
+    }
+
+    function isValidCirclePost(data, circleId, postId) {
+      return data.keys().hasAll(['id', 'circle_id', 'author_id', 'author_name', 'kind', 'title', 'status', 'member_uids', 'created_at'])
+        && data.keys().hasOnly([
+          'id',
+          'circle_id',
+          'author_id',
+          'author_name',
+          'kind',
+          'title',
+          'body',
+          'resource_url',
+          'assignee_name',
+          'status',
+          'member_uids',
+          'helpful_uids',
+          'created_at'
+        ])
+        && data.id == postId
+        && isValidId(data.id)
+        && data.circle_id == circleId
+        && isValidId(data.circle_id)
+        && isValidId(data.author_id)
+        && data.author_name is string && data.author_name.size() >= 1 && data.author_name.size() <= 60
+        && data.kind in ['discussion', 'resource', 'task']
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && isOptionalString(data, 'body', 2000)
+        && isOptionalString(data, 'resource_url', 512)
+        && isOptionalString(data, 'assignee_name', 60)
+        && data.status in ['open', 'done']
+        && data.member_uids is list && data.member_uids.size() >= 1 && data.member_uids.size() <= 25
+        && data.member_uids[0] is string
+        && isBoundedStringList(data, 'helpful_uids', 25)
+        && data.created_at is string && data.created_at.size() <= 40;
+    }
+
+    function isValidModerationReport(data, reportId) {
+      return data.keys().hasAll(['id', 'reporter_id', 'status', 'created_at'])
+        && data.keys().hasOnly([
+          'id',
+          'reporter_id',
+          'reporter_email',
+          'circle_id',
+          'target_type',
+          'target_id',
+          'reported_target_type',
+          'reported_target_id',
+          'reason',
+          'category',
+          'details',
+          'moderator_notes',
+          'status',
+          'created_at',
+          'updated_at'
+        ])
+        && data.id == reportId
+        && isValidId(data.id)
+        && isValidId(data.reporter_id)
+        && isOptionalString(data, 'reporter_email', 160)
+        && isOptionalString(data, 'circle_id', 128)
+        && isOptionalEnum(data, 'target_type', ['post', 'resource', 'task', 'team'])
+        && isOptionalString(data, 'target_id', 128)
+        && isOptionalEnum(data, 'reported_target_type', ['circle_post', 'circle_member', 'comment', 'resource', 'other'])
+        && isOptionalString(data, 'reported_target_id', 128)
+        && isOptionalEnum(data, 'reason', ['harassment', 'spam', 'pii_exposed', 'inappropriate', 'cheating', 'other'])
+        && isOptionalEnum(data, 'category', ['inappropriate_content', 'harassment', 'spam', 'impersonation', 'unsafe_behavior', 'misleading_content', 'other'])
+        && isOptionalString(data, 'details', 2000)
+        && isOptionalString(data, 'moderator_notes', 1000)
+        && data.status in ['submitted', 'pending', 'reviewed', 'action_taken', 'resolved', 'dismissed']
+        && data.created_at is string && data.created_at.size() <= 40
+        && isOptionalString(data, 'updated_at', 40);
+    }
+
+    function isValidHelpArticle(data, articleId) {
+      return data.keys().hasAll(['id', 'slug', 'title', 'category', 'content', 'published', 'created_at', 'last_updated_at'])
+        && data.keys().hasOnly([
+          'id',
+          'slug',
+          'title',
+          'category',
+          'excerpt',
+          'content',
+          'steps',
+          'tags',
+          'related_article_ids',
+          'published',
+          'author_name',
+          'created_at',
+          'last_updated_at'
+        ])
+        && data.id == articleId
+        && isValidId(data.id)
+        && data.slug is string && data.slug.size() >= 1 && data.slug.size() <= 160
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.category in ['getting_started', 'account', 'growth_map', 'study', 'productivity', 'ai', 'settings', 'troubleshooting']
+        && isOptionalString(data, 'excerpt', 500)
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 15000
+        && isBoundedStringList(data, 'steps', 30)
+        && isBoundedStringList(data, 'tags', 20)
+        && isBoundedStringList(data, 'related_article_ids', 20)
+        && data.published is bool
+        && isOptionalString(data, 'author_name', 100)
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.last_updated_at is string && data.last_updated_at.size() <= 40;
+    }
+
+    function isValidSupportTicket(data, ticketId) {
+      return data.keys().hasAll([
+          'id',
+          'user_id',
+          'subject',
+          'category',
+          'priority',
+          'status',
+          'description',
+          'contact_preference',
+          'messages',
+          'created_at',
+          'updated_at'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'user_id',
+          'user_email',
+          'user_display_name',
+          'subject',
+          'category',
+          'priority',
+          'status',
+          'description',
+          'attachment_url',
+          'contact_preference',
+          'assigned_staff_id',
+          'assigned_staff_name',
+          'resolution_notes',
+          'messages',
+          'created_at',
+          'updated_at'
+        ])
+        && data.id == ticketId
+        && isValidId(data.id)
+        && isValidId(data.user_id)
+        && isOptionalString(data, 'user_email', 160)
+        && isOptionalString(data, 'user_display_name', 100)
+        && data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 200
+        && data.category in ['account', 'login_verification', 'technical', 'study_learning', 'growth_map', 'billing', 'privacy_security', 'general', 'other']
+        && data.priority in ['low', 'medium', 'high', 'urgent']
+        && data.status in ['open', 'in_progress', 'waiting_user', 'resolved', 'closed']
+        && data.description is string && data.description.size() >= 1 && data.description.size() <= 4000
+        && isOptionalString(data, 'attachment_url', 512)
+        && data.contact_preference in ['in_app', 'email']
+        && isOptionalString(data, 'assigned_staff_id', 128)
+        && isOptionalString(data, 'assigned_staff_name', 100)
+        && isOptionalString(data, 'resolution_notes', 2000)
+        && data.messages is list && data.messages.size() <= 100
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidTechnicalReport(data, reportId) {
+      return data.keys().hasAll(['id', 'user_id', 'category', 'title', 'description', 'status', 'created_at', 'updated_at'])
+        && data.keys().hasOnly([
+          'id',
+          'user_id',
+          'user_email',
+          'category',
+          'title',
+          'description',
+          'steps_to_reproduce',
+          'page_url',
+          'browser_info',
+          'attachment_url',
+          'status',
+          'created_at',
+          'updated_at'
+        ])
+        && data.id == reportId
+        && isValidId(data.id)
+        && isValidId(data.user_id)
+        && isOptionalString(data, 'user_email', 160)
+        && data.category in ['broken_button', 'page_not_loading', 'incorrect_result', 'auth_problem', 'settings_not_saving', 'unexpected_error', 'other']
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.description is string && data.description.size() >= 1 && data.description.size() <= 4000
+        && isOptionalString(data, 'steps_to_reproduce', 2000)
+        && isOptionalString(data, 'page_url', 512)
+        && isOptionalString(data, 'browser_info', 512)
+        && isOptionalString(data, 'attachment_url', 512)
+        && data.status in ['open', 'investigating', 'resolved', 'closed']
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidFeedbackItem(data, feedbackId) {
+      return data.keys().hasAll(['id', 'user_id', 'category', 'title', 'description', 'status', 'upvotes', 'upvoted_by', 'created_at', 'updated_at'])
+        && data.keys().hasOnly([
+          'id',
+          'user_id',
+          'user_name',
+          'category',
+          'title',
+          'description',
+          'status',
+          'upvotes',
+          'upvoted_by',
+          'created_at',
+          'updated_at'
+        ])
+        && data.id == feedbackId
+        && isValidId(data.id)
+        && isValidId(data.user_id)
+        && isOptionalString(data, 'user_name', 100)
+        && data.category in ['feature_suggestion', 'usability_feedback', 'content_improvement', 'general']
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.description is string && data.description.size() >= 1 && data.description.size() <= 2000
+        && data.status in ['submitted', 'under_review', 'planned', 'completed', 'closed']
+        && data.upvotes is number && data.upvotes >= 0 && data.upvotes <= 5000
+        && data.upvoted_by is list && data.upvoted_by.size() <= 5000
+        && data.upvotes == data.upvoted_by.size()
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidStaffRole(data, userId) {
+      return data.keys().hasAll(['user_id', 'email', 'role', 'assigned_by', 'created_at', 'updated_at'])
+        && data.keys().hasOnly(['user_id', 'email', 'role', 'assigned_by', 'created_at', 'updated_at'])
+        && data.user_id == userId
+        && isValidId(data.user_id)
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 160
+        && data.role in ['founder', 'admin', 'support', 'moderator', 'content_manager', 'student']
+        && data.assigned_by is string && data.assigned_by.size() >= 1 && data.assigned_by.size() <= 160
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isBoundedMapList(data, field, maxItems) {
+      return !(field in data) || (
+        data[field] is list
+        && data[field].size() <= maxItems
+        && (data[field].size() == 0 || data[field][0] is map)
+      );
+    }
+
+    function isValidQuranPreferences(data, userId) {
+      return data.keys().hasAll([
+          'user_id',
+          'save_enabled',
+          'last_surah',
+          'last_ayah',
+          'last_position_seconds',
+          'preferred_reciter_id',
+          'playback_rate',
+          'volume',
+          'muted',
+          'repeat_mode',
+          'updated_at'
+        ])
+        && data.keys().hasOnly([
+          'user_id',
+          'save_enabled',
+          'last_surah',
+          'last_ayah',
+          'last_position_seconds',
+          'preferred_reciter_id',
+          'playback_rate',
+          'volume',
+          'muted',
+          'repeat_mode',
+          'font_size_step',
+          'reading_theme',
+          'line_spacing',
+          'reading_width',
+          'show_verse_markers',
+          'show_translation',
+          'translation_id',
+          'bookmarks',
+          'reading_history',
+          'updated_at'
+        ])
+        && data.user_id == userId
+        && isValidId(data.user_id)
+        && data.save_enabled is bool
+        && data.last_surah is number && data.last_surah >= 1 && data.last_surah <= 114
+        && data.last_ayah is number && data.last_ayah >= 1 && data.last_ayah <= 286
+        && data.last_position_seconds is number && data.last_position_seconds >= 0 && data.last_position_seconds <= 25000
+        && data.preferred_reciter_id is number && data.preferred_reciter_id >= 1 && data.preferred_reciter_id <= 100
+        && data.playback_rate is number && data.playback_rate >= 0.5 && data.playback_rate <= 2.0
+        && data.volume is number && data.volume >= 0 && data.volume <= 1
+        && data.muted is bool
+        && data.repeat_mode in ['off', 'ayah', 'surah']
+        && isOptionalNumberRange(data, 'font_size_step', 1, 5)
+        && isOptionalEnum(data, 'reading_theme', ['system', 'light', 'dark'])
+        && isOptionalEnum(data, 'line_spacing', ['compact', 'comfortable', 'spacious'])
+        && isOptionalEnum(data, 'reading_width', ['focused', 'wide'])
+        && isOptionalBool(data, 'show_verse_markers')
+        && isOptionalBool(data, 'show_translation')
+        && isOptionalNumberRange(data, 'translation_id', 1, 500)
+        && isBoundedMapList(data, 'bookmarks', 50)
+        && isBoundedMapList(data, 'reading_history', 20)
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidCommunityResource(data, resourceId) {
+      return data.keys().hasAll([
+          'id',
+          'owner_id',
+          'title',
+          'collection',
+          'resource_kind',
+          'subject',
+          'grade_band',
+          'level',
+          'language',
+          'summary',
+          'content',
+          'author',
+          'author_role',
+          'source_attribution',
+          'license',
+          'is_downloadable_permitted',
+          'teacher_curated',
+          'review_status',
+          'last_reviewed_date',
+          'created_at',
+          'updated_at'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'owner_id',
+          'title',
+          'title_ar',
+          'collection',
+          'resource_kind',
+          'subject',
+          'grade_band',
+          'level',
+          'language',
+          'learning_objectives',
+          'summary',
+          'content',
+          'author',
+          'author_role',
+          'source_attribution',
+          'license',
+          'is_downloadable_permitted',
+          'download_size_bytes',
+          'teacher_curated',
+          'review_status',
+          'last_reviewed_date',
+          'quality_score',
+          'created_at',
+          'updated_at'
+        ])
+        && data.id == resourceId
+        && isValidId(data.id)
+        && isValidId(data.owner_id)
+        && data.title is string && data.title.size() >= 3 && data.title.size() <= 200
+        && isOptionalString(data, 'title_ar', 200)
+        && data.collection in ['foundational', 'science', 'languages', 'mathematics', 'life_skills', 'teacher_curated']
+        && data.resource_kind in ['book', 'lesson', 'worksheet', 'guide', 'reference']
+        && data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 80
+        && data.grade_band is string && data.grade_band.size() >= 1 && data.grade_band.size() <= 40
+        && data.level in ['beginner', 'intermediate', 'advanced']
+        && data.language in ['en', 'ar', 'bilingual']
+        && isBoundedStringList(data, 'learning_objectives', 12)
+        && data.summary is string && data.summary.size() >= 5 && data.summary.size() <= 1000
+        && data.content is string && data.content.size() >= 20 && data.content.size() <= 12000
+        && data.author is string && data.author.size() >= 1 && data.author.size() <= 120
+        && data.author_role in ['educator', 'approved_contributor', 'student_mentor']
+        && data.source_attribution is string && data.source_attribution.size() >= 1 && data.source_attribution.size() <= 400
+        && data.license in ['CC-BY-4.0', 'CC-BY-SA-4.0', 'CC0-1.0', 'NEXORA-OER-FREE', 'Attribution-Reference-Only']
+        && data.is_downloadable_permitted is bool
+        && isOptionalNumberRange(data, 'download_size_bytes', 0, 50000000)
+        && data.teacher_curated is bool
+        && data.review_status in ['draft', 'pending_review', 'under_review', 'approved', 'needs_correction', 'outdated', 'archived']
+        && data.last_reviewed_date is string && data.last_reviewed_date.size() <= 40
+        && (!('quality_score' in data) || data.quality_score == null || data.quality_score is map)
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidTeachingGuide(data, guideId) {
+      return data.keys().hasAll([
+          'id',
+          'owner_id',
+          'title',
+          'subject',
+          'pedagogical_model',
+          'target_grade',
+          'learning_objective',
+          'printable_worksheet_outline',
+          'author',
+          'version',
+          'supervisor_approved',
+          'created_at',
+          'updated_at'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'owner_id',
+          'title',
+          'title_ar',
+          'subject',
+          'pedagogical_model',
+          'target_grade',
+          'learning_objective',
+          'remedial_accommodations',
+          'extension_challenges',
+          'printable_worksheet_outline',
+          'multi_angle_explanations',
+          'author',
+          'version',
+          'quality_rating',
+          'rating_count',
+          'supervisor_approved',
+          'safety_notice',
+          'created_at',
+          'updated_at'
+        ])
+        && data.id == guideId
+        && isValidId(data.id)
+        && isValidId(data.owner_id)
+        && data.title is string && data.title.size() >= 3 && data.title.size() <= 200
+        && isOptionalString(data, 'title_ar', 200)
+        && data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 80
+        && data.pedagogical_model in ['5e_inquiry', 'direct_instruction', 'socratic_seminar', 'differentiated_stations']
+        && data.target_grade is string && data.target_grade.size() >= 1 && data.target_grade.size() <= 40
+        && data.learning_objective is string && data.learning_objective.size() >= 5 && data.learning_objective.size() <= 1000
+        && isBoundedStringList(data, 'remedial_accommodations', 15)
+        && isBoundedStringList(data, 'extension_challenges', 15)
+        && data.printable_worksheet_outline is string && data.printable_worksheet_outline.size() >= 5 && data.printable_worksheet_outline.size() <= 4000
+        && (!('multi_angle_explanations' in data) || data.multi_angle_explanations == null || data.multi_angle_explanations is map)
+        && data.author is string && data.author.size() >= 1 && data.author.size() <= 120
+        && data.version is number && data.version >= 1 && data.version <= 100
+        && (!('quality_rating' in data) || data.quality_rating == null || data.quality_rating is map)
+        && isOptionalNumberRange(data, 'rating_count', 0, 100000)
+        && data.supervisor_approved is bool
+        && isOptionalString(data, 'safety_notice', 400)
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidRealWorldProject(data, projectId) {
+      return data.keys().hasAll([
+          'id',
+          'user_id',
+          'category',
+          'title',
+          'problem_definition',
+          'intended_beneficiaries',
+          'educational_purpose',
+          'safe_activity_plan',
+          'supervisor_name',
+          'adult_supervised',
+          'expected_outcomes',
+          'impact_metric_value',
+          'impact_metric_label',
+          'showcase_opt_in',
+          'status',
+          'created_at',
+          'updated_at'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'user_id',
+          'category',
+          'title',
+          'problem_definition',
+          'intended_beneficiaries',
+          'educational_purpose',
+          'safe_activity_plan',
+          'required_permissions',
+          'supervisor_name',
+          'adult_supervised',
+          'expected_outcomes',
+          'evidence_summary',
+          'reflection_and_lessons',
+          'impact_metric_value',
+          'impact_metric_label',
+          'team_aliases',
+          'milestones',
+          'showcase_opt_in',
+          'status',
+          'created_at',
+          'updated_at'
+        ])
+        && data.id == projectId
+        && isValidId(data.id)
+        && isValidId(data.user_id)
+        && data.category in ['reading_initiative', 'educational_support', 'digital_literacy', 'environmental_awareness', 'accessibility_awareness', 'science_education', 'community_knowledge_sharing', 'responsible_tech', 'student_led_learning']
+        && data.title is string && data.title.size() >= 5 && data.title.size() <= 200
+        && data.problem_definition is string && data.problem_definition.size() >= 10 && data.problem_definition.size() <= 2000
+        && data.intended_beneficiaries is string && data.intended_beneficiaries.size() >= 5 && data.intended_beneficiaries.size() <= 500
+        && data.educational_purpose is string && data.educational_purpose.size() >= 5 && data.educational_purpose.size() <= 1000
+        && data.safe_activity_plan is string && data.safe_activity_plan.size() >= 10 && data.safe_activity_plan.size() <= 2000
+        && isBoundedStringList(data, 'required_permissions', 12)
+        && data.supervisor_name is string && data.supervisor_name.size() >= 3 && data.supervisor_name.size() <= 120
+        && data.adult_supervised is bool
+        && data.expected_outcomes is string && data.expected_outcomes.size() >= 5 && data.expected_outcomes.size() <= 1000
+        && isOptionalString(data, 'evidence_summary', 1500)
+        && isOptionalString(data, 'reflection_and_lessons', 1500)
+        && data.impact_metric_value is number && data.impact_metric_value >= 0 && data.impact_metric_value <= 1000000
+        && data.impact_metric_label is string && data.impact_metric_label.size() >= 3 && data.impact_metric_label.size() <= 200
+        && isBoundedStringList(data, 'team_aliases', 15)
+        && isBoundedMapList(data, 'milestones', 15)
+        && data.showcase_opt_in is bool
+        && data.status in ['draft', 'in_progress', 'completed_verified']
+        && data.created_at is string && data.created_at.size() <= 40
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidContentErrorReport(data, reportId) {
+      return data.keys().hasAll([
+          'id',
+          'reporter_id',
+          'resource_id',
+          'resource_title',
+          'kind',
+          'details',
+          'status',
+          'reported_at'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'reporter_id',
+          'resource_id',
+          'resource_title',
+          'kind',
+          'details',
+          'status',
+          'resolution_note',
+          'reported_at'
+        ])
+        && data.id == reportId
+        && isValidId(data.id)
+        && isValidId(data.reporter_id)
+        && data.resource_id is string && data.resource_id.size() >= 1 && data.resource_id.size() <= 128
+        && data.resource_title is string && data.resource_title.size() >= 1 && data.resource_title.size() <= 200
+        && data.kind in ['factual_error', 'broken_link', 'outdated', 'copyright', 'inappropriate', 'accessibility', 'translation_issue', 'outdated_info', 'broken_source', 'accessibility_issue']
+        && data.details is string && data.details.size() >= 10 && data.details.size() <= 2000
+        && data.status in ['open', 'resolved']
+        && isOptionalString(data, 'resolution_note', 1000)
+        && data.reported_at is string && data.reported_at.size() <= 40;
+    }
+
+    function isValidSmartStudyPlan(data, userId) {
+      return data.keys().hasAll([
+          'user_id',
+          'daily_minutes',
+          'preferred_time',
+          'blocked_weekdays',
+          'subjects',
+          'blocks',
+          'updated_at'
+        ])
+        && data.keys().hasOnly([
+          'user_id',
+          'daily_minutes',
+          'preferred_time',
+          'commitments_note',
+          'blocked_weekdays',
+          'subjects',
+          'blocks',
+          'engine',
+          'updated_at'
+        ])
+        && data.user_id == userId
+        && isValidId(data.user_id)
+        && data.daily_minutes is number && data.daily_minutes >= 15 && data.daily_minutes <= 360
+        && data.preferred_time in ['morning', 'afternoon', 'evening']
+        && isOptionalString(data, 'commitments_note', 300)
+        && data.blocked_weekdays is list && data.blocked_weekdays.size() <= 7
+        && isBoundedMapList(data, 'subjects', 16)
+        && isBoundedMapList(data, 'blocks', 40)
+        && isOptionalString(data, 'engine', 40)
+        && data.updated_at is string && data.updated_at.size() <= 40;
+    }
+
+    function isValidExamQuestion(data, questionId) {
+      return data.keys().hasAll([
+          'id',
+          'subject',
+          'topic',
+          'difficulty',
+          'format',
+          'prompt',
+          'model_answer',
+          'explanation',
+          'created_at'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'subject',
+          'topic',
+          'difficulty',
+          'format',
+          'prompt',
+          'options',
+          'correct_index',
+          'accepted_keywords',
+          'model_answer',
+          'explanation',
+          'created_at'
+        ])
+        && data.id == questionId
+        && isValidId(data.id)
+        && data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 80
+        && data.topic is string && data.topic.size() >= 1 && data.topic.size() <= 120
+        && data.difficulty in ['foundation', 'standard', 'challenge']
+        && data.format in ['mcq', 'true_false', 'short_answer', 'written_response']
+        && data.prompt is string && data.prompt.size() >= 5 && data.prompt.size() <= 1000
+        && isBoundedStringList(data, 'options', 8)
+        && isOptionalNumberRange(data, 'correct_index', 0, 7)
+        && isBoundedStringList(data, 'accepted_keywords', 20)
+        && data.model_answer is string && data.model_answer.size() >= 1 && data.model_answer.size() <= 1000
+        && data.explanation is string && data.explanation.size() >= 1 && data.explanation.size() <= 1000
+        && data.created_at is string && data.created_at.size() <= 40;
+    }
+
+    // 4. Collection Rules
+
+    match /test/connection {
+      allow get: if true;
+      allow list, write: if false;
+    }
+
+    match /admins/{adminUid} {
+      allow get: if isValidId(adminUid) && isOwner(adminUid);
+      allow list, write: if false;
+    }
+
+    match /staff_roles/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId) && isAdmin() && isValidStaffRole(incoming(), userId);
+      allow update: if isValidId(userId)
+        && isAdmin()
+        && isValidStaffRole(incoming(), userId)
+        && incoming().user_id == existing().user_id
+        && incoming().created_at == existing().created_at
+        && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'email', 'assigned_by', 'updated_at']);
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    match /profiles/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isStaff());
+      allow list: if (isEligibleUser() && existing().id == request.auth.uid) || isStaff();
+      allow create: if isValidId(userId) && isOwner(userId) && isValidProfile(incoming(), userId);
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidProfile(incoming(), userId)
+        && incoming().id == existing().id
+        && (!('created_at' in existing()) || incoming().created_at == existing().created_at)
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'display_name',
+          'avatar_url',
+          'language',
+          'region',
+          'date_of_birth',
+          'age_band',
+          'grade_level',
+          'school_name',
+          'preferred_subjects',
+          'learning_goals',
+          'parental_consent',
+          'onboarded',
+          'is_anonymous',
+          'auth_provider',
+          'email_verified',
+          'phone_number',
+          'updated_at'
+        ]);
+      allow delete: if isValidId(userId) && isOwner(userId);
+    }
+
+    match /user_settings/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(userId) && isOwner(userId) && isValidUserSettings(incoming(), userId);
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserSettings(incoming(), userId)
+        && incoming().user_id == existing().user_id
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'theme',
+          'font_scale',
+          'dyslexia_font',
+          'high_contrast',
+          'reduced_motion',
+          'focus_ring',
+          'simplified_ui',
+          'clear_language',
+          'read_aloud',
+          'read_aloud_rate',
+          'voice_input',
+          'captions_preferred',
+          'accent_color',
+          'custom_accent_hex',
+          'density',
+          'corner_style',
+          'font_family',
+          'reduce_visual_effects',
+          'reading_layout',
+          'default_home_tab',
+          'dashboard_hidden_widgets',
+          'dashboard_widget_order',
+          'ui_theme',
+          'card_style',
+          'border_style',
+          'shadow_level',
+          'animation_level',
+          'bg_style',
+          'heading_scale',
+          'line_height',
+          'letter_spacing',
+          'font_weight',
+          'readability_preset',
+          'layout_workspace',
+          'sidebar_mode',
+          'show_quick_actions',
+          'timezone',
+          'date_format',
+          'time_format',
+          'first_day_of_week',
+          'calendar_type',
+          'measurement_units',
+          'opportunity_scope',
+          'study_explanation_lang',
+          'study_complexity',
+          'study_detail_level',
+          'study_step_by_step',
+          'study_examples_first',
+          'study_visual_aids',
+          'study_practice_questions',
+          'study_flashcard_style',
+          'study_quiz_difficulty',
+          'study_session_minutes',
+          'study_break_minutes',
+          'study_revision_reminders',
+          'ai_response_lang',
+          'ai_response_length',
+          'ai_tone',
+          'ai_clarifying_questions',
+          'ai_share_profile',
+          'ai_share_tasks',
+          'ai_share_growth',
+          'ai_remember_preferences',
+          'ai_save_history',
+          'ai_proactive_suggestions',
+          'ai_notifications',
+          'notify_reminders',
+          'notify_tasks',
+          'notify_calendar',
+          'notify_streak',
+          'notify_opportunities',
+          'notify_community',
+          'notify_teams',
+          'notify_email_enabled',
+          'notify_push_enabled',
+          'notify_frequency',
+          'quiet_hours_enabled',
+          'quiet_hours_start',
+          'quiet_hours_end',
+          'keep_signed_in',
+          'profile_visibility',
+          'show_in_circle',
+          'ui_mode',
+          'theme_preset_id',
+          'layout_mode',
+          'updated_at'
+        ]);
+      allow delete: if isValidId(userId) && isOwner(userId);
+    }
+
+    match /quran_preferences/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(userId) && isOwner(userId) && isValidQuranPreferences(incoming(), userId);
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidQuranPreferences(incoming(), userId)
+        && incoming().user_id == existing().user_id
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'save_enabled',
+          'last_surah',
+          'last_ayah',
+          'last_position_seconds',
+          'preferred_reciter_id',
+          'playback_rate',
+          'volume',
+          'muted',
+          'repeat_mode',
+          'font_size_step',
+          'reading_theme',
+          'line_spacing',
+          'reading_width',
+          'show_verse_markers',
+          'show_translation',
+          'translation_id',
+          'bookmarks',
+          'reading_history',
+          'updated_at'
+        ]);
+      allow delete: if isValidId(userId) && isOwner(userId);
+    }
+
+    match /user_stats/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(userId) && isOwner(userId) && isValidUserStats(incoming(), userId);
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserStats(incoming(), userId)
+        && incoming().user_id == existing().user_id
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'xp',
+          'level',
+          'current_streak',
+          'longest_streak',
+          'last_active_date',
+          'updated_at'
+        ]);
+      allow delete: if isValidId(userId) && isOwner(userId);
+    }
+
+    match /tasks/{taskId} {
+      allow get: if isValidId(taskId) && isEligibleUser() && (resource == null || existing().user_id == request.auth.uid);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(taskId) && isEligibleUser() && isValidTask(incoming(), taskId);
+      allow update: if isValidId(taskId)
+        && isEligibleUser()
+        && existing().user_id == request.auth.uid
+        && isValidTask(incoming(), taskId)
+        && incoming().id == existing().id
+        && incoming().user_id == existing().user_id
+        && incoming().created_at == existing().created_at
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title',
+          'details',
+          'priority',
+          'status',
+          'area',
+          'subject',
+          'recurrence',
+          'subtasks',
+          'due_at',
+          'goal_id',
+          'completed_at'
+        ]);
+      allow delete: if isValidId(taskId) && isEligibleUser() && existing().user_id == request.auth.uid;
+    }
+
+    match /goals/{goalId} {
+      allow get: if isValidId(goalId) && isEligibleUser() && (resource == null || existing().user_id == request.auth.uid);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(goalId) && isEligibleUser() && isValidGoal(incoming(), goalId);
+      allow update: if isValidId(goalId)
+        && isEligibleUser()
+        && existing().user_id == request.auth.uid
+        && isValidGoal(incoming(), goalId)
+        && incoming().id == existing().id
+        && incoming().user_id == existing().user_id
+        && incoming().created_at == existing().created_at
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title',
+          'area',
+          'status',
+          'is_daily',
+          'last_reset_date',
+          'target_date',
+          'milestones',
+          'completed_at'
+        ]);
+      allow delete: if isValidId(goalId) && isEligibleUser() && existing().user_id == request.auth.uid;
+    }
+
+    match /activity_events/{eventId} {
+      allow get: if isValidId(eventId) && isEligibleUser() && (resource == null || existing().user_id == request.auth.uid);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(eventId) && isEligibleUser() && isValidActivityEvent(incoming(), eventId);
+      allow update: if false;
+      allow delete: if isValidId(eventId) && isEligibleUser() && existing().user_id == request.auth.uid;
+    }
+
+    match /study_items/{itemId} {
+      allow get: if isValidId(itemId) && isEligibleUser() && (resource == null || existing().user_id == request.auth.uid);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(itemId) && isEligibleUser() && isValidStudyItem(incoming(), itemId);
+      allow update: if isValidId(itemId)
+        && isEligibleUser()
+        && existing().user_id == request.auth.uid
+        && isValidStudyItem(incoming(), itemId)
+        && incoming().id == existing().id
+        && incoming().user_id == existing().user_id
+        && incoming().kind == existing().kind
+        && incoming().created_at == existing().created_at
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'subject',
+          'topic',
+          'deck',
+          'title',
+          'content',
+          'simplified_content',
+          'answer',
+          'difficulty',
+          'study_status',
+          'mistake_reason',
+          'mistake_status',
+          'review_count',
+          'next_review_at',
+          'updated_at'
+        ]);
+      allow delete: if isValidId(itemId) && isEligibleUser() && existing().user_id == request.auth.uid;
+    }
+
+    match /quiz_attempts/{attemptId} {
+      allow get: if isValidId(attemptId) && isEligibleUser() && (resource == null || existing().user_id == request.auth.uid);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(attemptId) && isEligibleUser() && isValidQuizAttempt(incoming(), attemptId);
+      allow update: if false;
+      allow delete: if isValidId(attemptId) && isEligibleUser() && existing().user_id == request.auth.uid;
+    }
+
+    match /focus_sessions/{sessionId} {
+      allow get: if isValidId(sessionId) && isEligibleUser() && (resource == null || existing().user_id == request.auth.uid);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(sessionId) && isEligibleUser() && isValidFocusSession(incoming(), sessionId);
+      allow update: if false;
+      allow delete: if isValidId(sessionId) && isEligibleUser() && existing().user_id == request.auth.uid;
+    }
+
+    // Strictly private wellbeing check-ins & personal journal
+    match /care_entries/{entryId} {
+      allow get: if isValidId(entryId) && isEligibleUser() && (resource == null || existing().user_id == request.auth.uid);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(entryId) && isEligibleUser() && isValidCareEntry(incoming(), entryId);
+      allow update: if false;
+      allow delete: if isValidId(entryId) && isEligibleUser() && existing().user_id == request.auth.uid;
+    }
+
+    // Primary daily academic growth journals collection
+    match /journals/{entryId} {
+      allow get: if isValidId(entryId) && isEligibleUser() && (resource == null || existing().user_id == request.auth.uid);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(entryId) && isEligibleUser() && isValidJournalEntry(incoming(), entryId);
+      allow update: if isValidId(entryId)
+        && isEligibleUser()
+        && existing().user_id == request.auth.uid
+        && isValidJournalEntry(incoming(), entryId)
+        && incoming().id == existing().id
+        && incoming().user_id == existing().user_id
+        && incoming().created_at == existing().created_at
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'entry_date',
+          'title',
+          'reflection',
+          'key_win',
+          'next_step',
+          'subject',
+          'area',
+          'mood',
+          'study_minutes',
+          'tags',
+          'blocker',
+          'gratitude',
+          'updated_at'
+        ]);
+      allow delete: if isValidId(entryId) && isEligibleUser() && existing().user_id == request.auth.uid;
+    }
+
+    // Legacy daily academic growth journal entries (backward-compatible)
+    match /journal_entries/{entryId} {
+      allow get: if isValidId(entryId) && isEligibleUser() && (resource == null || existing().user_id == request.auth.uid);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(entryId) && isEligibleUser() && isValidJournalEntry(incoming(), entryId);
+      allow update: if isValidId(entryId)
+        && isEligibleUser()
+        && existing().user_id == request.auth.uid
+        && isValidJournalEntry(incoming(), entryId)
+        && incoming().id == existing().id
+        && incoming().user_id == existing().user_id
+        && incoming().created_at == existing().created_at
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'entry_date',
+          'title',
+          'reflection',
+          'key_win',
+          'next_step',
+          'subject',
+          'area',
+          'mood',
+          'study_minutes',
+          'tags',
+          'blocker',
+          'gratitude',
+          'updated_at'
+        ]);
+      allow delete: if isValidId(entryId) && isEligibleUser() && existing().user_id == request.auth.uid;
+    }
+
+    match /future_plans/{planId} {
+      allow get: if isValidId(planId) && isEligibleUser() && (resource == null || existing().user_id == request.auth.uid);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(planId) && isEligibleUser() && isValidFuturePlan(incoming(), planId);
+      allow update: if isValidId(planId)
+        && isEligibleUser()
+        && existing().user_id == request.auth.uid
+        && isValidFuturePlan(incoming(), planId)
+        && incoming().id == existing().id
+        && incoming().user_id == existing().user_id
+        && incoming().created_at == existing().created_at
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'pathway_id',
+          'title',
+          'interests',
+          'strengths',
+          'milestones',
+          'notes',
+          'status',
+          'updated_at'
+        ]);
+      allow delete: if isValidId(planId) && isEligibleUser() && existing().user_id == request.auth.uid;
+    }
+
+    match /opportunities/{oppId} {
+      allow get: if isValidId(oppId) && isEligibleUser() && (resource == null || existing().user_id == request.auth.uid);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(oppId) && isEligibleUser() && isValidOpportunity(incoming(), oppId);
+      allow update: if isValidId(oppId)
+        && isEligibleUser()
+        && existing().user_id == request.auth.uid
+        && isValidOpportunity(incoming(), oppId)
+        && incoming().id == existing().id
+        && incoming().user_id == existing().user_id
+        && incoming().created_at == existing().created_at
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title',
+          'organizer',
+          'category',
+          'region_scope',
+          'eligibility',
+          'deadline',
+          'cost',
+          'url',
+          'source',
+          'last_verified_at',
+          'status',
+          'notes',
+          'linked_plan_id',
+          'updated_at'
+        ]);
+      allow delete: if isValidId(oppId) && isEligibleUser() && existing().user_id == request.auth.uid;
+    }
+
+    match /ai_conversations/{convId} {
+      allow get: if isValidId(convId) && isEligibleUser() && (resource == null || existing().user_id == request.auth.uid);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(convId) && isEligibleUser() && isValidAiConversation(incoming(), convId);
+      allow update: if isValidId(convId)
+        && isEligibleUser()
+        && existing().user_id == request.auth.uid
+        && isValidAiConversation(incoming(), convId)
+        && incoming().id == existing().id
+        && incoming().user_id == existing().user_id
+        && incoming().created_at == existing().created_at
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title',
+          'subject',
+          'messages',
+          'updated_at'
+        ]);
+      allow delete: if isValidId(convId) && isEligibleUser() && existing().user_id == request.auth.uid;
+    }
+
+    match /circle_invites/{inviteCode} {
+      allow get: if isValidId(inviteCode) && isEligibleUser();
+      allow list: if false;
+      allow create: if isValidId(inviteCode) && isEligibleUser() && isValidCircleInvite(incoming(), inviteCode);
+      allow update: if false;
+      allow delete: if isValidId(inviteCode) && isEligibleUser() && existing().owner_id == request.auth.uid;
+    }
+
+    match /circles/{circleId} {
+      allow get: if isValidId(circleId) && isEligibleUser() && (
+        resource == null || existing().owner_id == request.auth.uid || request.auth.uid in existing().member_uids
+      );
+      allow list: if isEligibleUser() && request.auth.uid in existing().member_uids;
+      allow create: if isValidId(circleId)
+        && isEligibleUser()
+        && isValidCircleTeam(incoming(), circleId)
+        && incoming().owner_id == request.auth.uid
+        && request.auth.uid in incoming().member_uids
+        && incoming().member_uids.size() == 1;
+      allow update: if isValidId(circleId)
+        && isEligibleUser()
+        && isValidCircleTeam(incoming(), circleId)
+        && incoming().id == existing().id
+        && incoming().owner_id == existing().owner_id
+        && incoming().invite_code == existing().invite_code
+        && incoming().created_at == existing().created_at
+        && (
+          (
+            existing().owner_id == request.auth.uid
+            && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'subject', 'shared_goal', 'member_uids', 'updated_at'])
+          ) || (
+            !(request.auth.uid in existing().member_uids)
+            && request.auth.uid in incoming().member_uids
+            && incoming().member_uids.hasAll(existing().member_uids)
+            && incoming().member_uids.size() == existing().member_uids.size() + 1
+            && incoming().diff(existing()).affectedKeys().hasOnly(['member_uids', 'updated_at'])
+          ) || (
+            request.auth.uid in existing().member_uids
+            && !(request.auth.uid in incoming().member_uids)
+            && request.auth.uid != existing().owner_id
+            && existing().member_uids.hasAll(incoming().member_uids)
+            && incoming().member_uids.size() == existing().member_uids.size() - 1
+            && incoming().diff(existing()).affectedKeys().hasOnly(['member_uids', 'updated_at'])
+          )
+        );
+      allow delete: if isValidId(circleId) && isEligibleUser() && existing().owner_id == request.auth.uid;
+
+      match /members/{memberUid} {
+        allow get: if isValidId(circleId) && isValidId(memberUid) && isEligibleUser() && (
+          memberUid == request.auth.uid || isCircleMember(circleId) || isCircleOwner(circleId)
+        );
+        allow list: if isEligibleUser() && isCircleMember(circleId);
+        allow create: if isValidId(circleId)
+          && isValidId(memberUid)
+          && isEligibleUser()
+          && memberUid == request.auth.uid
+          && isValidCircleMember(incoming(), circleId, memberUid)
+          && exists(/databases/$(database)/documents/circles/$(circleId))
+          && (
+            (incoming().role == 'owner' && get(/databases/$(database)/documents/circles/$(circleId)).data.owner_id == request.auth.uid) ||
+            (incoming().role == 'member' && request.auth.uid in get(/databases/$(database)/documents/circles/$(circleId)).data.member_uids)
+          );
+        allow update: if isValidId(circleId)
+          && isValidId(memberUid)
+          && isEligibleUser()
+          && memberUid == request.auth.uid
+          && isCircleMember(circleId)
+          && isValidCircleMember(incoming(), circleId, memberUid)
+          && incoming().uid == existing().uid
+          && incoming().circle_id == existing().circle_id
+          && incoming().role == existing().role
+          && incoming().joined_at == existing().joined_at
+          && incoming().diff(existing()).affectedKeys().hasOnly(['display_name', 'show_progress', 'xp_snapshot', 'level_snapshot']);
+        allow delete: if isValidId(circleId) && isValidId(memberUid) && isEligibleUser() && (
+          (memberUid == request.auth.uid && existing().role != 'owner') || isCircleOwner(circleId)
+        );
+      }
+
+      match /posts/{postId} {
+        allow get: if isValidId(circleId) && isValidId(postId) && isEligibleUser() && isCircleMember(circleId);
+        allow list: if isEligibleUser() && isCircleMember(circleId);
+        allow create: if isValidId(circleId)
+          && isValidId(postId)
+          && isEligibleUser()
+          && isValidCirclePost(incoming(), circleId, postId)
+          && incoming().author_id == request.auth.uid
+          && isCircleMember(circleId);
+        allow update: if isValidId(circleId)
+          && isValidId(postId)
+          && isEligibleUser()
+          && isCircleMember(circleId)
+          && isValidCirclePost(incoming(), circleId, postId)
+          && incoming().id == existing().id
+          && incoming().circle_id == existing().circle_id
+          && incoming().author_id == existing().author_id
+          && incoming().created_at == existing().created_at
+          && (
+            (
+              existing().author_id == request.auth.uid
+              && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'body', 'resource_url', 'assignee_name', 'status', 'helpful_uids'])
+            ) || (
+              incoming().diff(existing()).affectedKeys().hasOnly(['status', 'helpful_uids'])
+            )
+          );
+        allow delete: if isValidId(circleId) && isValidId(postId) && isEligibleUser() && (
+          existing().author_id == request.auth.uid || isCircleOwner(circleId) || isAdmin()
+        );
+      }
+    }
+
+    match /moderation_reports/{reportId} {
+      allow get: if isValidId(reportId) && isEligibleUser() && (
+        resource == null || existing().reporter_id == request.auth.uid || isStaff()
+      );
+      allow list: if isEligibleUser() && (
+        existing().reporter_id == request.auth.uid || isStaff()
+      );
+      allow create: if isValidId(reportId)
+        && isEligibleUser()
+        && isValidModerationReport(incoming(), reportId)
+        && incoming().reporter_id == request.auth.uid
+        && incoming().status in ['submitted', 'pending'];
+      allow update: if isValidId(reportId)
+        && isStaff()
+        && isValidModerationReport(incoming(), reportId)
+        && incoming().id == existing().id
+        && incoming().reporter_id == existing().reporter_id
+        && incoming().created_at == existing().created_at
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'details', 'moderator_notes', 'updated_at']);
+      allow delete: if isValidId(reportId) && isAdmin();
+    }
+
+    match /help_articles/{articleId} {
+      allow get: if isValidId(articleId) && (resource == null || existing().published == true || canManageHelp());
+      allow list: if existing().published == true || canManageHelp();
+      allow create: if isValidId(articleId) && canManageHelp() && isValidHelpArticle(incoming(), articleId);
+      allow update: if isValidId(articleId)
+        && canManageHelp()
+        && isValidHelpArticle(incoming(), articleId)
+        && incoming().id == existing().id
+        && incoming().created_at == existing().created_at
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'slug',
+          'title',
+          'category',
+          'excerpt',
+          'content',
+          'steps',
+          'tags',
+          'related_article_ids',
+          'published',
+          'last_updated_at',
+          'author_name'
+        ]);
+      allow delete: if isValidId(articleId) && canManageHelp();
+    }
+
+    match /support_tickets/{ticketId} {
+      allow get: if isValidId(ticketId) && isEligibleUser() && (
+        resource == null || existing().user_id == request.auth.uid || isStaff()
+      );
+      allow list: if isEligibleUser() && (
+        existing().user_id == request.auth.uid || isStaff()
+      );
+      allow create: if isValidId(ticketId)
+        && isEligibleUser()
+        && isValidSupportTicket(incoming(), ticketId)
+        && incoming().user_id == request.auth.uid
+        && incoming().status == 'open';
+      allow update: if isValidId(ticketId)
+        && isEligibleUser()
+        && isValidSupportTicket(incoming(), ticketId)
+        && incoming().id == existing().id
+        && incoming().user_id == existing().user_id
+        && incoming().created_at == existing().created_at
+        && (
+          (
+            existing().user_id == request.auth.uid
+            && incoming().diff(existing()).affectedKeys().hasOnly(['messages', 'status', 'updated_at'])
+            && incoming().status in ['open', 'in_progress', 'waiting_user']
+          ) || (
+            isStaff()
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'messages',
+              'status',
+              'priority',
+              'assigned_staff_id',
+              'assigned_staff_name',
+              'resolution_notes',
+              'updated_at'
+            ])
+          )
+        );
+      allow delete: if isValidId(ticketId) && isAdmin();
+    }
+
+    match /technical_reports/{reportId} {
+      allow get: if isValidId(reportId) && isEligibleUser() && (
+        resource == null || existing().user_id == request.auth.uid || isStaff()
+      );
+      allow list: if isEligibleUser() && (
+        existing().user_id == request.auth.uid || isStaff()
+      );
+      allow create: if isValidId(reportId)
+        && isEligibleUser()
+        && isValidTechnicalReport(incoming(), reportId)
+        && incoming().user_id == request.auth.uid
+        && incoming().status == 'open';
+      allow update: if isValidId(reportId)
+        && isStaff()
+        && isValidTechnicalReport(incoming(), reportId)
+        && incoming().id == existing().id
+        && incoming().user_id == existing().user_id
+        && incoming().created_at == existing().created_at
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updated_at']);
+      allow delete: if isValidId(reportId) && isAdmin();
+    }
+
+    match /feedback_items/{feedbackId} {
+      allow get: if isValidId(feedbackId) && isEligibleUser();
+      allow list: if isEligibleUser();
+      allow create: if isValidId(feedbackId)
+        && isEligibleUser()
+        && isValidFeedbackItem(incoming(), feedbackId)
+        && incoming().user_id == request.auth.uid
+        && incoming().status == 'submitted';
+      allow update: if isValidId(feedbackId)
+        && isEligibleUser()
+        && isValidFeedbackItem(incoming(), feedbackId)
+        && incoming().id == existing().id
+        && incoming().user_id == existing().user_id
+        && incoming().created_at == existing().created_at
+        && (
+          (
+            isStaff()
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'upvotes', 'upvoted_by', 'updated_at'])
+          ) || (
+            incoming().diff(existing()).affectedKeys().hasOnly(['upvotes', 'upvoted_by', 'updated_at'])
+          )
+        );
+      allow delete: if isValidId(feedbackId) && (
+        (isEligibleUser() && existing().user_id == request.auth.uid) || isAdmin()
+      );
+    }
+
+    match /community_resources/{resourceId} {
+      allow get: if isValidId(resourceId) && (
+        resource == null
+        || existing().review_status == 'approved'
+        || (isEligibleUser() && existing().owner_id == request.auth.uid)
+        || isStaff()
+      );
+      allow list: if existing().review_status == 'approved'
+        || (isEligibleUser() && existing().owner_id == request.auth.uid)
+        || isStaff();
+      allow create: if isValidId(resourceId)
+        && isEligibleUser()
+        && isValidCommunityResource(incoming(), resourceId)
+        && incoming().owner_id == request.auth.uid
+        && (incoming().review_status == 'pending_review' || isStaff());
+      allow update: if isValidId(resourceId)
+        && isEligibleUser()
+        && isValidCommunityResource(incoming(), resourceId)
+        && incoming().id == existing().id
+        && incoming().owner_id == existing().owner_id
+        && incoming().created_at == existing().created_at
+        && (
+          isStaff()
+          || (existing().owner_id == request.auth.uid && incoming().review_status == 'pending_review')
+        );
+      allow delete: if isValidId(resourceId) && isAdmin();
+    }
+
+    match /teaching_guides/{guideId} {
+      allow get: if isValidId(guideId) && (
+        resource == null
+        || existing().supervisor_approved == true
+        || (isEligibleUser() && existing().owner_id == request.auth.uid)
+        || isStaff()
+      );
+      allow list: if existing().supervisor_approved == true
+        || (isEligibleUser() && existing().owner_id == request.auth.uid)
+        || isStaff();
+      allow create: if isValidId(guideId)
+        && isEligibleUser()
+        && isValidTeachingGuide(incoming(), guideId)
+        && incoming().owner_id == request.auth.uid
+        && (incoming().supervisor_approved == false || isStaff());
+      allow update: if isValidId(guideId)
+        && isEligibleUser()
+        && isValidTeachingGuide(incoming(), guideId)
+        && incoming().id == existing().id
+        && incoming().owner_id == existing().owner_id
+        && incoming().created_at == existing().created_at
+        && (
+          isStaff()
+          || (existing().owner_id == request.auth.uid && incoming().supervisor_approved == false)
+          || (existing().supervisor_approved == true && incoming().diff(existing()).affectedKeys().hasOnly(['quality_rating', 'rating_count', 'updated_at']))
+        );
+      allow delete: if isValidId(guideId) && isAdmin();
+    }
+
+    match /real_world_projects/{projectId} {
+      allow get: if isValidId(projectId) && (
+        resource == null
+        || (existing().showcase_opt_in == true && existing().adult_supervised == true && existing().status == 'completed_verified')
+        || (isEligibleUser() && existing().user_id == request.auth.uid)
+        || isStaff()
+      );
+      allow list: if (existing().showcase_opt_in == true && existing().adult_supervised == true && existing().status == 'completed_verified')
+        || (isEligibleUser() && existing().user_id == request.auth.uid)
+        || isStaff();
+      allow create: if isValidId(projectId)
+        && isEligibleUser()
+        && isValidRealWorldProject(incoming(), projectId)
+        && incoming().user_id == request.auth.uid
+        && incoming().adult_supervised == true
+        && incoming().status in ['draft', 'in_progress'];
+      allow update: if isValidId(projectId)
+        && isEligibleUser()
+        && isValidRealWorldProject(incoming(), projectId)
+        && incoming().id == existing().id
+        && incoming().user_id == existing().user_id
+        && incoming().created_at == existing().created_at
+        && (
+          isStaff()
+          || (existing().user_id == request.auth.uid && incoming().adult_supervised == true)
+        );
+      allow delete: if isValidId(projectId) && isEligibleUser() && (
+        existing().user_id == request.auth.uid || isAdmin()
+      );
+    }
+
+    match /content_error_reports/{reportId} {
+      allow get: if isValidId(reportId) && isEligibleUser() && (
+        resource == null || existing().reporter_id == request.auth.uid || isStaff()
+      );
+      allow list: if isEligibleUser() && (
+        existing().reporter_id == request.auth.uid || isStaff()
+      );
+      allow create: if isValidId(reportId)
+        && isEligibleUser()
+        && isValidContentErrorReport(incoming(), reportId)
+        && incoming().reporter_id == request.auth.uid
+        && incoming().status == 'open';
+      allow update: if isValidId(reportId)
+        && isStaff()
+        && isValidContentErrorReport(incoming(), reportId)
+        && incoming().id == existing().id
+        && incoming().reporter_id == existing().reporter_id
+        && incoming().reported_at == existing().reported_at
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'resolution_note']);
+      allow delete: if isValidId(reportId) && isAdmin();
+    }
+
+    match /smart_study_plans/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if isEligibleUser() && existing().user_id == request.auth.uid;
+      allow create: if isValidId(userId) && isOwner(userId) && isValidSmartStudyPlan(incoming(), userId);
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidSmartStudyPlan(incoming(), userId)
+        && incoming().user_id == existing().user_id;
+      allow delete: if isValidId(userId) && isOwner(userId);
+    }
+
+    match /exam_questions/{questionId} {
+      allow get: if isValidId(questionId) && isEligibleUser();
+      allow list: if isEligibleUser();
+      allow create: if isValidId(questionId) && isEligibleUser() && isValidExamQuestion(incoming(), questionId);
+      allow update: if isValidId(questionId) && isStaff() && isValidExamQuestion(incoming(), questionId);
+      allow delete: if isValidId(questionId) && isStaff();
+    }
+  }
+}

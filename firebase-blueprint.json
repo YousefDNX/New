@@ -1,0 +1,1651 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "Student Profile",
+      "description": "Core student profile identity, age-gate compliance, onboarding state, academic preferences, and 7-language localization.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Firebase Auth UID matching the document ID."
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "description": "Student display name."
+        },
+        "avatar_url": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Optional profile avatar URL from OAuth provider or preset."
+        },
+        "language": {
+          "type": "string",
+          "enum": ["en", "ar", "ja", "fr", "de", "zh-CN", "ko"],
+          "description": "Preferred UI language across 7 supported languages."
+        },
+        "region": {
+          "type": "string",
+          "enum": ["kuwait", "gcc", "global"],
+          "description": "Student region."
+        },
+        "date_of_birth": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "ISO date of birth string (YYYY-MM-DD)."
+        },
+        "age_band": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Derived age band (13-17, 18+)."
+        },
+        "grade_level": {
+          "type": "string",
+          "maxLength": 60,
+          "description": "Optional grade level or academic stage."
+        },
+        "school_name": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Optional private school or institution name."
+        },
+        "preferred_subjects": {
+          "type": "array",
+          "description": "Optional preferred study subjects (max 12 items)."
+        },
+        "learning_goals": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Personal learning goal summary."
+        },
+        "parental_consent": {
+          "type": "boolean",
+          "description": "Whether parental consent was confirmed for minors 13-17."
+        },
+        "onboarded": {
+          "type": "boolean",
+          "description": "Whether initial onboarding has been completed."
+        },
+        "is_anonymous": {
+          "type": "boolean",
+          "description": "Whether the Firebase Auth user is currently anonymous."
+        },
+        "auth_provider": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Primary Firebase Auth sign-in provider identifier."
+        },
+        "email_verified": {
+          "type": "boolean",
+          "description": "Cached email verification status from Firebase Auth."
+        },
+        "phone_number": {
+          "type": "string",
+          "maxLength": 32,
+          "description": "Verified phone number if authenticated or linked via SMS."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 40
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 40
+        }
+      },
+      "required": [
+        "id",
+        "display_name",
+        "language",
+        "region",
+        "onboarded",
+        "parental_consent",
+        "is_anonymous"
+      ]
+    },
+    "UserSettings": {
+      "title": "User Appearance, Accessibility, Study, AI, Notification, and Privacy Settings",
+      "description": "Per-student comprehensive personalization, WCAG accessibility, locale, study, AI control, notification, and privacy preferences.",
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "theme": { "type": "string", "enum": ["dark", "light", "system"] },
+        "font_scale": { "type": "number" },
+        "dyslexia_font": { "type": "boolean" },
+        "high_contrast": { "type": "boolean" },
+        "reduced_motion": { "type": "boolean" },
+        "focus_ring": { "type": "boolean" },
+        "simplified_ui": { "type": "boolean" },
+        "clear_language": { "type": "boolean" },
+        "read_aloud": { "type": "boolean" },
+        "read_aloud_rate": { "type": "number" },
+        "voice_input": { "type": "boolean" },
+        "captions_preferred": { "type": "boolean" },
+        "accent_color": {
+          "type": "string",
+          "enum": ["teal", "indigo", "emerald", "amber", "rose", "custom"]
+        },
+        "custom_accent_hex": { "type": "string", "maxLength": 16 },
+        "density": { "type": "string", "enum": ["compact", "comfortable", "spacious"] },
+        "corner_style": { "type": "string", "enum": ["sharp", "rounded", "soft"] },
+        "font_family": {
+          "type": "string",
+          "enum": ["nexora", "humanist", "compact", "serif", "arabic", "cjk", "accessible"]
+        },
+        "reduce_visual_effects": { "type": "boolean" },
+        "reading_layout": { "type": "string", "enum": ["standard", "focused"] },
+        "default_home_tab": {
+          "type": "string",
+          "enum": ["dashboard", "growthmap", "history", "journal", "overview"]
+        },
+        "dashboard_hidden_widgets": {
+          "type": "array",
+          "description": "Hidden overview widget IDs."
+        },
+        "dashboard_widget_order": {
+          "type": "array",
+          "description": "Ordered overview widget IDs."
+        },
+        "ui_theme": {
+          "type": "string",
+          "enum": [
+            "classic",
+            "minimal",
+            "focus",
+            "creative",
+            "aurora_glass",
+            "aurora",
+            "soft_modern",
+            "creative_neon",
+            "nordic_frost",
+            "sepia_study",
+            "cyber_matrix",
+            "midnight_purple"
+          ]
+        },
+        "card_style": { "type": "string", "enum": ["elevated", "flat", "glass"] },
+        "border_style": { "type": "string", "enum": ["subtle", "crisp", "minimal"] },
+        "shadow_level": { "type": "string", "enum": ["none", "soft", "rich"] },
+        "animation_level": { "type": "string", "enum": ["full", "subtle", "none"] },
+        "bg_style": { "type": "string", "enum": ["ambient", "solid", "grid"] },
+        "heading_scale": { "type": "number" },
+        "line_height": { "type": "number" },
+        "letter_spacing": { "type": "number" },
+        "font_weight": { "type": "string", "enum": ["regular", "medium"] },
+        "readability_preset": {
+          "type": "string",
+          "enum": ["standard", "comfortable", "large", "compact", "accessibility", "custom"]
+        },
+        "layout_workspace": {
+          "type": "string",
+          "enum": ["balanced", "study", "productivity", "minimal"]
+        },
+        "sidebar_mode": { "type": "string", "enum": ["expanded", "compact", "simplified"] },
+        "show_quick_actions": { "type": "boolean" },
+        "timezone": { "type": "string", "maxLength": 64 },
+        "date_format": { "type": "string", "enum": ["auto", "dmy", "mdy", "ymd"] },
+        "time_format": { "type": "string", "enum": ["12h", "24h"] },
+        "first_day_of_week": { "type": "string", "enum": ["sunday", "monday", "saturday"] },
+        "calendar_type": { "type": "string", "enum": ["gregorian", "hijri"] },
+        "measurement_units": { "type": "string", "enum": ["metric", "imperial"] },
+        "opportunity_scope": { "type": "string", "enum": ["local", "gcc", "global"] },
+        "study_explanation_lang": {
+          "type": "string",
+          "enum": ["ui", "en", "ar", "ja", "fr", "de", "zh-CN", "ko"]
+        },
+        "study_complexity": { "type": "string", "enum": ["simple", "balanced", "advanced"] },
+        "study_detail_level": { "type": "string", "enum": ["concise", "standard", "detailed"] },
+        "study_step_by_step": { "type": "boolean" },
+        "study_examples_first": { "type": "boolean" },
+        "study_visual_aids": { "type": "boolean" },
+        "study_practice_questions": { "type": "boolean" },
+        "study_flashcard_style": { "type": "string", "enum": ["recall", "spaced", "cloze"] },
+        "study_quiz_difficulty": {
+          "type": "string",
+          "enum": ["adaptive", "foundation", "challenge"]
+        },
+        "study_session_minutes": { "type": "number" },
+        "study_break_minutes": { "type": "number" },
+        "study_revision_reminders": { "type": "boolean" },
+        "ai_response_lang": {
+          "type": "string",
+          "enum": ["ui", "en", "ar", "ja", "fr", "de", "zh-CN", "ko"]
+        },
+        "ai_response_length": { "type": "string", "enum": ["concise", "standard", "detailed"] },
+        "ai_tone": { "type": "string", "enum": ["coach", "calm", "academic"] },
+        "ai_clarifying_questions": { "type": "boolean" },
+        "ai_share_profile": { "type": "boolean" },
+        "ai_share_tasks": { "type": "boolean" },
+        "ai_share_growth": { "type": "boolean" },
+        "ai_remember_preferences": { "type": "boolean" },
+        "ai_save_history": { "type": "boolean" },
+        "ai_proactive_suggestions": { "type": "boolean" },
+        "ai_notifications": { "type": "boolean" },
+        "notify_reminders": { "type": "boolean" },
+        "notify_tasks": { "type": "boolean" },
+        "notify_calendar": { "type": "boolean" },
+        "notify_streak": { "type": "boolean" },
+        "notify_opportunities": { "type": "boolean" },
+        "notify_community": { "type": "boolean" },
+        "notify_teams": { "type": "boolean" },
+        "notify_email_enabled": { "type": "boolean" },
+        "notify_push_enabled": { "type": "boolean" },
+        "notify_frequency": { "type": "string", "enum": ["instant", "daily", "weekly"] },
+        "quiet_hours_enabled": { "type": "boolean" },
+        "quiet_hours_start": { "type": "string", "maxLength": 10 },
+        "quiet_hours_end": { "type": "string", "maxLength": 10 },
+        "keep_signed_in": { "type": "boolean" },
+        "profile_visibility": { "type": "string", "enum": ["private", "team"] },
+        "show_in_circle": { "type": "boolean" },
+        "ui_mode": { "type": "string", "enum": ["simplified", "advanced"] },
+        "theme_preset_id": { "type": "string", "maxLength": 64 },
+        "layout_mode": {
+          "type": "string",
+          "enum": [
+            "classic",
+            "compact",
+            "floating",
+            "right_rail",
+            "dual_rail",
+            "mini_drawer",
+            "top_nav",
+            "double_header",
+            "breadcrumb_bar",
+            "command_dock",
+            "zen_focus",
+            "split_study",
+            "cinema_wide",
+            "flashcard_stage",
+            "exam_proctor",
+            "bento",
+            "masonry_flow",
+            "kanban_columns",
+            "executive_kpi",
+            "compact_dense",
+            "bottom_dock",
+            "thumb_zone",
+            "prime_academy",
+            "scholar_codex"
+          ]
+        },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "user_id",
+        "theme",
+        "font_scale",
+        "dyslexia_font",
+        "high_contrast",
+        "reduced_motion",
+        "ai_share_profile",
+        "ai_share_tasks",
+        "ai_share_growth",
+        "notify_reminders",
+        "notify_community"
+      ]
+    },
+    "UserStats": {
+      "title": "Growth Map User Stats",
+      "description": "Student XP, level, and consistency streak metrics.",
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "xp": { "type": "number" },
+        "level": { "type": "number" },
+        "current_streak": { "type": "number" },
+        "longest_streak": { "type": "number" },
+        "last_active_date": { "type": "string", "maxLength": 20 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["user_id", "xp", "level", "current_streak", "longest_streak"]
+    },
+    "Task": {
+      "title": "Student Task",
+      "description": "Student productivity task with Growth Area, subject label, subtasks, and recurrence connected to Growth Map progress.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "details": { "type": "string", "maxLength": 2000 },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "status": { "type": "string", "enum": ["todo", "in_progress", "done", "cancelled"] },
+        "area": {
+          "type": "string",
+          "enum": ["academic", "productivity", "growth", "wellbeing", "career", "community"]
+        },
+        "subject": { "type": "string", "maxLength": 60 },
+        "recurrence": { "type": "string", "enum": ["none", "daily", "weekly"] },
+        "subtasks": {
+          "type": "array",
+          "description": "Bounded checklist of subtasks (max 15)."
+        },
+        "due_at": { "type": "string", "maxLength": 40 },
+        "goal_id": { "type": "string", "maxLength": 128 },
+        "completed_at": { "type": "string", "maxLength": 40 },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["id", "user_id", "title", "priority", "status", "created_at"]
+    },
+    "Goal": {
+      "title": "Growth Goal",
+      "description": "Student Growth Map and daily focus goal across life areas, with optional daily reset date.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "area": {
+          "type": "string",
+          "enum": ["academic", "productivity", "growth", "wellbeing", "career", "community"]
+        },
+        "status": { "type": "string", "enum": ["active", "paused", "completed"] },
+        "is_daily": { "type": "boolean" },
+        "last_reset_date": { "type": "string", "maxLength": 20 },
+        "target_date": { "type": "string", "maxLength": 40 },
+        "milestones": {
+          "type": "array",
+          "description": "Goal milestone checklist items (max 12)."
+        },
+        "completed_at": { "type": "string", "maxLength": 40 },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["id", "user_id", "title", "area", "status", "created_at"]
+    },
+    "ActivityEvent": {
+      "title": "Growth Activity Event",
+      "description": "Immutable XP and Growth Map milestone log entry per student.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "event_type": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "area": {
+          "type": "string",
+          "enum": ["academic", "productivity", "growth", "wellbeing", "career", "community"]
+        },
+        "xp": { "type": "number" },
+        "ref_id": { "type": "string", "maxLength": 128 },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["id", "user_id", "event_type", "area", "xp", "created_at"]
+    },
+    "StudyItem": {
+      "title": "Study Material, Flashcard, or Mistake Entry",
+      "description": "Unified private study record supporting notes, flashcard decks with spaced intervals, and conceptual mistake log entries.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "kind": { "type": "string", "enum": ["note", "flashcard", "mistake"] },
+        "subject": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "topic": { "type": "string", "maxLength": 80 },
+        "deck": { "type": "string", "maxLength": 60 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "content": { "type": "string", "maxLength": 4000 },
+        "simplified_content": { "type": "string", "maxLength": 4000 },
+        "answer": { "type": "string", "maxLength": 2000 },
+        "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+        "study_status": {
+          "type": "string",
+          "enum": [
+            "not_started",
+            "learning",
+            "needs_review",
+            "practicing",
+            "comfortable",
+            "completed"
+          ]
+        },
+        "mistake_reason": { "type": "string", "maxLength": 500 },
+        "mistake_status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "reviewed",
+            "mastered",
+            "recorded",
+            "understanding_needed",
+            "explanation_viewed",
+            "practice_pending",
+            "review_scheduled",
+            "comfortable"
+          ]
+        },
+        "review_count": { "type": "number" },
+        "next_review_at": { "type": "string", "maxLength": 40 },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "user_id",
+        "kind",
+        "subject",
+        "title",
+        "content",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "QuizAttempt": {
+      "title": "Study Practice Quiz Attempt",
+      "description": "Immutable practice quiz score history built from the student's study deck.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "subject": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "total_questions": { "type": "number" },
+        "correct_count": { "type": "number" },
+        "score_pct": { "type": "number" },
+        "wrong_item_ids": { "type": "array", "description": "IDs of missed cards (max 50)." },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "user_id",
+        "subject",
+        "total_questions",
+        "correct_count",
+        "score_pct",
+        "created_at"
+      ]
+    },
+    "FocusSession": {
+      "title": "Pomodoro Focus Session",
+      "description": "Completed deep focus sprint synced with Productivity and Growth Map.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "area": {
+          "type": "string",
+          "enum": ["academic", "productivity", "growth", "wellbeing", "career", "community"]
+        },
+        "subject": { "type": "string", "maxLength": 60 },
+        "duration_minutes": { "type": "number" },
+        "completed": { "type": "boolean" },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["id", "user_id", "title", "area", "duration_minutes", "completed", "created_at"]
+    },
+    "CareEntry": {
+      "title": "Private Wellbeing Check-in & Journal",
+      "description": "Strictly private student wellbeing reflection. Never shared with peers, moderators, or AI.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "mood": {
+          "type": "string",
+          "enum": ["calm", "okay", "tired", "stressed", "overwhelmed", "focused"]
+        },
+        "energy": { "type": "number" },
+        "stress_level": { "type": "number" },
+        "sleep_hours": { "type": "number" },
+        "prompt": { "type": "string", "maxLength": 200 },
+        "note": { "type": "string", "maxLength": 2000 },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["id", "user_id", "mood", "energy", "stress_level", "created_at"]
+    },
+    "FuturePlan": {
+      "title": "Educational & Career Exploration Plan",
+      "description": "Personal career interests, strengths, and educational pathway milestones.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "pathway_id": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "interests": { "type": "array", "description": "Selected interests (max 10)." },
+        "strengths": { "type": "array", "description": "Identified strengths (max 10)." },
+        "milestones": { "type": "array", "description": "Pathway checklist steps (max 12)." },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["exploring", "active", "achieved"] },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["id", "user_id", "pathway_id", "title", "status", "created_at", "updated_at"]
+    },
+    "Opportunity": {
+      "title": "Student Opportunity Tracker Entry",
+      "description": "Saved or student-tracked educational opportunity with transparent source metadata.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "organizer": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "category": {
+          "type": "string",
+          "enum": ["scholarship", "competition", "program", "course", "initiative", "internship"]
+        },
+        "region_scope": { "type": "string", "enum": ["kuwait", "gcc", "global"] },
+        "eligibility": { "type": "string", "maxLength": 300 },
+        "deadline": { "type": "string", "maxLength": 40 },
+        "cost": { "type": "string", "maxLength": 120 },
+        "url": { "type": "string", "maxLength": 512 },
+        "source": { "type": "string", "maxLength": 200 },
+        "source_kind": { "type": "string", "enum": ["manual", "reference_catalog"] },
+        "last_verified_at": { "type": "string", "maxLength": 40 },
+        "status": { "type": "string", "enum": ["saved", "applied", "archived"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "linked_plan_id": { "type": "string", "maxLength": 128 },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "user_id",
+        "title",
+        "organizer",
+        "category",
+        "region_scope",
+        "source_kind",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "AiConversation": {
+      "title": "NEXORA AI Saved Conversation",
+      "description": "Private student AI study conversation history.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "subject": { "type": "string", "maxLength": 60 },
+        "messages": { "type": "array", "description": "Bounded message turns (max 60)." },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["id", "user_id", "title", "messages", "created_at", "updated_at"]
+    },
+    "CircleTeam": {
+      "title": "Knowledge Circle Study Team",
+      "description": "Moderated student collaboration team with non-PII membership.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "description": { "type": "string", "maxLength": 400 },
+        "subject": { "type": "string", "maxLength": 60 },
+        "invite_code": { "type": "string", "minLength": 6, "maxLength": 16 },
+        "owner_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "shared_goal": { "type": "string", "maxLength": 200 },
+        "member_uids": { "type": "array", "description": "Bounded member UID list (max 25)." },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "name",
+        "invite_code",
+        "owner_id",
+        "member_uids",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "CircleInvite": {
+      "title": "Knowledge Circle Invite Code Lookup",
+      "description": "Non-PII lookup record enabling join-by-exact-code without exposing team directory lists.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 6,
+          "maxLength": 16
+        },
+        "circle_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "circle_name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "subject": { "type": "string", "maxLength": 60 },
+        "owner_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["id", "circle_id", "circle_name", "owner_id", "created_at"]
+    },
+    "CircleMember": {
+      "title": "Knowledge Circle Member",
+      "description": "Safe non-PII membership record inside a Knowledge Circle team.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "circle_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "display_name": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "role": { "type": "string", "enum": ["owner", "member"] },
+        "show_progress": { "type": "boolean" },
+        "xp_snapshot": { "type": "number" },
+        "level_snapshot": { "type": "number" },
+        "joined_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["uid", "circle_id", "display_name", "role", "show_progress", "joined_at"]
+    },
+    "CirclePost": {
+      "title": "Knowledge Circle Team Post / Task / Resource",
+      "description": "Team-scoped question, shared resource, or assigned team task.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "circle_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "author_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "author_name": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "kind": { "type": "string", "enum": ["discussion", "resource", "task"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "body": { "type": "string", "maxLength": 2000 },
+        "resource_url": { "type": "string", "maxLength": 512 },
+        "assignee_name": { "type": "string", "maxLength": 60 },
+        "status": { "type": "string", "enum": ["open", "done"] },
+        "member_uids": {
+          "type": "array",
+          "description": "Team member UIDs synced for list queries."
+        },
+        "helpful_uids": {
+          "type": "array",
+          "description": "Bounded helpful reaction UIDs (max 25)."
+        },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "circle_id",
+        "author_id",
+        "author_name",
+        "kind",
+        "title",
+        "status",
+        "member_uids",
+        "created_at"
+      ]
+    },
+    "ModerationReport": {
+      "title": "Community Safety & Moderation Report",
+      "description": "Logged student safety report for Knowledge Circle or platform content.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "reporter_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "reporter_email": { "type": "string", "maxLength": 160 },
+        "circle_id": { "type": "string", "maxLength": 128 },
+        "target_type": { "type": "string", "enum": ["post", "resource", "task", "team"] },
+        "target_id": { "type": "string", "maxLength": 128 },
+        "reported_target_type": {
+          "type": "string",
+          "enum": ["circle_post", "circle_member", "comment", "resource", "other"]
+        },
+        "reported_target_id": { "type": "string", "maxLength": 128 },
+        "reason": {
+          "type": "string",
+          "enum": ["harassment", "spam", "pii_exposed", "inappropriate", "cheating", "other"]
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "inappropriate_content",
+            "harassment",
+            "spam",
+            "impersonation",
+            "unsafe_behavior",
+            "misleading_content",
+            "other"
+          ]
+        },
+        "details": { "type": "string", "maxLength": 2000 },
+        "moderator_notes": { "type": "string", "maxLength": 1000 },
+        "status": {
+          "type": "string",
+          "enum": ["submitted", "pending", "reviewed", "action_taken", "resolved", "dismissed"]
+        },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["id", "reporter_id", "status", "created_at"]
+    },
+    "HelpArticle": {
+      "title": "Help Center Documentation Article",
+      "description": "Searchable help guide and step-by-step documentation authored by NEXORA staff.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "slug": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "category": {
+          "type": "string",
+          "enum": [
+            "getting_started",
+            "account",
+            "growth_map",
+            "study",
+            "productivity",
+            "ai",
+            "settings",
+            "troubleshooting"
+          ]
+        },
+        "excerpt": { "type": "string", "maxLength": 500 },
+        "content": { "type": "string", "minLength": 1, "maxLength": 15000 },
+        "steps": { "type": "array" },
+        "tags": { "type": "array" },
+        "related_article_ids": { "type": "array" },
+        "published": { "type": "boolean" },
+        "author_name": { "type": "string", "maxLength": 100 },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "last_updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "slug",
+        "title",
+        "category",
+        "content",
+        "published",
+        "created_at",
+        "last_updated_at"
+      ]
+    },
+    "SupportTicket": {
+      "title": "Student Support Ticket",
+      "description": "Private student support ticket with status tracking and threaded conversation history.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_email": { "type": "string", "maxLength": 160 },
+        "user_display_name": { "type": "string", "maxLength": 100 },
+        "subject": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "category": {
+          "type": "string",
+          "enum": [
+            "account",
+            "login_verification",
+            "technical",
+            "study_learning",
+            "growth_map",
+            "billing",
+            "privacy_security",
+            "general",
+            "other"
+          ]
+        },
+        "priority": { "type": "string", "enum": ["low", "medium", "high", "urgent"] },
+        "status": {
+          "type": "string",
+          "enum": ["open", "in_progress", "waiting_user", "resolved", "closed"]
+        },
+        "description": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "attachment_url": { "type": "string", "maxLength": 512 },
+        "contact_preference": { "type": "string", "enum": ["in_app", "email"] },
+        "assigned_staff_id": { "type": "string", "maxLength": 128 },
+        "assigned_staff_name": { "type": "string", "maxLength": 100 },
+        "resolution_notes": { "type": "string", "maxLength": 2000 },
+        "messages": { "type": "array" },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "user_id",
+        "subject",
+        "category",
+        "priority",
+        "status",
+        "description",
+        "contact_preference",
+        "messages",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "TechnicalReport": {
+      "title": "Technical Bug & Diagnostic Report",
+      "description": "Student-submitted technical bug report with browser context and reproduction steps.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_email": { "type": "string", "maxLength": 160 },
+        "category": {
+          "type": "string",
+          "enum": [
+            "broken_button",
+            "page_not_loading",
+            "incorrect_result",
+            "auth_problem",
+            "settings_not_saving",
+            "unexpected_error",
+            "other"
+          ]
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "description": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "steps_to_reproduce": { "type": "string", "maxLength": 2000 },
+        "page_url": { "type": "string", "maxLength": 512 },
+        "browser_info": { "type": "string", "maxLength": 512 },
+        "attachment_url": { "type": "string", "maxLength": 512 },
+        "status": { "type": "string", "enum": ["open", "investigating", "resolved", "closed"] },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "user_id",
+        "category",
+        "title",
+        "description",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "FeedbackItem": {
+      "title": "Student Feature Suggestion & Feedback",
+      "description": "Student suggestion and upvote tracking for platform improvements.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_name": { "type": "string", "maxLength": 100 },
+        "category": {
+          "type": "string",
+          "enum": ["feature_suggestion", "usability_feedback", "content_improvement", "general"]
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "description": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "status": {
+          "type": "string",
+          "enum": ["submitted", "under_review", "planned", "completed", "closed"]
+        },
+        "upvotes": { "type": "number" },
+        "upvoted_by": { "type": "array" },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "user_id",
+        "category",
+        "title",
+        "description",
+        "status",
+        "upvotes",
+        "upvoted_by",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "StaffRole": {
+      "title": "Staff RBAC Assignment",
+      "description": "Authorized staff role assignment managed by platform administrators.",
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "email": { "type": "string", "maxLength": 160 },
+        "role": {
+          "type": "string",
+          "enum": ["founder", "admin", "support", "moderator", "content_manager", "student"]
+        },
+        "assigned_by": { "type": "string", "maxLength": 160 },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["user_id", "email", "role", "assigned_by", "created_at", "updated_at"]
+    },
+    "JournalEntry": {
+      "title": "Academic Growth Daily Journal Entry",
+      "description": "Private daily academic and personal growth reflection saved to Firestore to complement Growth Map progress tracking.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "entry_date": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "reflection": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "key_win": { "type": "string", "maxLength": 300 },
+        "next_step": { "type": "string", "maxLength": 300 },
+        "subject": { "type": "string", "maxLength": 60 },
+        "area": {
+          "type": "string",
+          "enum": ["academic", "productivity", "growth", "wellbeing", "career", "community"]
+        },
+        "mood": {
+          "type": "string",
+          "enum": ["focused", "curious", "confident", "challenged", "reflective", "energized"]
+        },
+        "study_minutes": { "type": "number" },
+        "tags": {
+          "type": "array",
+          "description": "Optional topic tags extracted from reflection or entered manually (max 8)."
+        },
+        "blocker": { "type": "string", "maxLength": 300 },
+        "gratitude": { "type": "string", "maxLength": 300 },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "user_id",
+        "entry_date",
+        "title",
+        "reflection",
+        "area",
+        "mood",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "QuranPreferences": {
+      "title": "QuranPreferences",
+      "description": "Optional user-saved Digital Quran Mushaf reading progress, bookmarks, theme, typography, translation, and listening preferences, keyed by Firebase Auth UID.",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string", "maxLength": 128 },
+        "save_enabled": { "type": "boolean" },
+        "last_surah": { "type": "number" },
+        "last_ayah": { "type": "number" },
+        "last_position_seconds": { "type": "number" },
+        "preferred_reciter_id": { "type": "number" },
+        "playback_rate": { "type": "number" },
+        "volume": { "type": "number" },
+        "muted": { "type": "boolean" },
+        "repeat_mode": {
+          "type": "string",
+          "enum": ["off", "ayah", "surah"]
+        },
+        "font_size_step": { "type": "number" },
+        "reading_theme": {
+          "type": "string",
+          "enum": ["system", "light", "dark"]
+        },
+        "line_spacing": {
+          "type": "string",
+          "enum": ["compact", "comfortable", "spacious"]
+        },
+        "reading_width": {
+          "type": "string",
+          "enum": ["focused", "wide"]
+        },
+        "show_verse_markers": { "type": "boolean" },
+        "show_translation": { "type": "boolean" },
+        "translation_id": { "type": "number" },
+        "bookmarks": {
+          "type": "array",
+          "description": "Bounded private ayah bookmarks and saved reading positions (max 50)."
+        },
+        "reading_history": {
+          "type": "array",
+          "description": "Bounded optional reading position history (max 20)."
+        },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "user_id",
+        "save_enabled",
+        "last_surah",
+        "last_ayah",
+        "last_position_seconds",
+        "preferred_reciter_id",
+        "playback_rate",
+        "volume",
+        "muted",
+        "repeat_mode",
+        "updated_at"
+      ]
+    },
+    "CommunityResource": {
+      "title": "NEXORA Community Library Resource",
+      "description": "Structured educational resource with attribution, licensing, and moderation review workflow.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "owner_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "title_ar": { "type": "string", "maxLength": 200 },
+        "collection": {
+          "type": "string",
+          "enum": [
+            "foundational",
+            "science",
+            "languages",
+            "mathematics",
+            "life_skills",
+            "teacher_curated"
+          ]
+        },
+        "resource_kind": {
+          "type": "string",
+          "enum": ["book", "lesson", "worksheet", "guide", "reference"]
+        },
+        "subject": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "grade_band": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "level": { "type": "string", "enum": ["beginner", "intermediate", "advanced"] },
+        "language": { "type": "string", "enum": ["en", "ar", "bilingual"] },
+        "learning_objectives": { "type": "array" },
+        "summary": { "type": "string", "maxLength": 1000 },
+        "content": { "type": "string", "minLength": 20, "maxLength": 12000 },
+        "author": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "author_role": {
+          "type": "string",
+          "enum": ["educator", "approved_contributor", "student_mentor"]
+        },
+        "source_attribution": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "license": {
+          "type": "string",
+          "enum": [
+            "CC-BY-4.0",
+            "CC-BY-SA-4.0",
+            "CC0-1.0",
+            "NEXORA-OER-FREE",
+            "Attribution-Reference-Only"
+          ]
+        },
+        "is_downloadable_permitted": { "type": "boolean" },
+        "download_size_bytes": { "type": "number" },
+        "teacher_curated": { "type": "boolean" },
+        "review_status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "pending_review",
+            "under_review",
+            "approved",
+            "needs_correction",
+            "outdated",
+            "archived"
+          ]
+        },
+        "last_reviewed_date": { "type": "string", "maxLength": 40 },
+        "quality_score": { "type": "object" },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "owner_id",
+        "title",
+        "collection",
+        "resource_kind",
+        "subject",
+        "grade_band",
+        "level",
+        "language",
+        "summary",
+        "content",
+        "author",
+        "author_role",
+        "source_attribution",
+        "license",
+        "is_downloadable_permitted",
+        "teacher_curated",
+        "review_status",
+        "last_reviewed_date",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "TeachingGuide": {
+      "title": "NEXORA Teaching for All Guide",
+      "description": "Differentiated lesson plan, multi-angle explanation, and worksheet with quality ratings.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "owner_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "title_ar": { "type": "string", "maxLength": 200 },
+        "subject": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "pedagogical_model": {
+          "type": "string",
+          "enum": [
+            "5e_inquiry",
+            "direct_instruction",
+            "socratic_seminar",
+            "differentiated_stations"
+          ]
+        },
+        "target_grade": { "type": "string", "maxLength": 40 },
+        "learning_objective": { "type": "string", "maxLength": 1000 },
+        "remedial_accommodations": { "type": "array" },
+        "extension_challenges": { "type": "array" },
+        "printable_worksheet_outline": { "type": "string", "maxLength": 4000 },
+        "multi_angle_explanations": { "type": "object" },
+        "author": { "type": "string", "maxLength": 120 },
+        "version": { "type": "number" },
+        "quality_rating": { "type": "object" },
+        "rating_count": { "type": "number" },
+        "supervisor_approved": { "type": "boolean" },
+        "safety_notice": { "type": "string", "maxLength": 400 },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "owner_id",
+        "title",
+        "subject",
+        "pedagogical_model",
+        "target_grade",
+        "learning_objective",
+        "printable_worksheet_outline",
+        "author",
+        "version",
+        "supervisor_approved",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "RealWorldProject": {
+      "title": "NEXORA Real World Good Project",
+      "description": "Adult-supervised student civic and community service project with zero PII and verifiable milestones.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "user_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "category": {
+          "type": "string",
+          "enum": [
+            "reading_initiative",
+            "educational_support",
+            "digital_literacy",
+            "environmental_awareness",
+            "accessibility_awareness",
+            "science_education",
+            "community_knowledge_sharing",
+            "responsible_tech",
+            "student_led_learning"
+          ]
+        },
+        "title": { "type": "string", "minLength": 5, "maxLength": 200 },
+        "problem_definition": { "type": "string", "maxLength": 2000 },
+        "intended_beneficiaries": { "type": "string", "maxLength": 500 },
+        "educational_purpose": { "type": "string", "maxLength": 1000 },
+        "safe_activity_plan": { "type": "string", "maxLength": 2000 },
+        "required_permissions": { "type": "array" },
+        "supervisor_name": { "type": "string", "maxLength": 120 },
+        "adult_supervised": { "type": "boolean" },
+        "expected_outcomes": { "type": "string", "maxLength": 1000 },
+        "evidence_summary": { "type": "string", "maxLength": 1500 },
+        "reflection_and_lessons": { "type": "string", "maxLength": 1500 },
+        "impact_metric_value": { "type": "number" },
+        "impact_metric_label": { "type": "string", "maxLength": 200 },
+        "team_aliases": { "type": "array" },
+        "milestones": { "type": "array" },
+        "showcase_opt_in": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["draft", "in_progress", "completed_verified"] },
+        "created_at": { "type": "string", "maxLength": 40 },
+        "updated_at": { "type": "string", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "user_id",
+        "category",
+        "title",
+        "problem_definition",
+        "intended_beneficiaries",
+        "educational_purpose",
+        "safe_activity_plan",
+        "supervisor_name",
+        "adult_supervised",
+        "expected_outcomes",
+        "impact_metric_value",
+        "impact_metric_label",
+        "showcase_opt_in",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "ContentErrorReport": {
+      "title": "Educational Content Error Report",
+      "description": "Error, source, or correction report submitted by students or educators.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "reporter_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "resource_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "resource_title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "factual_error",
+            "broken_link",
+            "outdated",
+            "copyright",
+            "inappropriate",
+            "accessibility",
+            "translation_issue",
+            "outdated_info",
+            "broken_source",
+            "accessibility_issue"
+          ]
+        },
+        "details": { "type": "string", "minLength": 10, "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["open", "resolved"] },
+        "resolution_note": { "type": "string", "maxLength": 1000 },
+        "reported_at": { "type": "string", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "reporter_id",
+        "resource_id",
+        "resource_title",
+        "kind",
+        "details",
+        "status",
+        "reported_at"
+      ]
+    },
+    "SmartStudyPlan": {
+      "title": "Smart Study Plan",
+      "description": "Persisted multi-subject study planner preferences and background-computed schedule blocks keyed strictly by Firebase Auth UID.",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "daily_minutes": { "type": "number" },
+        "preferred_time": { "type": "string", "enum": ["morning", "afternoon", "evening"] },
+        "commitments_note": { "type": "string", "maxLength": 300 },
+        "blocked_weekdays": { "type": "array" },
+        "subjects": { "type": "array" },
+        "blocks": { "type": "array" },
+        "engine": { "type": "string", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "user_id",
+        "daily_minutes",
+        "preferred_time",
+        "blocked_weekdays",
+        "subjects",
+        "blocks",
+        "updated_at"
+      ]
+    },
+    "ExamQuestion": {
+      "title": "Categorized Exam Question",
+      "description": "Categorized exam simulation question bank entry queryable by topic and difficulty.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "subject": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "topic": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "difficulty": { "type": "string", "enum": ["foundation", "standard", "challenge"] },
+        "format": {
+          "type": "string",
+          "enum": ["mcq", "true_false", "short_answer", "written_response"]
+        },
+        "prompt": { "type": "string", "minLength": 5, "maxLength": 1000 },
+        "options": { "type": "array" },
+        "correct_index": { "type": "number" },
+        "accepted_keywords": { "type": "array" },
+        "model_answer": { "type": "string", "maxLength": 1000 },
+        "explanation": { "type": "string", "maxLength": 1000 },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": [
+        "id",
+        "subject",
+        "topic",
+        "difficulty",
+        "format",
+        "prompt",
+        "model_answer",
+        "explanation",
+        "created_at"
+      ]
+    }
+  },
+  "firestore": {
+    "/profiles/{userId}": {
+      "schema": { "$ref": "#/entities/Profile" },
+      "description": "Private student profile keyed strictly by Firebase Auth UID."
+    },
+    "/user_settings/{userId}": {
+      "schema": { "$ref": "#/entities/UserSettings" },
+      "description": "Private accessibility, study, localization, notification, and AI preference settings keyed by Firebase Auth UID."
+    },
+    "/quran_preferences/{userId}": {
+      "schema": { "$ref": "#/entities/QuranPreferences" },
+      "description": "Optional private Quran Kareem listening position, reciter, and playback preferences keyed strictly by Firebase Auth UID."
+    },
+    "/user_stats/{userId}": {
+      "schema": { "$ref": "#/entities/UserStats" },
+      "description": "Growth Map XP, level, and streak stats keyed by Firebase Auth UID."
+    },
+    "/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "Private student tasks owned by user_id == request.auth.uid."
+    },
+    "/goals/{goalId}": {
+      "schema": { "$ref": "#/entities/Goal" },
+      "description": "Private student daily/growth goals owned by user_id == request.auth.uid."
+    },
+    "/activity_events/{eventId}": {
+      "schema": { "$ref": "#/entities/ActivityEvent" },
+      "description": "Private student XP/growth events owned by user_id == request.auth.uid."
+    },
+    "/study_items/{itemId}": {
+      "schema": { "$ref": "#/entities/StudyItem" },
+      "description": "Private student study notes, flashcard decks, and mistake log entries."
+    },
+    "/quiz_attempts/{attemptId}": {
+      "schema": { "$ref": "#/entities/QuizAttempt" },
+      "description": "Private student practice quiz attempts and scores."
+    },
+    "/focus_sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/FocusSession" },
+      "description": "Private student deep focus / Pomodoro sessions."
+    },
+    "/care_entries/{entryId}": {
+      "schema": { "$ref": "#/entities/CareEntry" },
+      "description": "Strictly private student wellbeing check-ins and personal journal reflections."
+    },
+    "/future_plans/{planId}": {
+      "schema": { "$ref": "#/entities/FuturePlan" },
+      "description": "Private student career and educational pathway exploration plans."
+    },
+    "/opportunities/{oppId}": {
+      "schema": { "$ref": "#/entities/Opportunity" },
+      "description": "Private student saved and tracked educational opportunities."
+    },
+    "/ai_conversations/{convId}": {
+      "schema": { "$ref": "#/entities/AiConversation" },
+      "description": "Private saved NEXORA AI study conversations."
+    },
+    "/circles/{circleId}": {
+      "schema": { "$ref": "#/entities/CircleTeam" },
+      "description": "Knowledge Circle study team master document."
+    },
+    "/circle_invites/{inviteCode}": {
+      "schema": { "$ref": "#/entities/CircleInvite" },
+      "description": "Exact-code invite lookup document containing no personal contact information."
+    },
+    "/circles/{circleId}/members/{memberUid}": {
+      "schema": { "$ref": "#/entities/CircleMember" },
+      "description": "Non-PII membership records inside a Knowledge Circle team."
+    },
+    "/circles/{circleId}/posts/{postId}": {
+      "schema": { "$ref": "#/entities/CirclePost" },
+      "description": "Team-scoped Knowledge Circle discussions, resources, and shared tasks."
+    },
+    "/moderation_reports/{reportId}": {
+      "schema": { "$ref": "#/entities/ModerationReport" },
+      "description": "Community safety and moderation reports."
+    },
+    "/help_articles/{articleId}": {
+      "schema": { "$ref": "#/entities/HelpArticle" },
+      "description": "Searchable help documentation articles managed by Content Managers and Admins."
+    },
+    "/support_tickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/SupportTicket" },
+      "description": "Student support requests restricted strictly to ticket owner and authorized support staff."
+    },
+    "/technical_reports/{reportId}": {
+      "schema": { "$ref": "#/entities/TechnicalReport" },
+      "description": "Technical bug reports isolated to reporter and authorized support/engineering staff."
+    },
+    "/feedback_items/{feedbackId}": {
+      "schema": { "$ref": "#/entities/FeedbackItem" },
+      "description": "Community feature suggestions and upvotes board."
+    },
+    "/staff_roles/{userId}": {
+      "schema": { "$ref": "#/entities/StaffRole" },
+      "description": "Staff RBAC roles for Admin Control Center access."
+    },
+    "/journals/{entryId}": {
+      "schema": { "$ref": "#/entities/JournalEntry" },
+      "description": "Primary private daily academic and personal growth journal entries collection owned by user_id == request.auth.uid."
+    },
+    "/journal_entries/{entryId}": {
+      "schema": { "$ref": "#/entities/JournalEntry" },
+      "description": "Legacy private daily journal entries collection kept compatible for seamless migration."
+    },
+    "/community_resources/{resourceId}": {
+      "schema": { "$ref": "#/entities/CommunityResource" },
+      "description": "Community Libraries structured educational resources with open licensing and educator review status."
+    },
+    "/teaching_guides/{guideId}": {
+      "schema": { "$ref": "#/entities/TeachingGuide" },
+      "description": "Teaching for All differentiated guides, worksheets, and educator ratings."
+    },
+    "/real_world_projects/{projectId}": {
+      "schema": { "$ref": "#/entities/RealWorldProject" },
+      "description": "Adult-supervised student civic and community impact projects with zero PII."
+    },
+    "/content_error_reports/{reportId}": {
+      "schema": { "$ref": "#/entities/ContentErrorReport" },
+      "description": "Reported educational inaccuracies, broken sources, and accessibility corrections."
+    },
+    "/smart_study_plans/{userId}": {
+      "schema": { "$ref": "#/entities/SmartStudyPlan" },
+      "description": "User's persisted Smart Study Planner configuration and background-generated schedule blocks."
+    },
+    "/exam_questions/{questionId}": {
+      "schema": { "$ref": "#/entities/ExamQuestion" },
+      "description": "Categorized practice exam simulation question bank queryable by topic and difficulty."
+    }
+  }
+}

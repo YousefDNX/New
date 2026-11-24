@@ -1,0 +1,21 @@
+User-agent: Googlebot
+Allow: /
+Disallow: /app/admin
+
+User-agent: Bingbot
+Allow: /
+Disallow: /app/admin
+
+User-agent: Twitterbot
+Allow: /
+Disallow: /app/admin
+
+User-agent: facebookexternalhit
+Allow: /
+Disallow: /app/admin
+
+User-agent: *
+Allow: /
+Disallow: /app/admin
+
+Sitemap: /sitemap.xml

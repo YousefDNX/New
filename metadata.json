@@ -1,0 +1,6 @@
+{
+  "name": "NEXORA — Student Growth Hub",
+  "description": "Premium student dashboard and interactive Growth Map tracking academic, productivity, personal development, wellbeing, career, and community milestones.",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
