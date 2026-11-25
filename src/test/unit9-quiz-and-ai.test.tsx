@@ -4,7 +4,7 @@ import { PreferencesProvider } from "@/lib/preferences";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ToastProvider } from "@/components/common/ToastProvider";
 import { Unit9VocabQuiz } from "@/components/study/Unit9VocabQuiz";
-import { StudyWorkspace } from "@/components/modules/StudyWorkspace";
+import { Grade9StudyCenter } from "@/components/english/Grade9StudyCenter";
 import { AiWorkspace } from "@/components/modules/AiWorkspace";
 import { GRADE_9_UNIT_9_WORDS, UNIT_9_INTERACTIVE_QUIZ_QUESTIONS } from "@/data/grade9-unit9-vocab";
 import { ALL_STUDY_VOCAB_UNITS, GRADE_9_ESSENTIAL_WORDS } from "@/data/grade9-vocab-units";
@@ -75,8 +75,8 @@ describe("Important Vocabulary Interactive Quiz, Expanded Study Vocabulary & Gem
     expect(summary.textContent).toContain("7 out of 8");
   });
 
-  it("StudyWorkspace exposes Important Vocabulary Interactive Quiz and Expanded 141-word Vocabulary Cards", () => {
-    renderWithUiProviders(<StudyWorkspace />);
+  it("Grade9StudyCenter exposes Important Vocabulary Interactive Quiz and Expanded 141-word Vocabulary Cards", () => {
+    renderWithUiProviders(<Grade9StudyCenter />);
 
     expect(screen.getByText(/Grade 9 Study & Vocabulary/i)).toBeInTheDocument();
     expect(
@@ -158,29 +158,27 @@ describe("Important Vocabulary Interactive Quiz, Expanded Study Vocabulary & Gem
     ]);
   });
 
-  it("generateStudyAssistantReply handles Important Vocabulary words and quiz prompts smoothly without error fallbacks", async () => {
-    const vocabRes = await generateStudyAssistantReply({
-      message: "What does algorithm mean?",
-      chatbotRole: "vocab",
-      modelTier: "fast",
-    });
-    expect(vocabRes.ok).toBe(true);
-    if (vocabRes.ok) {
-      expect(vocabRes.text.toLowerCase()).toContain("algorithm");
-      expect(vocabRes.text).toContain("خوارزمية");
+  it("generateStudyAssistantReply returns honest NOT_CONFIGURED when GEMINI_API_KEY is absent instead of faking responses", async () => {
+    const res = await generateStudyAssistantReply(
+      {
+        message: "اهلا إزيك؟ اشرح لي خوارزمية سريعة",
+        chatbotRole: "general",
+        modelTier: "fast",
+      },
+      { GEMINI_API_KEY: "" },
+    );
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.status).toBe(503);
+      expect(res.code).toBe("NOT_CONFIGURED");
+      expect(res.message).toContain("GEMINI_API_KEY");
     }
 
-    const quizFollowup = await generateStudyAssistantReply({
-      message: "B",
-      chatbotRole: "exam",
-      history: [
-        { role: "user", content: "Give me a quiz" },
-        { role: "assistant", content: "A) prototype B) hypothesis" },
-      ],
-    });
-    expect(quizFollowup.ok).toBe(true);
-    if (quizFollowup.ok) {
-      expect(quizFollowup.text).toContain("hypothesis");
+    const emptyRes = await generateStudyAssistantReply({ message: "   " });
+    expect(emptyRes.ok).toBe(false);
+    if (!emptyRes.ok) {
+      expect(emptyRes.status).toBe(400);
+      expect(emptyRes.code).toBe("BAD_REQUEST");
     }
   });
 });

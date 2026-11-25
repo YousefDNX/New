@@ -322,3 +322,27 @@ export const quranKo: Record<QuranKey, string> = {
   "quran.mushafTheme.light": "라이트",
   "quran.mushafTheme.dark": "다크",
 };
+
+export const quranEs: Record<QuranKey, string> = {
+  ...quranEn,
+  "nav.quran": "Sagrado Corán",
+  "mod.quran.name": "Sagrado Corán",
+  "mod.quran.hub": "Mushaf digital completo y recitaciones verificadas",
+  "quran.title": "Mushaf Digital del Corán",
+  "quran.surah": "Sura",
+  "quran.surahs": "Suras",
+  "quran.juz": "Juz'",
+  "quran.juzs": "30 Juz'",
+  "quran.ayah": "Aleya",
+  "quran.ayahs": "Aleyas",
+  "quran.selectSurah": "Seleccionar Sura",
+  "quran.searchSurah": "Buscar Sura por nombre o número...",
+  "quran.selectReciter": "Recitador",
+  "quran.play": "Reproducir recitación",
+  "quran.pause": "Pausar",
+  "quran.prevSurah": "Sura anterior",
+  "quran.nextSurah": "Siguiente Sura",
+  "quran.retry": "Reintentar",
+  "quran.mushafTheme.light": "Claro",
+  "quran.mushafTheme.dark": "Oscuro",
+};

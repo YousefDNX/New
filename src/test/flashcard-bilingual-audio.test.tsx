@@ -6,7 +6,7 @@ import { ThemeProvider } from "../components/theme/ThemeProvider";
 import { ToastProvider } from "../components/common/ToastProvider";
 import { Unit3VocabWorkspace } from "../components/study/Unit3VocabWorkspace";
 import { VocabularyAcademyPanel } from "../components/english/academies/WritingVocabGrammarAcademies";
-import { StudyWorkspace } from "../components/modules/StudyWorkspace";
+import { Grade9StudyCenter } from "../components/english/Grade9StudyCenter";
 import { createInitialEnglishWorldState } from "../lib/english-world";
 import { resetSpeechEngineStateForTests } from "../lib/speech-service";
 
@@ -215,8 +215,8 @@ describe("Vocabulary Flashcards — Conditional 'استمع بالعربية' Ar
     expect(screen.queryByRole("button", { name: /استمع بالعربية/ })).toBeNull();
   });
 
-  it("StudyWorkspace Flashcard review: reveals 'استمع بالعربية' only on flip and speaks Arabic translation", () => {
-    renderWithProviders(<StudyWorkspace />);
+  it("Grade9StudyCenter Flashcard review: reveals 'استمع بالعربية' only on flip and speaks Arabic translation", () => {
+    renderWithProviders(<Grade9StudyCenter />);
 
     // Open Unit 3 flashcards from the Grade 9 Study & Vocabulary hub
     fireEvent.click(screen.getByRole("button", { name: /Open Food, Culture & Healthy Living/i }));

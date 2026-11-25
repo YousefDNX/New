@@ -1,6 +1,7 @@
 import "./lib/error-capture";
 
 import {
+  formatGeminiError,
   generateMapsGroundedReply,
   generateOrEditEducationalImage,
   generateSearchGroundedReply,
@@ -9,6 +10,7 @@ import {
   resolveGeminiApiKey,
   resolveMapsApiKey,
   runLiveVoiceTurn,
+  streamStudyAssistantReply,
   synthesizeSpeechWithGemini,
   transcribeAudioWithGemini,
   type AiChatServerRequest,
@@ -304,7 +306,7 @@ export default {
           providerConfigured: configured,
           aiPaused: !controls.aiEnabled,
           mapsConfigured,
-          model: "gemini-4-hydrogen",
+          model: "Normal",
           features: {
             chatbot: configured && controls.aiEnabled,
             searchGrounding: configured && controls.aiEnabled,
@@ -339,6 +341,60 @@ export default {
         }
         const result = await generateStudyAssistantReply(body, env);
         return jsonResponse(result, result.ok ? 200 : result.status);
+      }
+
+      if (url.pathname === "/api/ai/chat/stream" && request.method === "POST") {
+        const controls = getPlatformControls();
+        if (!controls.aiEnabled) {
+          return jsonResponse(
+            {
+              ok: false,
+              code: "AI_PAUSED",
+              message: "BTC AI is temporarily paused by the moderator. Please try again shortly.",
+            },
+            503,
+          );
+        }
+        const body = await readJsonBody<AiChatServerRequest>(request);
+        if (!body) {
+          return jsonResponse(
+            { ok: false, code: "BAD_REQUEST", message: "Invalid JSON request body." },
+            400,
+          );
+        }
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+          async start(controller) {
+            try {
+              for await (const event of streamStudyAssistantReply(body, env)) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+              }
+            } catch (err) {
+              const formatted = formatGeminiError(err, false);
+              controller.enqueue(
+                encoder.encode(
+                  `data: ${JSON.stringify({
+                    type: "error",
+                    status: formatted.status,
+                    code: formatted.code,
+                    message: formatted.message,
+                    isPaidModelError: formatted.isPaidModelError,
+                  })}\n\n`,
+                ),
+              );
+            } finally {
+              controller.close();
+            }
+          },
+        });
+        return new Response(stream, {
+          status: 200,
+          headers: {
+            "content-type": "text/event-stream; charset=utf-8",
+            "cache-control": "no-cache, no-transform",
+            connection: "keep-alive",
+          },
+        });
       }
 
       if (url.pathname === "/api/ai/structured" && request.method === "POST") {

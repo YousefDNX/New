@@ -1,306 +1,81 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft,
+  AlertCircle,
   ArrowRight,
   BookOpen,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   EyeOff,
-  GraduationCap,
-  HelpCircle,
+  FileText,
   Layers,
-  Search,
-  Sparkles,
-  Trophy,
-  Volume2,
-  XCircle,
-  Zap,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Unit9VocabQuiz } from "@/components/study/Unit9VocabQuiz";
-import { VocabTestCenter } from "@/components/study/VocabTestCenter";
+import { PageHeader } from "@/components/app/Page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  ALL_STUDY_VOCAB_UNITS,
-  type Grade9VocabQuizQuestion,
-  type Grade9VocabUnitMeta,
-  type Grade9VocabWord,
-} from "@/data/grade9-vocab-units";
-import {
-  ACADEMIC_STUDENT_VOCABULARY,
-  CONFUSING_WORDS_DECKS,
-  type ExpandedVocabItem,
-} from "@/data/grade9-expanded-vocab";
-import { speakEnglishText } from "@/lib/english-speech";
+import { Textarea } from "@/components/ui/textarea";
 import { useOptionalAuth } from "@/lib/auth";
 import { recordLastVisitedModule } from "@/lib/continue-tracker";
 import { usePrefs } from "@/lib/preferences";
-import { speakArabicText } from "@/lib/speech-service";
 
-type StudyTopView = "units" | "unit9_quiz" | "vocabulary_cards" | "test_center" | "summaries";
-type UnitViewMode = "flashcards" | "quiz";
+type StudyTab = "notes" | "flashcards" | "mistakes";
 
-interface UnitSummaryGuide {
-  unit: number;
-  titleEn: string;
-  titleAr: string;
-  summaryEn: string;
-  summaryAr: string;
-  keyTakeawaysEn: string[];
-  keyTakeawaysAr: string[];
+interface StudyNoteItem {
+  id: string;
+  subject: string;
+  title: string;
+  content: string;
+  createdAt: string;
 }
 
-const UNIT_SUMMARY_GUIDES: UnitSummaryGuide[] = [
-  {
-    unit: 1,
-    titleEn: "Unit 1 — Explorers, Grit & Mindset",
-    titleAr: "الوحدة الأولى — الاستكشاف والعزيمة والعقلية الإيجابية",
-    summaryEn:
-      "Focuses on personal determination, overcoming difficult challenges ('tough', 'survive', 'will'), and building a steady mindset ('consistently', 'efficiently', 'trust').",
-    summaryAr:
-      "تركز الوحدة على قوة الإرادة وتجاوز الصعاب وبناء عقلية إيجابية منظمة تساعد الطالب على الاستمرار دون استسلام.",
-    keyTakeawaysEn: [
-      "Adverbs ending in -ly (proudly, merely, consistently, efficiently, equally) describe how an action is done.",
-      "Phrasal verb 'give up' means to stop trying; contrast it with 'will' and 'survive'.",
-      "Use 'highlight' and 'represent' when summarizing main ideas in reading passages.",
-    ],
-    keyTakeawaysAr: [
-      "الأحوال المنتهية بـ -ly تصف طريقة أداء الفعل مثل proudly وconsistently وefficiently.",
-      "الفعل المركب give up يعني الاستسلام، ويقابله الثبات والعزيمة (will / survive).",
-      "تُستخدم highlight وrepresent عند تلخيص الأفكار الرئيسية في نصوص القراءة.",
-    ],
-  },
-  {
-    unit: 2,
-    titleEn: "Unit 2 — Digital Safety, AI & Critical Judgement",
-    titleAr: "الوحدة الثانية — الأمان الرقمي والتقييم النقدي للمعلومات",
-    summaryEn:
-      "Teaches students how to evaluate claims online ('fake', 'phishing', 'scam'), protect digital access ('update', 'install', 'software'), and apply careful judgement before trusting sources.",
-    summaryAr:
-      "تعلم الطلاب كيفية التحقق من الأخبار والروابط المشبوهة، وحماية الحسابات والبرامج، واستخدام التفكير النقدي قبل تصديق أي ادعاء.",
-    keyTakeawaysEn: [
-      "Always verify 'claim' and 'fake' news with 'accurate' evidence before sharing.",
-      "Security verbs: 'access', 'update', 'install', 'evaluate', 'implement'.",
-      "Notice British spelling: 'judgement' (with the 'e').",
-    ],
-    keyTakeawaysAr: [
-      "تحقق دائماً من صحة أي ادعاء (claim) وتأكد من دقة المعلومة (accurate) قبل مشاركتها.",
-      "أفعال تقنية أساسية: access وupdate وinstall وevaluate وimplement.",
-      "انتبه للإملاء البريطاني المعتمد في كلمة judgement.",
-    ],
-  },
-  {
-    unit: 3,
-    titleEn: "Unit 3 — Food, Health & Balanced Living",
-    titleAr: "الوحدة الثالثة — الغذاء والصحة وأسلوب الحياة المتوازن",
-    summaryEn:
-      "Covers nutrition, balanced meals, British vocabulary spellings ('flavour', 'fibre'), and everyday health habits.",
-    summaryAr:
-      "تتناول التغذية الصحية، وتوازن الوجبات، والمفردات البريطانية الأساسية مثل flavour وfibre وعادات العناية بالصحة.",
-    keyTakeawaysEn: [
-      "Preserve British spellings: 'flavour' and 'fibre'.",
-      "Practice pairing food adjectives with healthy meal descriptions.",
-      "Review all 24 Unit 3 flashcards alongside audio pronunciation.",
-    ],
-    keyTakeawaysAr: [
-      "حافظ على الإملاء البريطاني في flavour وfibre.",
-      "تدرّب على ربط صفات الطعام بوصف الوجبات الصحية المتوازنة.",
-      "راجع البطاقات الـ ٢٤ كاملة مع الاستماع للنطق الصحيح.",
-    ],
-  },
-  {
-    unit: 4,
-    titleEn: "Unit 4 — Mindful Living & Conservation",
-    titleAr: "الوحدة الرابعة — الاستهلاك الواعي والحفاظ على الموارد",
-    summaryEn:
-      "Explores reducing waste ('discard', 'disposable', 'wasteful', 'minimise'), protecting resources ('conserve', 'preserve'), and making thoughtful daily choices ('mindful', 'donate', 'balanced').",
-    summaryAr:
-      "تتناول ترشيد الاستهلاك وتقليل الهدر والحفاظ على البيئة والموارد من خلال قرارات يومية واعية ومستدامة.",
-    keyTakeawaysEn: [
-      "Contrast wasteful habits ('discard', 'disposable') with sustainable choices ('conserve', 'preserve', 'donate').",
-      "British spelling check: 'minimise' (-ise ending).",
-      "Connectors for essays: 'instead', 'frankly', 'necessarily'.",
-    ],
-    keyTakeawaysAr: [
-      "قارن بين كلمات الهدر (discard / disposable) وكلمات الحفظ (conserve / preserve / donate).",
-      "انتبه للإملاء البريطاني في كلمة minimise.",
-      "استخدم روابط التعبير مثل instead وfrankly وnecessarily في الكتابة.",
-    ],
-  },
-];
+interface AcademicFlashcard {
+  id: string;
+  subject: string;
+  front: string;
+  back: string;
+  reviewed: boolean;
+}
 
-function GenericUnitImmediateQuiz({
-  unitMeta,
-  isAr,
-  onBackToFlashcards,
-}: {
-  unitMeta: Grade9VocabUnitMeta;
-  isAr: boolean;
-  onBackToFlashcards: () => void;
-}) {
-  const generatedQuestions: Grade9VocabQuizQuestion[] = useMemo(() => {
-    if (unitMeta.quizzes.length >= 6) return unitMeta.quizzes;
-    // Generate immediate-feedback MCQs directly from the unit's vocabulary words
-    const derived: Grade9VocabQuizQuestion[] = unitMeta.words.slice(0, 8).map((w, idx) => {
-      const distractors = unitMeta.words
-        .filter((other) => other.id !== w.id)
-        .slice(
-          idx % Math.max(1, unitMeta.words.length - 3),
-          (idx % Math.max(1, unitMeta.words.length - 3)) + 3,
-        );
-      const paddedDistractors =
-        distractors.length === 3
-          ? distractors
-          : unitMeta.words.filter((other) => other.id !== w.id).slice(0, 3);
-      const rawOptions = [w.meaningAr, ...paddedDistractors.map((d) => d.meaningAr)];
-      const correctPos = idx % rawOptions.length;
-      const rotated = [...rawOptions];
-      if (correctPos !== 0) {
-        const temp = rotated[0]!;
-        rotated[0] = rotated[correctPos]!;
-        rotated[correctPos] = temp;
-      }
-      return {
-        id: `auto-${unitMeta.unit}-${w.id}`,
-        unit: unitMeta.unit,
-        promptEn: `What is the Arabic meaning of "${w.word}" (${w.partOfSpeech})?`,
-        promptAr: `ما المعنى العربي الصحيح لكلمة "${w.word}"؟`,
-        options: rotated,
-        correctIndex: correctPos,
-        explanationEn: `${w.word} (${w.phonetic}): ${w.definitionEn}`,
-        explanationAr: `${w.word}: ${w.meaningAr} — مثال: ${w.exampleAr}`,
-      };
-    });
-    return [...unitMeta.quizzes, ...derived].slice(0, 10);
-  }, [unitMeta]);
+interface MistakeLogItem {
+  id: string;
+  subject: string;
+  question: string;
+  correction: string;
+  resolved: boolean;
+}
 
-  const [qIndex, setQIndex] = useState(0);
-  const [selectedMap, setSelectedMap] = useState<Record<string, number>>({});
+const GENERAL_SUBJECTS = [
+  { id: "math", en: "Mathematics", ar: "الرياضيات" },
+  { id: "science", en: "Science", ar: "العلوم" },
+  { id: "arabic", en: "Arabic", ar: "اللغة العربية" },
+  { id: "english", en: "English", ar: "اللغة الإنجليزية" },
+  { id: "history", en: "Social Studies & History", ar: "الدراسات والتاريخ" },
+  { id: "cs", en: "Computing", ar: "الحاسوب" },
+] as const;
 
-  const currentQ = generatedQuestions[qIndex];
-  const chosen = currentQ ? selectedMap[currentQ.id] : undefined;
-  const answered = chosen !== undefined;
-  const correctTotal = generatedQuestions.filter(
-    (q) => selectedMap[q.id] === q.correctIndex,
-  ).length;
+function readStoredList<T>(key: string): T[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T[]) : [];
+  } catch {
+    return [];
+  }
+}
 
-  if (!currentQ) return null;
-
-  return (
-    <div className="surface-card rounded-2xl border border-border/80 p-5 sm:p-7 space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-3">
-        <div>
-          <h3 className="font-display text-lg font-bold text-foreground">
-            {isAr
-              ? `اختبار تفاعلي — ${unitMeta.themeAr}`
-              : `Interactive Quiz — ${unitMeta.themeEn}`}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {isAr
-              ? `سؤال ${qIndex + 1} من ${generatedQuestions.length} · النتيجة: ${correctTotal}`
-              : `Question ${qIndex + 1} of ${generatedQuestions.length} · Score: ${correctTotal}`}
-          </p>
-        </div>
-        <Button type="button" variant="outline" size="sm" onClick={onBackToFlashcards}>
-          {isAr ? "العودة للبطاقات" : "Back to Flashcards"}
-        </Button>
-      </div>
-
-      <div className="space-y-1.5">
-        <div className="text-base sm:text-lg font-bold text-foreground">{currentQ.promptEn}</div>
-        <div className="text-xs text-muted-foreground font-arabic" dir="rtl">
-          {currentQ.promptAr}
-        </div>
-      </div>
-
-      <div className="grid gap-2.5">
-        {currentQ.options.map((opt, idx) => {
-          const isPicked = chosen === idx;
-          const isRight = idx === currentQ.correctIndex;
-          let cls = "border-border/80 bg-surface-2/40 hover:bg-surface-2 text-foreground";
-          if (answered) {
-            if (isRight) {
-              cls =
-                "border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold";
-            } else if (isPicked) {
-              cls = "border-destructive bg-destructive/15 text-destructive";
-            }
-          }
-          return (
-            <button
-              key={idx}
-              type="button"
-              disabled={answered}
-              onClick={() => setSelectedMap((prev) => ({ ...prev, [currentQ.id]: idx }))}
-              className={`flex items-center justify-between rounded-xl border p-3.5 text-start text-sm transition-all ${cls}`}
-            >
-              <span>{opt}</span>
-              {answered && isRight && <CheckCircle2 className="size-4 text-emerald-600" />}
-              {answered && isPicked && !isRight && <XCircle className="size-4 text-destructive" />}
-            </button>
-          );
-        })}
-      </div>
-
-      {answered && (
-        <div
-          role="status"
-          className={`rounded-xl border p-3.5 text-xs space-y-2 ${
-            chosen === currentQ.correctIndex
-              ? "border-emerald-500/40 bg-emerald-500/10"
-              : "border-amber-500/40 bg-amber-500/10"
-          }`}
-        >
-          <div className="font-bold">
-            {chosen === currentQ.correctIndex
-              ? isAr
-                ? "إجابة صحيحة!"
-                : "Correct!"
-              : isAr
-                ? "حاول مراجعة الشرح التالي:"
-                : "Review the explanation:"}
-          </div>
-          <p>{currentQ.explanationEn}</p>
-          {currentQ.explanationAr && (
-            <p className="font-arabic text-muted-foreground" dir="rtl">
-              {currentQ.explanationAr}
-            </p>
-          )}
-          <div className="flex gap-2 pt-1">
-            {qIndex < generatedQuestions.length - 1 ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="glow"
-                onClick={() => setQIndex((i) => i + 1)}
-              >
-                {isAr ? "السؤال التالي" : "Next Question"}
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                size="sm"
-                variant="glow"
-                onClick={() => {
-                  setQIndex(0);
-                  setSelectedMap({});
-                }}
-              >
-                {isAr ? "إعادة الاختبار" : "Restart Quiz"}
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+function writeStoredList<T>(key: string, items: T[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(items));
+  } catch {
+    // ignore storage quota failures
+  }
 }
 
 export function StudyWorkspace() {
-  const { lang } = usePrefs();
+  const { lang, t } = usePrefs();
   const auth = useOptionalAuth();
   const uid = auth?.user?.uid ?? null;
   const isAr = lang === "ar";
@@ -313,945 +88,555 @@ export function StudyWorkspace() {
     });
   }, [uid]);
 
-  const revisedStorageKey = `btc_study_revised_${uid || "guest"}`;
-  const [revisedUnits, setRevisedUnits] = useState<Record<number, boolean>>(() => {
-    if (typeof window === "undefined") return {};
-    try {
-      const raw = window.localStorage.getItem(`btc_study_revised_${uid || "guest"}`);
-      return raw ? (JSON.parse(raw) as Record<number, boolean>) : {};
-    } catch {
-      return {};
-    }
-  });
+  const notesKey = `btc_academic_notes_${uid || "guest"}`;
+  const cardsKey = `btc_academic_cards_${uid || "guest"}`;
+  const mistakesKey = `btc_academic_mistakes_${uid || "guest"}`;
+
+  const [tab, setTab] = useState<StudyTab>("notes");
+
+  // Notes state
+  const [notes, setNotes] = useState<StudyNoteItem[]>(() => readStoredList(notesKey));
+  const [noteSubject, setNoteSubject] = useState("math");
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteContent, setNoteContent] = useState("");
+  const [filterSubject, setFilterSubject] = useState<string>("all");
+
+  // Flashcards state
+  const [cards, setCards] = useState<AcademicFlashcard[]>(() => readStoredList(cardsKey));
+  const [cardSubject, setCardSubject] = useState("science");
+  const [cardFront, setCardFront] = useState("");
+  const [cardBack, setCardBack] = useState("");
+  const [revealedIds, setRevealedIds] = useState<Record<string, boolean>>({});
+
+  // Mistake log state
+  const [mistakes, setMistakes] = useState<MistakeLogItem[]>(() => readStoredList(mistakesKey));
+  const [mistakeSubject, setMistakeSubject] = useState("math");
+  const [mistakeQuestion, setMistakeQuestion] = useState("");
+  const [mistakeCorrection, setMistakeCorrection] = useState("");
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(revisedStorageKey);
-      setRevisedUnits(raw ? (JSON.parse(raw) as Record<number, boolean>) : {});
-    } catch {
-      setRevisedUnits({});
-    }
-  }, [revisedStorageKey]);
+    setNotes(readStoredList(notesKey));
+    setCards(readStoredList(cardsKey));
+    setMistakes(readStoredList(mistakesKey));
+  }, [notesKey, cardsKey, mistakesKey]);
 
-  const toggleRevisedUnit = (unitNum: number) => {
-    setRevisedUnits((prev) => {
-      const next = { ...prev, [unitNum]: !prev[unitNum] };
-      try {
-        window.localStorage.setItem(revisedStorageKey, JSON.stringify(next));
-      } catch {
-        // ignore storage errors
-      }
-      return next;
-    });
+  const getSubjectLabel = (id: string) => {
+    const found = GENERAL_SUBJECTS.find((s) => s.id === id);
+    if (!found) return id;
+    return isAr ? found.ar : found.en;
   };
 
-  const [topView, setTopView] = useState<StudyTopView>(() => {
-    if (typeof window === "undefined") return "units";
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get("tab");
-    if (tabParam === "unit9_quiz") return "unit9_quiz";
-    if (tabParam === "test_center" || tabParam === "tests" || tabParam === "quiz")
-      return "test_center";
-    if (tabParam === "vocabulary" || tabParam === "essential") return "vocabulary_cards";
-    if (tabParam === "summaries") return "summaries";
-    return "units";
-  });
-
-  // Check URL parameters for initial unit selection (e.g., ?tab=unit3_vocab or ?unit=9)
-  const [selectedUnitNumber, setSelectedUnitNumber] = useState<number | null>(() => {
-    if (typeof window === "undefined") return null;
-    const params = new URLSearchParams(window.location.search);
-    const unitParam = params.get("unit");
-    if (unitParam) {
-      const parsed = parseInt(unitParam, 10);
-      if (ALL_STUDY_VOCAB_UNITS.some((u) => u.unit === parsed)) return parsed;
-    }
-    const tabParam = params.get("tab");
-    if (tabParam === "unit3_vocab") return 3;
-    if (tabParam === "unit1_vocab") return 1;
-    if (tabParam === "unit2_vocab") return 2;
-    if (tabParam === "unit4_vocab") return 4;
-    if (tabParam === "unit9" || tabParam === "unit9_vocab") return 9;
-    return null;
-  });
-
-  const [unitViewMode, setUnitViewMode] = useState<UnitViewMode>("flashcards");
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [isMeaningRevealed, setIsMeaningRevealed] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-
-  // Vocabulary explorer state (all expanded study words)
-  const [vocabSearch, setVocabSearch] = useState("");
-  const [vocabDeckFilter, setVocabDeckFilter] = useState<
-    "all" | "unit9" | "essential" | "academic" | "confusing"
-  >("all");
-
-  const selectedUnit: Grade9VocabUnitMeta | undefined = ALL_STUDY_VOCAB_UNITS.find(
-    (u) => u.unit === selectedUnitNumber,
+  const visibleNotes = useMemo(
+    () => (filterSubject === "all" ? notes : notes.filter((n) => n.subject === filterSubject)),
+    [notes, filterSubject],
   );
 
-  const words: Grade9VocabWord[] = selectedUnit?.words ?? [];
-  const currentWord: Grade9VocabWord | undefined = words[currentWordIndex];
-
-  const handleSelectUnit = (unitNum: number, mode: UnitViewMode = "flashcards") => {
-    setSelectedUnitNumber(unitNum);
-    setUnitViewMode(mode);
-    setTopView("units");
-    setCurrentWordIndex(0);
-    setIsMeaningRevealed(false);
+  const handleAddNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    const title = noteTitle.trim();
+    const content = noteContent.trim();
+    if (!title || !content) return;
+    const next: StudyNoteItem[] = [
+      {
+        id: `note-${Date.now()}`,
+        subject: noteSubject,
+        title,
+        content,
+        createdAt: new Date().toISOString(),
+      },
+      ...notes,
+    ];
+    setNotes(next);
+    writeStoredList(notesKey, next);
+    setNoteTitle("");
+    setNoteContent("");
+    toast.success(isAr ? "تم حفظ الملاحظة الدراسية." : "Study note saved.");
   };
 
-  const handleBackToUnits = () => {
-    setSelectedUnitNumber(null);
-    setUnitViewMode("flashcards");
-    setCurrentWordIndex(0);
-    setIsMeaningRevealed(false);
+  const handleDeleteNote = (id: string) => {
+    const next = notes.filter((n) => n.id !== id);
+    setNotes(next);
+    writeStoredList(notesKey, next);
   };
 
-  const handleNextWord = useCallback(() => {
-    if (currentWordIndex < words.length - 1) {
-      setCurrentWordIndex((i) => i + 1);
-      setIsMeaningRevealed(false);
-    }
-  }, [currentWordIndex, words.length]);
-
-  const handlePrevWord = useCallback(() => {
-    if (currentWordIndex > 0) {
-      setCurrentWordIndex((i) => i - 1);
-      setIsMeaningRevealed(false);
-    }
-  }, [currentWordIndex]);
-
-  // Keyboard navigation for flashcards
-  useEffect(() => {
-    if (!selectedUnitNumber || unitViewMode !== "flashcards") return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === "ArrowRight") {
-        if (isAr) handlePrevWord();
-        else handleNextWord();
-      } else if (e.key === "ArrowLeft") {
-        if (isAr) handleNextWord();
-        else handlePrevWord();
-      } else if (e.key === " " || e.key === "Enter") {
-        setIsMeaningRevealed((prev) => !prev);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedUnitNumber, unitViewMode, isAr, handleNextWord, handlePrevWord]);
-
-  const handlePronounce = (wordText: string) => {
-    setIsSpeaking(true);
-    const ok = speakEnglishText(wordText, { rate: 0.88, lang: "en-GB" });
-    setTimeout(() => setIsSpeaking(false), 900);
-    if (!ok) {
-      toast.info(isAr ? `النطق: ${wordText}` : `Pronunciation: ${wordText}`);
-    }
+  const handleAddCard = (e: React.FormEvent) => {
+    e.preventDefault();
+    const front = cardFront.trim();
+    const back = cardBack.trim();
+    if (!front || !back) return;
+    const next: AcademicFlashcard[] = [
+      {
+        id: `card-${Date.now()}`,
+        subject: cardSubject,
+        front,
+        back,
+        reviewed: false,
+      },
+      ...cards,
+    ];
+    setCards(next);
+    writeStoredList(cardsKey, next);
+    setCardFront("");
+    setCardBack("");
+    toast.success(isAr ? "تمت إضافة البطاقة للمراجعة." : "Flashcard added for review.");
   };
 
-  const handlePronounceArabic = (arabicText: string) => {
-    const ok = speakArabicText(arabicText, { rate: 0.92, preferredLocale: "ar-SA" });
-    if (!ok) {
-      toast.info(`النطق بالعربية: ${arabicText}`);
-    }
+  const handleToggleReviewed = (id: string) => {
+    const next = cards.map((c) => (c.id === id ? { ...c, reviewed: !c.reviewed } : c));
+    setCards(next);
+    writeStoredList(cardsKey, next);
   };
 
-  const explorerWords = useMemo(() => {
-    const unit9 = ALL_STUDY_VOCAB_UNITS.find((u) => u.unit === 9)?.words ?? [];
-    const essential = ALL_STUDY_VOCAB_UNITS.find((u) => u.unit === 10)?.words ?? [];
-    const allUnitsWords = ALL_STUDY_VOCAB_UNITS.flatMap((u) => u.words);
+  const handleDeleteCard = (id: string) => {
+    const next = cards.filter((c) => c.id !== id);
+    setCards(next);
+    writeStoredList(cardsKey, next);
+  };
 
-    const academicWords: Grade9VocabWord[] = ACADEMIC_STUDENT_VOCABULARY.map((item) => ({
-      id: item.id,
-      word: item.word,
-      partOfSpeech: item.partOfSpeech,
-      phonetic: item.phonetic,
-      definitionEn: item.definitionEn,
-      meaningAr: item.meaningAr,
-      exampleEn: item.exampleEn,
-      exampleAr: item.exampleAr,
-      collocations: item.collocations ?? [],
-      synonyms: item.synonyms ?? [],
-      unit: 11,
-      grade: 9,
-    }));
+  const handleAddMistake = (e: React.FormEvent) => {
+    e.preventDefault();
+    const question = mistakeQuestion.trim();
+    const correction = mistakeCorrection.trim();
+    if (!question || !correction) return;
+    const next: MistakeLogItem[] = [
+      {
+        id: `err-${Date.now()}`,
+        subject: mistakeSubject,
+        question,
+        correction,
+        resolved: false,
+      },
+      ...mistakes,
+    ];
+    setMistakes(next);
+    writeStoredList(mistakesKey, next);
+    setMistakeQuestion("");
+    setMistakeCorrection("");
+    toast.success(isAr ? "تم تسجيل الخطأ للمراجعة." : "Mistake recorded for review.");
+  };
 
-    const confusingWords: Grade9VocabWord[] = CONFUSING_WORDS_DECKS.map((item) => ({
-      id: item.id,
-      word: item.word,
-      partOfSpeech: item.partOfSpeech,
-      phonetic: item.phonetic,
-      definitionEn: item.definitionEn,
-      meaningAr: item.meaningAr,
-      exampleEn: item.exampleEn,
-      exampleAr: item.exampleAr,
-      collocations: [],
-      synonyms: [],
-      unit: 12,
-      grade: 9,
-    }));
+  const handleToggleMistakeResolved = (id: string) => {
+    const next = mistakes.map((m) => (m.id === id ? { ...m, resolved: !m.resolved } : m));
+    setMistakes(next);
+    writeStoredList(mistakesKey, next);
+  };
 
-    const pool =
-      vocabDeckFilter === "unit9"
-        ? unit9
-        : vocabDeckFilter === "essential"
-          ? essential
-          : vocabDeckFilter === "academic"
-            ? academicWords
-            : vocabDeckFilter === "confusing"
-              ? confusingWords
-              : allUnitsWords;
+  const handleDeleteMistake = (id: string) => {
+    const next = mistakes.filter((m) => m.id !== id);
+    setMistakes(next);
+    writeStoredList(mistakesKey, next);
+  };
 
-    const q = vocabSearch.trim().toLowerCase();
-    if (!q) return pool;
-    return pool.filter(
-      (w) =>
-        w.word.toLowerCase().includes(q) ||
-        w.definitionEn.toLowerCase().includes(q) ||
-        w.meaningAr.includes(q),
-    );
-  }, [vocabDeckFilter, vocabSearch]);
+  return (
+    <div className="mx-auto max-w-4xl space-y-6 pb-12">
+      <PageHeader
+        title={t("nav.study") || (isAr ? "الدراسة والأكاديميات" : "Study & Academics")}
+        subtitle={
+          isAr
+            ? "مساحة منظمة وبسيطة لتدوين ملخصاتك ومراجعة بطاقات المواد ومتابعة أخطاء الاختبارات."
+            : "A clean academic space to capture subject notes, practice active flashcards, and track exam corrections."
+        }
+      />
 
-  // Top-level Comprehensive Vocabulary Test Center view
-  if (topView === "test_center" && !selectedUnitNumber) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-6 pb-14">
-        <VocabTestCenter onBackToStudy={() => setTopView("units")} />
-      </div>
-    );
-  }
-
-  // Top-level Lesson Summaries & Revision view
-  if (topView === "summaries" && !selectedUnitNumber) {
-    const revisedCount = UNIT_SUMMARY_GUIDES.filter((g) => revisedUnits[g.unit]).length;
-    return (
-      <div className="mx-auto max-w-5xl space-y-6 pb-14">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-4">
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setTopView("units")}
-              className="gap-2 text-xs font-semibold cursor-pointer"
-            >
-              <ArrowLeft className="size-4 rtl-flip" />
-              <span>{isAr ? "العودة للوحدات" : "Back to Units"}</span>
-            </Button>
-            <div>
-              <h2 className="font-display text-xl font-bold text-foreground">
-                {isAr ? "ملخصات الدروس وخطة المراجعة" : "Lesson Summaries & Revision"}
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {isAr
-                  ? `تمت مراجعة ${revisedCount} من ${UNIT_SUMMARY_GUIDES.length} وحدات`
-                  : `${revisedCount} of ${UNIT_SUMMARY_GUIDES.length} units revised`}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {UNIT_SUMMARY_GUIDES.map((guide) => {
-            const done = Boolean(revisedUnits[guide.unit]);
-            return (
-              <div
-                key={guide.unit}
-                className="surface-card flex flex-col justify-between rounded-2xl border border-border/80 p-5 space-y-4"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="rounded-md bg-primary/10 px-2.5 py-0.5 font-mono text-[11px] font-bold text-primary">
-                      UNIT {guide.unit}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => toggleRevisedUnit(guide.unit)}
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
-                        done
-                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                          : "bg-surface-2 text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <CheckCircle2 className="size-3.5" />
-                      <span>
-                        {done
-                          ? isAr
-                            ? "تمت المراجعة"
-                            : "Revised"
-                          : isAr
-                            ? "تحديد كمُراجع"
-                            : "Mark Revised"}
-                      </span>
-                    </button>
-                  </div>
-
-                  <h3 className="font-display text-base font-bold text-foreground">
-                    {isAr ? guide.titleAr : guide.titleEn}
-                  </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {isAr ? guide.summaryAr : guide.summaryEn}
-                  </p>
-
-                  <ul className="space-y-1.5 rounded-xl bg-surface-2/60 p-3 text-xs text-foreground">
-                    {(isAr ? guide.keyTakeawaysAr : guide.keyTakeawaysEn).map((tip, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
-                        <span>{tip}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-3">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleSelectUnit(guide.unit, "flashcards")}
-                    className="h-8 text-xs cursor-pointer"
-                  >
-                    {isAr ? "افتح البطاقات" : "Open Flashcards"}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="glow"
-                    onClick={() => handleSelectUnit(guide.unit, "quiz")}
-                    className="h-8 text-xs cursor-pointer"
-                  >
-                    {isAr ? "اختبار سريع" : "Quick Quiz"}
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // Top-level Unit 9 Interactive Quiz view
-  if (topView === "unit9_quiz" && !selectedUnitNumber) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-6 pb-14">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 pb-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setTopView("units")}
-            className="gap-2 text-xs font-semibold cursor-pointer"
-          >
-            <ArrowLeft className="size-4 rtl-flip" />
-            <span>{isAr ? "العودة لجميع الوحدات" : "Back to Study Units"}</span>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => handleSelectUnit(9, "flashcards")}
-            className="gap-2 text-xs font-semibold cursor-pointer"
-          >
-            <Layers className="size-4 text-primary" />
+      {/* Pointer to Grade 9 Vocabulary Center moved inside English World */}
+      <div className="surface-card flex flex-col gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+            <BookOpen className="size-4 shrink-0" />
             <span>
               {isAr
-                ? "بطاقات المفردات المهمة (٢٤ كلمة)"
-                : "Important Vocabulary Flashcards (24 Words)"}
+                ? "مفردات الصف التاسع — اللغة الإنجليزية"
+                : "Grade 9 English Vocabulary & Tests"}
             </span>
-          </Button>
+          </div>
+          <p className="text-sm text-foreground leading-relaxed">
+            {isAr
+              ? "انتقل مركز مفردات الصف التاسع واختباراته التفاعلية إلى قسم عالم الإنجليزية لسهولة الوصول."
+              : "The Grade 9 vocabulary units, summaries, and interactive tests now live inside English World → Grade 9 — Vocabulary."}
+          </p>
         </div>
 
-        <Unit9VocabQuiz onBackToFlashcards={() => handleSelectUnit(9, "flashcards")} />
+        <a
+          href="/app/english?tab=grade9"
+          className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+        >
+          <span>{isAr ? "افتح مفردات الصف التاسع" : "Open Grade 9 — Vocabulary"}</span>
+          <ArrowRight className="size-4 rtl-flip" />
+        </a>
       </div>
-    );
-  }
 
-  // Top-level Essential & Expanded Vocabulary Cards Browser
-  if (topView === "vocabulary_cards" && !selectedUnitNumber) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-6 pb-14">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-4">
-          <div className="flex items-center gap-3">
+      {/* Simple Module Mode Switcher */}
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface/60 p-1.5">
+        {(
+          [
+            {
+              id: "notes",
+              en: `Study Notes (${notes.length})`,
+              ar: `الملاحظات والملخصات (${notes.length})`,
+              icon: FileText,
+            },
+            {
+              id: "flashcards",
+              en: `Flashcard Deck (${cards.length})`,
+              ar: `بطاقات المراجعة (${cards.length})`,
+              icon: Layers,
+            },
+            {
+              id: "mistakes",
+              en: `Mistake Log (${mistakes.length})`,
+              ar: `سجل الأخطاء والتصحيح (${mistakes.length})`,
+              icon: AlertCircle,
+            },
+          ] as const
+        ).map((item) => {
+          const Icon = item.icon;
+          return (
             <Button
+              key={item.id}
               type="button"
-              variant="outline"
               size="sm"
-              onClick={() => setTopView("units")}
-              className="gap-2 text-xs font-semibold cursor-pointer"
+              variant={tab === item.id ? "glow" : "ghost"}
+              onClick={() => setTab(item.id)}
+              className="min-h-[42px] gap-1.5 text-xs"
             >
-              <ArrowLeft className="size-4 rtl-flip" />
-              <span>{isAr ? "العودة للوحدات" : "Back to Units"}</span>
+              <Icon className="size-4 shrink-0" />
+              <span>{isAr ? item.ar : item.en}</span>
             </Button>
-            <div>
-              <h2 className="font-display text-xl font-bold text-foreground">
-                {isAr
-                  ? "موسوعة المفردات الأساسية والطالب المتفوّق"
-                  : "Expanded Student Vocabulary Cards"}
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {isAr
-                  ? "تعلّم أهم الكلمات الأكاديمية والمفردات المهمة للعلوم والتكنولوجيا مع النطق والأمثلة."
-                  : "Learn essential academic words and important science vocabulary with audio and examples."}
-              </p>
+          );
+        })}
+      </div>
+
+      {/* TAB 1: Study Notes */}
+      {tab === "notes" && (
+        <div className="space-y-5">
+          <form onSubmit={handleAddNote} className="surface-card space-y-3 rounded-2xl p-5">
+            <h2 className="font-display text-base font-bold text-foreground">
+              {isAr ? "أضف ملخص درس أو ملاحظة" : "Add Study Note or Lesson Summary"}
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <select
+                value={noteSubject}
+                onChange={(e) => setNoteSubject(e.target.value)}
+                aria-label={isAr ? "المادة الدراسية" : "Subject"}
+                className="min-h-[44px] rounded-xl border border-border bg-surface-2 px-3 text-sm text-foreground"
+              >
+                {GENERAL_SUBJECTS.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {isAr ? s.ar : s.en}
+                  </option>
+                ))}
+              </select>
+              <Input
+                value={noteTitle}
+                onChange={(e) => setNoteTitle(e.target.value)}
+                placeholder={isAr ? "عنوان الدرس أو المفهوم..." : "Lesson topic or concept..."}
+                className="min-h-[44px]"
+              />
             </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="glow"
-              size="sm"
-              onClick={() => setTopView("test_center")}
-              className="gap-1.5 text-xs font-bold cursor-pointer"
-            >
-              <Zap className="size-3.5" />
-              <span>{isAr ? "بنك الاختبارات الشامل" : "Test Center"}</span>
+            <Textarea
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              placeholder={
+                isAr
+                  ? "اكتب النقاط الرئيسية أو القوانين بأسلوبك..."
+                  : "Write key points, formulas, or ideas in your own words..."
+              }
+              rows={3}
+            />
+            <Button type="submit" variant="glow" className="min-h-[44px] gap-2">
+              <Plus className="size-4" />
+              <span>{isAr ? "حفظ الملاحظة" : "Save Study Note"}</span>
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setTopView("unit9_quiz")}
-              className="gap-1.5 text-xs font-bold cursor-pointer"
-            >
-              <Trophy className="size-3.5" />
-              <span>{isAr ? "اختبار المفردات المهمة" : "Important Vocabulary Quiz"}</span>
-            </Button>
-          </div>
-        </div>
+          </form>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-1.5">
-            {(
-              [
-                { id: "all", labelEn: "All Words (141)", labelAr: "جميع الكلمات (١٤١)" },
-                {
-                  id: "essential",
-                  labelEn: "Essential Mastery (24)",
-                  labelAr: "كلمات التفوق الأساسية (٢٤)",
-                },
-                {
-                  id: "unit9",
-                  labelEn: "Important Vocabulary (24)",
-                  labelAr: "المفردات المهمة (٢٤)",
-                },
-                {
-                  id: "academic",
-                  labelEn: "Academic Super-Words (16)",
-                  labelAr: "مفردات أكاديمية متقدمة (١٦)",
-                },
-                {
-                  id: "confusing",
-                  labelEn: "Confusing Words & Traps (5)",
-                  labelAr: "كلمات متشابهة وفروق دقيقة (٥)",
-                },
-              ] as const
-            ).map((f) => (
+          {notes.length > 0 && (
+            <div className="flex flex-wrap gap-2">
               <button
-                key={f.id}
                 type="button"
-                onClick={() => setVocabDeckFilter(f.id)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
-                  vocabDeckFilter === f.id
+                onClick={() => setFilterSubject("all")}
+                className={`min-h-[38px] rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  filterSubject === "all"
                     ? "bg-primary text-primary-foreground"
                     : "bg-surface-2 text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {isAr ? f.labelAr : f.labelEn}
+                {isAr ? "كل المواد" : "All Subjects"}
               </button>
-            ))}
-          </div>
-
-          <div className="relative w-full sm:w-64">
-            <Search className="pointer-events-none absolute start-2.5 top-2.5 size-3.5 text-muted-foreground" />
-            <Input
-              value={vocabSearch}
-              onChange={(e) => setVocabSearch(e.target.value)}
-              placeholder={isAr ? "ابحث عن كلمة أو معنى..." : "Search word or meaning..."}
-              className="h-8 ps-8 text-xs"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {explorerWords.map((w) => (
-            <div
-              key={w.id}
-              className="surface-card flex flex-col justify-between rounded-2xl border border-border/80 p-4 space-y-3"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="rounded-md bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-bold text-primary">
-                    {w.unit === 10
-                      ? "ESSENTIAL"
-                      : w.unit === 9
-                        ? "IMPORTANT"
-                        : w.unit === 11
-                          ? "ACADEMIC"
-                          : w.unit === 12
-                            ? "CONFUSING PAIRS"
-                            : `UNIT ${w.unit}`}{" "}
-                    · {w.partOfSpeech}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handlePronounce(w.word)}
-                    className="flex size-7 items-center justify-center rounded-full bg-surface-2 text-primary hover:bg-primary/15 cursor-pointer"
-                    aria-label={`Listen to ${w.word}`}
-                  >
-                    <Volume2 className="size-3.5" />
-                  </button>
-                </div>
-
-                <div>
-                  <h3 className="font-display text-lg font-bold text-foreground">{w.word}</h3>
-                  <div className="font-mono text-[11px] text-muted-foreground">{w.phonetic}</div>
-                </div>
-
-                <div className="font-arabic text-sm font-bold text-primary" dir="rtl">
-                  {w.meaningAr}
-                </div>
-
-                <p className="text-xs text-muted-foreground leading-relaxed">{w.definitionEn}</p>
-              </div>
-
-              <div className="rounded-xl bg-surface-2/60 p-2.5 text-[11px] space-y-1 border border-border/50">
-                <p className="italic text-foreground">&ldquo;{w.exampleEn}&rdquo;</p>
-                <p className="font-arabic text-muted-foreground" dir="rtl">
-                  {w.exampleAr}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // If no unit is selected, show Study Landing Page with Units 1-4 + Unit 9 + Essential Mastery Pack
-  if (!selectedUnitNumber || !selectedUnit) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-8 pb-14">
-        {/* Header */}
-        <div className="text-center space-y-3 pt-2">
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary">
-            <GraduationCap className="size-4" />
-            <span>
-              {isAr
-                ? "منهج الصف التاسع والمفردات الأساسية — اللغة الإنجليزية"
-                : "Grade 9 & Essential Mastery — English Study Hub"}
-            </span>
-          </div>
-
-          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-            {isAr ? "مركز الدراسة والمفردات" : "Grade 9 Study & Vocabulary"}
-          </h1>
-
-          <p className="mx-auto max-w-2xl text-sm sm:text-base text-muted-foreground leading-relaxed">
-            {isAr
-              ? "ادرس وحدات الصف التاسع، اختبر مستواك فوراً في اختبار المفردات المهمة التفاعلي، وتعلّم كلمات التفوق الأكاديمي الأساسية."
-              : "Master Grade 9 vocabulary units, test yourself with immediate feedback in the Important Vocabulary Interactive Quiz, and learn essential words every student needs."}
-          </p>
-
-          {/* Direct Action Bar for Test Center, Unit 9 Interactive Quiz & Expanded Vocabulary Cards */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <Button
-              type="button"
-              variant="glow"
-              size="default"
-              onClick={() => setTopView("test_center")}
-              className="gap-2 font-bold cursor-pointer"
-            >
-              <Zap className="size-4" />
-              <span>
-                {isAr
-                  ? "بنك الاختبارات الشامل (نماذج متعددة وتصحيح فوري)"
-                  : "All Vocabulary Tests (Sprint, Mock & Mastery)"}
-              </span>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="default"
-              onClick={() => setTopView("unit9_quiz")}
-              className="gap-2 font-bold cursor-pointer"
-            >
-              <Trophy className="size-4 text-primary" />
-              <span>
-                {isAr
-                  ? "ابدأ اختبار المفردات المهمة التفاعلي (تصحيح فوري)"
-                  : "Important Vocabulary Interactive Quiz (Immediate Feedback)"}
-              </span>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="default"
-              onClick={() => setTopView("vocabulary_cards")}
-              className="gap-2 font-semibold cursor-pointer"
-            >
-              <BookOpen className="size-4 text-primary" />
-              <span>
-                {isAr
-                  ? "بطاقات المفردات الأساسية والموسّعة (١٤١ كلمة)"
-                  : "Browse All Study Cards & Essential Words (141)"}
-              </span>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="default"
-              onClick={() => setTopView("summaries")}
-              className="gap-2 font-semibold cursor-pointer"
-            >
-              <Layers className="size-4 text-primary" />
-              <span>{isAr ? "ملخصات الدروس والمراجعة" : "Lesson Summaries & Revision"}</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* Unit Cards Grid (Units 1-4 + Unit 9 + Essential Mastery Pack) */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          {ALL_STUDY_VOCAB_UNITS.map((unitMeta) => {
-            const wordCount = unitMeta.words.length;
-            const isUnit9 = unitMeta.unit === 9;
-            const isEssential = unitMeta.unit === 10;
-
-            return (
-              <div
-                key={unitMeta.unit}
-                className={`surface-card group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-6 sm:p-7 transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:bg-surface-2/40 ${
-                  isUnit9 || isEssential ? "border-primary/40" : "border-border/80"
-                }`}
-              >
-                <div
-                  className="space-y-4 cursor-pointer"
-                  onClick={() => handleSelectUnit(unitMeta.unit, "flashcards")}
+              {GENERAL_SUBJECTS.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setFilterSubject(s.id)}
+                  className={`min-h-[38px] rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    filterSubject === s.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-surface-2 text-muted-foreground hover:text-foreground"
+                  }`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-3 py-1 font-mono text-xs font-bold text-primary tracking-wider">
-                      {isEssential
-                        ? isAr
-                          ? "كلمات التفوّق"
-                          : "ESSENTIAL PACK"
-                        : isUnit9
-                          ? isAr
-                            ? "المفردات المهمة"
-                            : "IMPORTANT VOCAB"
-                          : `UNIT ${unitMeta.unit}`}
-                    </span>
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {isAr ? `${wordCount} كلمة` : `${wordCount} words`}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
-                      {isAr ? unitMeta.themeAr : unitMeta.themeEn}
-                    </h2>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      {isAr ? unitMeta.themeEn : unitMeta.themeAr}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-border/60 flex flex-wrap items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectUnit(unitMeta.unit, "flashcards")}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline cursor-pointer"
-                  >
-                    <Layers className="size-3.5" />
-                    <span>{isAr ? "البطاقات التعليمية" : "Start Flashcards"}</span>
-                  </button>
-
-                  <div className="flex items-center gap-2">
-                    {isUnit9 ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="glow"
-                        onClick={() => handleSelectUnit(9, "quiz")}
-                        className="h-8 gap-1.5 text-xs font-bold cursor-pointer"
-                      >
-                        <HelpCircle className="size-3.5" />
-                        <span>{isAr ? "اختبار المفردات المهمة" : "Important Vocab Quiz"}</span>
-                      </Button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleSelectUnit(unitMeta.unit, "quiz")}
-                        className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1 text-xs font-semibold text-foreground hover:border-primary/40 cursor-pointer"
-                      >
-                        <Sparkles className="size-3 text-primary" />
-                        <span>{isAr ? "اختبار سريع" : "Quick Quiz"}</span>
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => handleSelectUnit(unitMeta.unit, "flashcards")}
-                      className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors cursor-pointer"
-                      aria-label={`Open ${unitMeta.themeEn}`}
-                    >
-                      <ArrowRight className="size-4 rtl-flip" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // Selected Unit View (Flashcards or Interactive Quiz)
-  return (
-    <div className="mx-auto max-w-3xl space-y-6 pb-12">
-      {/* Top Navigation */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-4">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleBackToUnits}
-          className="gap-2 text-xs font-semibold cursor-pointer"
-        >
-          <ArrowLeft className="size-4 rtl-flip" />
-          <span>{isAr ? "العودة لاختيار الوحدات" : "Back to Units"}</span>
-        </Button>
-
-        <div className="text-center">
-          <div className="text-xs font-bold text-primary font-mono tracking-wider">
-            {selectedUnit.unit === 10
-              ? isAr
-                ? "كلمات التفوّق الأساسية"
-                : "ESSENTIAL VOCABULARY"
-              : selectedUnit.unit === 9
-                ? isAr
-                  ? "المفردات المهمة — العلوم والتكنولوجيا"
-                  : "IMPORTANT VOCABULARY"
-                : `UNIT ${selectedUnit.unit}`}
-          </div>
-          <div className="text-xs text-muted-foreground truncate max-w-[220px] sm:max-w-xs">
-            {isAr ? selectedUnit.themeAr : selectedUnit.themeEn}
-          </div>
-        </div>
-
-        {/* Mode Toggle inside Unit: Flashcards vs Interactive Quiz */}
-        <div className="flex items-center gap-1.5 rounded-xl bg-surface-2 p-1 border border-border/70">
-          <button
-            type="button"
-            onClick={() => setUnitViewMode("flashcards")}
-            className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
-              unitViewMode === "flashcards"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {isAr ? "البطاقات" : "Flashcards"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setUnitViewMode("quiz")}
-            className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
-              unitViewMode === "quiz"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {isAr ? "اختبار تفاعلي" : "Interactive Quiz"}
-          </button>
-        </div>
-      </div>
-
-      {/* Quiz Mode */}
-      {unitViewMode === "quiz" ? (
-        selectedUnit.unit === 9 ? (
-          <Unit9VocabQuiz onBackToFlashcards={() => setUnitViewMode("flashcards")} />
-        ) : (
-          <GenericUnitImmediateQuiz
-            unitMeta={selectedUnit}
-            isAr={isAr}
-            onBackToFlashcards={() => setUnitViewMode("flashcards")}
-          />
-        )
-      ) : (
-        /* Flashcards Mode */
-        <div className="mx-auto max-w-2xl space-y-5">
-          {/* Position & Progress Bar */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              {isAr
-                ? `بطاقة ${currentWordIndex + 1} من ${words.length}`
-                : `Card ${currentWordIndex + 1} of ${words.length}`}
-            </span>
-            <div className="font-mono font-bold text-foreground bg-surface-2 px-3 py-1 rounded-lg border border-border">
-              {currentWordIndex + 1} / {words.length}
-            </div>
-          </div>
-
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-            <div
-              className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${((currentWordIndex + 1) / Math.max(1, words.length)) * 100}%` }}
-            />
-          </div>
-
-          {/* Flashcard Container */}
-          {currentWord && (
-            <div className="surface-card relative overflow-hidden rounded-2xl border-2 border-border/90 p-6 sm:p-9 shadow-md transition-all">
-              <div className="space-y-6 text-center">
-                <div className="space-y-2">
-                  <div className="inline-flex items-center gap-2">
-                    <span className="rounded-md bg-surface-2 px-2.5 py-0.5 font-mono text-xs font-medium text-muted-foreground">
-                      {currentWord.partOfSpeech}
-                    </span>
-                    {currentWord.phonetic && (
-                      <span className="font-mono text-xs text-primary/90">
-                        {currentWord.phonetic}
-                      </span>
-                    )}
-                  </div>
-
-                  <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground select-all">
-                    {currentWord.word}
-                  </h2>
-                </div>
-
-                <div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePronounce(currentWord.word)}
-                    disabled={isSpeaking}
-                    className="gap-2 rounded-full px-4 text-xs font-semibold cursor-pointer border-primary/40 hover:bg-primary/10"
-                  >
-                    <Volume2
-                      className={`size-4 text-primary ${isSpeaking ? "animate-pulse" : ""}`}
-                    />
-                    <span>{isAr ? "استمع للنطق (British)" : "Listen (British English)"}</span>
-                  </Button>
-                </div>
-
-                <p className="text-sm sm:text-base leading-relaxed text-muted-foreground max-w-lg mx-auto">
-                  {currentWord.definitionEn}
-                </p>
-
-                <div className="pt-2">
-                  {!isMeaningRevealed ? (
-                    <Button
-                      type="button"
-                      variant="glow"
-                      size="lg"
-                      onClick={() => setIsMeaningRevealed(true)}
-                      className="w-full sm:w-auto gap-2 px-8 font-bold cursor-pointer"
-                    >
-                      <Eye className="size-4" />
-                      <span>{isAr ? "إظهار المعنى بالعربية" : "Reveal Arabic Meaning"}</span>
-                    </Button>
-                  ) : (
-                    <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 text-start space-y-3 animate-in fade-in-50 zoom-in-95 duration-200">
-                      <div className="flex items-center justify-between border-b border-primary/20 pb-2">
-                        <span className="text-xs font-bold text-primary">
-                          {isAr ? "المعنى بالعربية" : "Arabic Meaning"}
-                        </span>
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => handlePronounceArabic(currentWord.meaningAr)}
-                            className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                          >
-                            <Volume2 className="size-3.5" />
-                            <span className="font-arabic">استمع بالعربية</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setIsMeaningRevealed(false)}
-                            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer"
-                          >
-                            <EyeOff className="size-3.5" />
-                            <span>{isAr ? "إخفاء" : "Hide"}</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="font-display text-2xl font-bold text-foreground text-center py-1 font-arabic">
-                        {currentWord.meaningAr}
-                      </div>
-
-                      {currentWord.exampleEn && (
-                        <div className="text-xs space-y-1 pt-2 border-t border-border/40">
-                          <div className="text-muted-foreground font-medium">Example:</div>
-                          <p className="text-foreground italic">{currentWord.exampleEn}</p>
-                          {currentWord.exampleAr && (
-                            <p className="text-muted-foreground font-arabic" dir="rtl">
-                              {currentWord.exampleAr}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      {currentWord.collocations && currentWord.collocations.length > 0 && (
-                        <div className="text-xs pt-1 flex flex-wrap gap-1.5 items-center">
-                          <span className="text-muted-foreground font-medium">Collocations:</span>
-                          {currentWord.collocations.map((c, i) => (
-                            <span
-                              key={i}
-                              className="rounded-md bg-surface-2 px-2 py-0.5 text-foreground font-mono text-[11px]"
-                            >
-                              {c}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
+                  {isAr ? s.ar : s.en}
+                </button>
+              ))}
             </div>
           )}
 
-          {/* Navigation Controls */}
-          <div className="flex items-center justify-between gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              onClick={handlePrevWord}
-              disabled={currentWordIndex === 0}
-              className="flex-1 gap-2 font-semibold cursor-pointer"
-            >
-              <ChevronLeft className="size-4 rtl-flip" />
-              <span>{isAr ? "السابق" : "Previous"}</span>
-            </Button>
+          {visibleNotes.length === 0 ? (
+            <div className="surface-card rounded-2xl p-6 text-center text-sm text-muted-foreground">
+              {isAr
+                ? "لا توجد ملاحظات مسجلة بعد. ابدأ بكتابة أول ملخص دراسي بالأعلى."
+                : "No study notes yet. Write your first concise lesson summary above."}
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {visibleNotes.map((note) => (
+                <div
+                  key={note.id}
+                  className="surface-card flex flex-col justify-between gap-3 rounded-2xl p-5"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                        {getSubjectLabel(note.subject)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteNote(note.id)}
+                        aria-label={isAr ? "حذف الملاحظة" : "Delete note"}
+                        className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+                    <h3 className="font-display text-base font-bold text-foreground leading-snug">
+                      {note.title}
+                    </h3>
+                    <p className="whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">
+                      {note.content}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-            <Button
-              type="button"
-              variant="default"
-              size="lg"
-              onClick={handleNextWord}
-              disabled={currentWordIndex === words.length - 1}
-              className="flex-1 gap-2 font-semibold cursor-pointer"
-            >
-              <span>{isAr ? "التالي" : "Next"}</span>
-              <ChevronRight className="size-4 rtl-flip" />
+      {/* TAB 2: Active Flashcards */}
+      {tab === "flashcards" && (
+        <div className="space-y-5">
+          <form onSubmit={handleAddCard} className="surface-card space-y-3 rounded-2xl p-5">
+            <h2 className="font-display text-base font-bold text-foreground">
+              {isAr ? "أنشئ بطاقة مراجعة سريعة" : "Create Active Recall Flashcard"}
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <select
+                value={cardSubject}
+                onChange={(e) => setCardSubject(e.target.value)}
+                aria-label={isAr ? "المادة" : "Subject"}
+                className="min-h-[44px] rounded-xl border border-border bg-surface-2 px-3 text-sm text-foreground"
+              >
+                {GENERAL_SUBJECTS.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {isAr ? s.ar : s.en}
+                  </option>
+                ))}
+              </select>
+              <Input
+                value={cardFront}
+                onChange={(e) => setCardFront(e.target.value)}
+                placeholder={isAr ? "السؤال أو المصطلح..." : "Question or concept prompt..."}
+                className="min-h-[44px]"
+              />
+              <Input
+                value={cardBack}
+                onChange={(e) => setCardBack(e.target.value)}
+                placeholder={isAr ? "الإجابة أو الشرح..." : "Answer or explanation..."}
+                className="min-h-[44px]"
+              />
+            </div>
+            <Button type="submit" variant="glow" className="min-h-[44px] gap-2">
+              <Plus className="size-4" />
+              <span>{isAr ? "إضافة البطاقة" : "Add Flashcard"}</span>
             </Button>
-          </div>
+          </form>
 
-          <p className="text-center text-xs text-muted-foreground">
-            {isAr
-              ? "يمكنك استخدام مفاتيح الأسهم (← و →) ومفتاح المسافة للتنقل السريع."
-              : "Tip: Use arrow keys (← and →) and Spacebar for rapid flashcard navigation."}
-          </p>
+          {cards.length === 0 ? (
+            <div className="surface-card rounded-2xl p-6 text-center text-sm text-muted-foreground">
+              {isAr
+                ? "أنشئ بطاقات سؤال وجواب لأي مادة لاختبار تذكرك النشط."
+                : "Create question-and-answer flashcards for any subject to practice active recall."}
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {cards.map((card) => {
+                const shown = Boolean(revealedIds[card.id]);
+                return (
+                  <div key={card.id} className="surface-card space-y-3 rounded-2xl p-5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                        {getSubjectLabel(card.subject)}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleReviewed(card.id)}
+                          className={`inline-flex min-h-[36px] items-center gap-1 rounded-lg px-2.5 text-xs font-medium ${
+                            card.reviewed
+                              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                              : "bg-surface-2 text-muted-foreground"
+                          }`}
+                        >
+                          <CheckCircle2 className="size-3.5" />
+                          <span>
+                            {card.reviewed
+                              ? isAr
+                                ? "مُتقنة"
+                                : "Mastered"
+                              : isAr
+                                ? "قيد المراجعة"
+                                : "Reviewing"}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCard(card.id)}
+                          aria-label={isAr ? "حذف البطاقة" : "Delete flashcard"}
+                          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-base font-bold text-foreground leading-snug">{card.front}</p>
+
+                    {shown && (
+                      <div className="rounded-xl border border-primary/25 bg-primary/5 p-3 text-sm text-foreground">
+                        {card.back}
+                      </div>
+                    )}
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setRevealedIds((prev) => ({ ...prev, [card.id]: !prev[card.id] }))
+                      }
+                      className="min-h-[40px] w-full gap-2 text-xs"
+                    >
+                      {shown ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                      <span>
+                        {shown
+                          ? isAr
+                            ? "إخفاء الإجابة"
+                            : "Hide Answer"
+                          : isAr
+                            ? "إظهار الإجابة"
+                            : "Reveal Answer"}
+                      </span>
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 3: Mistake Log */}
+      {tab === "mistakes" && (
+        <div className="space-y-5">
+          <form onSubmit={handleAddMistake} className="surface-card space-y-3 rounded-2xl p-5">
+            <h2 className="font-display text-base font-bold text-foreground">
+              {isAr ? "سجل خطأً لتجنّبه مستقبلاً" : "Log a Mistake & Correction"}
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <select
+                value={mistakeSubject}
+                onChange={(e) => setMistakeSubject(e.target.value)}
+                aria-label={isAr ? "المادة" : "Subject"}
+                className="min-h-[44px] rounded-xl border border-border bg-surface-2 px-3 text-sm text-foreground"
+              >
+                {GENERAL_SUBJECTS.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {isAr ? s.ar : s.en}
+                  </option>
+                ))}
+              </select>
+              <Input
+                value={mistakeQuestion}
+                onChange={(e) => setMistakeQuestion(e.target.value)}
+                placeholder={isAr ? "ما السؤال أو الخطأ؟" : "What was the mistake?"}
+                className="min-h-[44px]"
+              />
+              <Input
+                value={mistakeCorrection}
+                onChange={(e) => setMistakeCorrection(e.target.value)}
+                placeholder={isAr ? "الحل الصحيح أو السبب..." : "Correct answer & takeaway..."}
+                className="min-h-[44px]"
+              />
+            </div>
+            <Button type="submit" variant="glow" className="min-h-[44px] gap-2">
+              <Plus className="size-4" />
+              <span>{isAr ? "تسجيل في السجل" : "Save Correction"}</span>
+            </Button>
+          </form>
+
+          {mistakes.length === 0 ? (
+            <div className="surface-card rounded-2xl p-6 text-center text-sm text-muted-foreground">
+              {isAr
+                ? "سجل أخطاء التمارين والاختبارات هنا لتحويلها إلى نقاط قوة."
+                : "Record quiz or homework mistakes here so you do not repeat them."}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {mistakes.map((item) => (
+                <div
+                  key={item.id}
+                  className="surface-card flex flex-col gap-3 rounded-2xl p-5 sm:flex-row sm:items-start sm:justify-between"
+                >
+                  <div className="space-y-1.5">
+                    <span className="inline-block rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                      {getSubjectLabel(item.subject)}
+                    </span>
+                    <p className="text-sm font-bold text-foreground">{item.question}</p>
+                    <p className="text-sm text-emerald-700 dark:text-emerald-300">
+                      {item.correction}
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={item.resolved ? "default" : "outline"}
+                      onClick={() => handleToggleMistakeResolved(item.id)}
+                      className="min-h-[40px] gap-1.5 text-xs"
+                    >
+                      <CheckCircle2 className="size-3.5" />
+                      <span>
+                        {item.resolved
+                          ? isAr
+                            ? "تم الفهم"
+                            : "Resolved"
+                          : isAr
+                            ? "تحديد كمفهوم"
+                            : "Mark Resolved"}
+                      </span>
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteMistake(item.id)}
+                      aria-label={isAr ? "حذف السجل" : "Delete mistake entry"}
+                      className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

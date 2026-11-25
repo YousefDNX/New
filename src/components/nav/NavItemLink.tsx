@@ -39,7 +39,7 @@ export function NavItemLink({ item, collapsed, onNavigate, className }: Props) {
         className="shrink-0"
         strokeWidth={1.9}
       />
-      {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+      {!collapsed && <span className="min-w-0 flex-1 break-words leading-snug">{label}</span>}
     </Link>
   );
 }

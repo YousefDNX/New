@@ -11,15 +11,15 @@ export const Route = createFileRoute("/_authenticated/app/study")({
   },
   head: () => ({
     meta: [
-      { title: `Grade 9 Study — ${BRAND.name}` },
+      { title: `Study & Academics — ${BRAND.name}` },
       {
         name: "description",
-        content: `Grade 9 English vocabulary flashcards and study units on ${BRAND.name}.`,
+        content: `General academic notes, flashcards, and mistake tracking on ${BRAND.name}.`,
       },
-      { property: "og:title", content: `Grade 9 Study — ${BRAND.name}` },
+      { property: "og:title", content: `Study & Academics — ${BRAND.name}` },
       {
         property: "og:description",
-        content: `Grade 9 English vocabulary flashcards and study units on ${BRAND.name}.`,
+        content: `General academic notes, flashcards, and mistake tracking on ${BRAND.name}.`,
       },
     ],
   }),

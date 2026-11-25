@@ -273,81 +273,137 @@ export function analyzeWeakSubjects(params: {
 export interface PathwayTemplate {
   id: string;
   title: string;
+  titleAr: string;
   summary: string;
+  summaryAr: string;
   interests: string[];
+  interestsAr: string[];
   strengths: string[];
+  strengthsAr: string[];
   subjects: string[];
+  subjectsAr: string[];
   milestones: string[];
+  milestonesAr: string[];
 }
 
 export const FUTURE_PATHWAYS: PathwayTemplate[] = [
   {
     id: "ai-software-engineering",
     title: "Software Engineering & Applied AI",
+    titleAr: "هندسة البرمجيات والذكاء الاصطناعي التطبيقي",
     summary: "Design reliable software tools, algorithms, and human-centered computing systems.",
+    summaryAr: "تصميم أدوات برمجية موثوقة وخوارزميات وأنظمة حوسبة تخدم المستخدمين.",
     interests: ["Technology", "Problem Solving", "Math"],
+    interestsAr: ["التقنية", "حل المشكلات", "الرياضيات"],
     strengths: ["Analytical Thinking", "Persistence"],
+    strengthsAr: ["التفكير التحليلي", "المثابرة"],
     subjects: ["Mathematics", "Computer Science", "Physics"],
+    subjectsAr: ["الرياضيات", "علوم الحاسب", "الفيزياء"],
     milestones: [
       "Build 2 small coding projects with clean tests",
       "Strengthen algebra, functions, and discrete logic",
       "Explore regional university CS admissions requirements",
     ],
+    milestonesAr: [
+      "بناء مشروعين برمجيين صغيرين مع اختبارات واضحة",
+      "تقوية مهارات الجبر والدوال والمنطق الرياضي",
+      "مراجعة متطلبات القبول في كليات علوم الحاسب",
+    ],
   },
   {
     id: "biomed-health-sciences",
     title: "Medicine, Biotech & Health Sciences",
+    titleAr: "الطب والتقنية الحيوية والعلوم الصحية",
     summary:
       "Apply biology, chemistry, and research discipline to clinical care or medical research.",
+    summaryAr: "توظيف الأحياء والكيمياء ومنهج البحث العلمي في الرعاية الصحية والأبحاث الطبية.",
     interests: ["Science", "Helping People", "Research"],
+    interestsAr: ["العلوم", "مساعدة الآخرين", "البحث العلمي"],
     strengths: ["Empathy", "Attention to Detail"],
+    strengthsAr: ["التعاطف", "الدقة والانتباه للتفاصيل"],
     subjects: ["Biology", "Chemistry", "English"],
+    subjectsAr: ["الأحياء", "الكيمياء", "اللغة الإنجليزية"],
     milestones: [
       "Master cellular biology & organic foundations",
       "Volunteer or shadow a local health initiative",
       "Compare pre-med / health science degree tracks",
     ],
+    milestonesAr: [
+      "إتقان أساسيات بيولوجيا الخلية والكيمياء العضوية",
+      "المشاركة التطوعية في مبادرة توعوية أو صحية محلية",
+      "مقارنة مسارات الطب والعلوم الصحية في الجامعات",
+    ],
   },
   {
     id: "clean-energy-engineering",
     title: "Sustainable & Mechanical Engineering",
+    titleAr: "الهندسة الميكانيكية والطاقة المستدامة",
     summary:
       "Solve energy, infrastructure, and climate challenges through physics and applied design.",
+    summaryAr: "ابتكار حلول للطاقة والبنية التحتية والبيئة عبر الفيزياء والتصميم الهندسي.",
     interests: ["Sustainability", "Design", "Math"],
+    interestsAr: ["الاستدامة", "التصميم", "الرياضيات"],
     strengths: ["Systems Thinking", "Collaboration"],
+    strengthsAr: ["التفكير المنظومي", "العمل الجماعي"],
     subjects: ["Physics", "Calculus", "Chemistry"],
+    subjectsAr: ["الفيزياء", "التفاضل والتكامل", "الكيمياء"],
     milestones: [
       "Complete calculus derivatives & mechanics problem sets",
       "Document a renewable-energy or design mini-study",
       "Review scholarship criteria for engineering faculties",
     ],
+    milestonesAr: [
+      "حل تمارين متدرجة في الميكانيكا والتفاضل",
+      "توثيق دراسة مصغرة حول الطاقة المتجددة أو التصميم",
+      "الاطلاع على معايير المنح الدراسية لكليات الهندسة",
+    ],
   },
   {
     id: "economics-policy-entrepreneurship",
     title: "Economics, Public Policy & Leadership",
+    titleAr: "الاقتصاد والسياسات العامة والقيادة",
     summary:
       "Combine data literacy, writing, and strategic thinking to lead organizations or initiatives.",
+    summaryAr: "الجمع بين تحليل البيانات والكتابة والتفكير الاستراتيجي لقيادة المبادرات والمؤسسات.",
     interests: ["Leadership", "Writing", "Global Affairs"],
+    interestsAr: ["القيادة", "الكتابة", "الشؤون العالمية"],
     strengths: ["Communication", "Strategic Planning"],
+    strengthsAr: ["التواصل", "التخطيط الاستراتيجي"],
     subjects: ["Economics", "Mathematics", "History"],
+    subjectsAr: ["الاقتصاد", "الرياضيات", "التاريخ"],
     milestones: [
       "Write a structured essay on a local economic challenge",
       "Lead a student club or Knowledge Circle project",
       "Research Model UN / debate & policy fellowships",
     ],
+    milestonesAr: [
+      "كتابة مقال تحليلي منظم حول موضوع اقتصادي أو مجتمعي",
+      "قيادة مبادرة طلابية أو مشروع تعلّم في حلقة المعرفة",
+      "استكشاف برامج المناظرات ونموذج الأمم المتحدة",
+    ],
   },
   {
     id: "digital-media-architecture",
     title: "Architecture & Interactive Design",
+    titleAr: "العمارة والتصميم التفاعلي",
     summary:
       "Blend visual craft, spatial reasoning, and human ergonomics to shape physical and digital spaces.",
+    summaryAr: "دمج المهارة البصرية والتفكير المكاني لتصميم المساحات المعمارية والرقمية المريحة.",
     interests: ["Design", "Visual Arts", "Technology"],
+    interestsAr: ["التصميم", "الفنون البصرية", "التقنية"],
     strengths: ["Creativity", "Visual Spatial"],
+    strengthsAr: ["الإبداع", "الإدراك المكاني"],
     subjects: ["Art & Design", "Mathematics", "Physics"],
+    subjectsAr: ["الفنون والتصميم", "الرياضيات", "الفيزياء"],
     milestones: [
       "Curate a 5-piece portfolio of sketches or models",
       "Study proportions, geometry, and material properties",
       "Review portfolio admissions timelines",
+    ],
+    milestonesAr: [
+      "إعداد ملف أعمال من 5 رسومات أو نماذج أولية",
+      "دراسة النسب الهندسية وخصائص المواد",
+      "مراجعة مواعيد تقديم ملفات الأعمال في الكليات",
     ],
   },
 ];
@@ -355,14 +411,21 @@ export const FUTURE_PATHWAYS: PathwayTemplate[] = [
 export interface ReferenceOpportunityItem {
   id: string;
   title: string;
+  titleAr: string;
   organizer: string;
+  organizerAr: string;
   category: OpportunityCategory;
   region_scope: "kuwait" | "gcc" | "global";
   eligibility: string;
+  eligibilityAr: string;
   deadline: string;
+  deadlineAr: string;
   cost: string;
+  costAr: string;
   url: string;
   source: string;
+  sourceAr: string;
+  verificationKind: "official_portal";
   last_verified_at: string;
 }
 
@@ -370,79 +433,121 @@ export const REFERENCE_OPPORTUNITIES: ReferenceOpportunityItem[] = [
   {
     id: "ref-kfas-stem",
     title: "KFAS Youth STEM & Innovation Initiatives",
+    titleAr: "مبادرات مؤسسة الكويت للتقدم العلمي للشباب والابتكار",
     organizer: "Kuwait Foundation for the Advancement of Sciences",
+    organizerAr: "مؤسسة الكويت للتقدم العلمي (KFAS)",
     category: "program",
     region_scope: "kuwait",
     eligibility: "High school & university students residing in Kuwait",
+    eligibilityAr: "طلاب المرحلة الثانوية والجامعية المقيمون في الكويت",
     deadline: "Rolling seasonal cycles — check official portal",
+    deadlineAr: "دورات موسمية متجددة — راجع البوابة الرسمية",
     cost: "Funded / Free",
+    costAr: "مموّل / مجاني",
     url: "https://www.kfas.org/",
     source: "KFAS Official Portal",
+    sourceAr: "الموقع الرسمي لمؤسسة الكويت للتقدم العلمي",
+    verificationKind: "official_portal",
     last_verified_at: "2026-01-15",
   },
   {
     id: "ref-mohe-kuwait-scholarships",
     title: "Kuwait MOHE Merit & External Scholarships",
+    titleAr: "بعثات التميز والابتعاث الخارجي — وزارة التعليم العالي (الكويت)",
     organizer: "Ministry of Higher Education (Kuwait)",
+    organizerAr: "وزارة التعليم العالي — دولة الكويت",
     category: "scholarship",
     region_scope: "kuwait",
     eligibility: "Kuwaiti high school graduates meeting GPA & major criteria",
+    eligibilityAr: "خريجو الثانوية في الكويت وفق شروط المعدل والتخصص الرسمية",
     deadline: "Annual Summer Window — confirm on MOHE",
+    deadlineAr: "فترة التقديم الصيفية السنوية — تأكد من البوابة الرسمية",
     cost: "Full Tuition & Stipend",
+    costAr: "رسوم دراسية ومخصصات وفق اللوائح",
     url: "https://www.mohe.edu.kw/",
     source: "Kuwait MOHE Official Portal",
+    sourceAr: "بوابة وزارة التعليم العالي الكويتية",
+    verificationKind: "official_portal",
     last_verified_at: "2026-01-15",
   },
   {
     id: "ref-misk-youth",
     title: "Misk Youth & Leadership Fellowship Track",
+    titleAr: "مسار زمالة مسك للشباب والقيادة",
     organizer: "Misk Foundation",
+    organizerAr: "مؤسسة محمد بن سلمان (مسك)",
     category: "initiative",
     region_scope: "gcc",
     eligibility: "Ambitious youth and university students across the region",
+    eligibilityAr: "الشباب وطلاب الجامعات الطموحون في المنطقة",
     deadline: "Cohort-based — check official announcements",
+    deadlineAr: "حسب الدفعات المعلنة — راجع الموقع الرسمي",
     cost: "Free / Sponsored",
+    costAr: "مجاني / برعاية المؤسسة",
     url: "https://misk.org.sa/en/",
     source: "Misk Foundation Official Site",
+    sourceAr: "الموقع الرسمي لمؤسسة مسك",
+    verificationKind: "official_portal",
     last_verified_at: "2026-01-15",
   },
   {
     id: "ref-nyuad-summer",
     title: "NYU Abu Dhabi Summer Academy Program",
+    titleAr: "البرنامج الصيفي لجامعة نيويورك أبوظبي",
     organizer: "New York University Abu Dhabi",
+    organizerAr: "جامعة نيويورك أبوظبي (NYUAD)",
     category: "program",
     region_scope: "gcc",
     eligibility: "High-achieving high school students in the UAE & GCC",
+    eligibilityAr: "طلاب المرحلة الثانوية المتفوقون في الإمارات والخليج",
     deadline: "Annual Spring Application — verify dates",
+    deadlineAr: "تقديم سنوي في الربيع — تحقق من المواعيد الرسمية",
     cost: "Full Scholarship Available",
+    costAr: "تتوفر منح تغطي التكاليف",
     url: "https://nyuad.nyu.edu/",
     source: "NYUAD Admissions",
+    sourceAr: "بوابة القبول — جامعة نيويورك أبوظبي",
+    verificationKind: "official_portal",
     last_verified_at: "2026-01-15",
   },
   {
     id: "ref-khan-mit-ocw",
-    title: "MIT OpenCourseWare & Khan Academy Olympiad Prep",
+    title: "MIT OpenCourseWare & Open Self-Paced STEM",
+    titleAr: "مساقات MIT المفتوحة والموارد العلمية المجانية",
     organizer: "MIT OpenCourseWare",
+    organizerAr: "معهد ماساتشوستس للتقنية (MIT OCW)",
     category: "course",
     region_scope: "global",
     eligibility: "Open to students worldwide (self-paced)",
+    eligibilityAr: "متاح مجاناً لجميع الطلاب حول العالم للتعلم الذاتي",
     deadline: "Open enrollment year-round",
+    deadlineAr: "متاح طوال العام بدون موعد إغلاق",
     cost: "Free",
+    costAr: "مجاني",
     url: "https://ocw.mit.edu/",
     source: "MIT OpenCourseWare",
+    sourceAr: "منصة MIT OpenCourseWare الرسمية",
+    verificationKind: "official_portal",
     last_verified_at: "2026-01-15",
   },
   {
     id: "ref-imo-iseff",
     title: "Regeneron ISEF Regional Science Fair Qualifiers",
+    titleAr: "تصفيات المعرض العلمي الدولي للعلوم والهندسة (ISEF)",
     organizer: "Society for Science",
+    organizerAr: "جمعية العلوم (Society for Science)",
     category: "competition",
     region_scope: "global",
     eligibility: "Grades 9–12 students competing via national science fair",
+    eligibilityAr: "طلاب الصفوف 9–12 المشاركون عبر التصفيات الوطنية المعتمدة",
     deadline: "Depends on national fair calendar",
+    deadlineAr: "بحسب تقويم المعارض الوطنية في كل بلد",
     cost: "Free / Sponsored Travel for Finalists",
+    costAr: "مشاركة مجانية عبر التصفيات الوطنية",
     url: "https://www.societyforscience.org/isef/",
     source: "Society for Science",
+    sourceAr: "الموقع الرسمي لمؤسسة Society for Science",
+    verificationKind: "official_portal",
     last_verified_at: "2026-01-15",
   },
 ];

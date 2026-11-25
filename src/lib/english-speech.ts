@@ -33,15 +33,26 @@ export function getAvailableEnglishVoices(): EnglishVoiceOption[] {
 
 export function speakEnglishText(
   text: string,
-  options?: { rate?: number; voiceURI?: string; lang?: string; onEnd?: () => void },
+  options?: {
+    rate?: number;
+    voiceURI?: string;
+    lang?: string;
+    preferNativeOnly?: boolean;
+    onEnd?: () => void;
+    onError?: (error: Error) => void;
+  },
 ): boolean {
   return speakEnhancedText(text, {
     forcedLang: "en",
     preferredLocale: options?.lang ?? "en-GB",
     voiceURI: options?.voiceURI,
     rate: options?.rate,
+    preferNativeOnly: options?.preferNativeOnly,
     onEnd: options?.onEnd,
-    onError: options?.onEnd ? () => options.onEnd?.() : undefined,
+    onError: (err) => {
+      options?.onError?.(err);
+      options?.onEnd?.();
+    },
   });
 }
 

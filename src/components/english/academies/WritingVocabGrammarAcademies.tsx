@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { RealTimeWritingChecker } from "./RealTimeWritingChecker";
 import {
   GRADE_9_UNIT_QUIZZES,
   GRADE_9_VOCAB_UNITS,
@@ -35,6 +36,9 @@ import {
   type WritingSubmissionRecord,
 } from "@/lib/english-world";
 import { speakEnglishText } from "@/lib/english-speech";
+import { usePrefs } from "@/lib/preferences";
+import { QUIZ_COLOR_PALETTES, getQuizButtonRadiusClass } from "@/lib/settings";
+import { playCorrectSound, playIncorrectSound } from "@/lib/sound-effects";
 import { speakArabicText } from "@/lib/speech-service";
 
 /* -------------------------------------------------------------------------- */
@@ -176,6 +180,7 @@ export function WritingAcademyPanel({
             placeholder="Write your sentences or paragraph carefully here..."
             className="text-sm leading-relaxed"
           />
+          <RealTimeWritingChecker draft={draft} onApplyCorrection={(fixed) => setDraft(fixed)} />
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
@@ -1072,6 +1077,9 @@ export function VocabularyAcademyPanel({
 /* GRAMMAR ACADEMY (14 TOPICS + INTERACTIVE DRILLS)                           */
 /* -------------------------------------------------------------------------- */
 
+const GRAMMAR_PRAISE_AR = ["ممتاز!", "أحسنت!", "رائع!", "استمر، أنت تتقدم!"];
+const GRAMMAR_PRAISE_EN = ["Excellent!", "Well done!", "Great job!", "Keep going!"];
+
 export function GrammarAcademyPanel({
   englishState,
   onSubmitGrammarScore,
@@ -1088,10 +1096,17 @@ export function GrammarAcademyPanel({
     explanation: string;
   }) => void;
 }) {
+  const { lang, soundAndQuiz } = usePrefs();
+  const isAr = lang === "ar";
+  const radiusClass = getQuizButtonRadiusClass(soundAndQuiz.quizButtonStyle);
+  const paletteSpec = QUIZ_COLOR_PALETTES[soundAndQuiz.quizColorPalette];
+
   const [selectedId, setSelectedId] = useState(GRAMMAR_TOPICS[0]!.id);
+  const [quizIndex, setQuizIndex] = useState(0);
   const [choiceMap, setChoiceMap] = useState<Record<string, number>>({});
   const [textMap, setTextMap] = useState<Record<string, string>>({});
-  const [checked, setChecked] = useState(false);
+  const [submittedIds, setSubmittedIds] = useState<Record<string, boolean>>({});
+  const [quizFinished, setQuizFinished] = useState(false);
 
   const topic = useMemo(
     () => GRAMMAR_TOPICS.find((g) => g.id === selectedId) ?? GRAMMAR_TOPICS[0]!,
@@ -1100,50 +1115,113 @@ export function GrammarAcademyPanel({
 
   const selectTopic = (id: string) => {
     setSelectedId(id);
+    setQuizIndex(0);
     setChoiceMap({});
     setTextMap({});
-    setChecked(false);
+    setSubmittedIds({});
+    setQuizFinished(false);
   };
 
-  const results = topic.exercises.map((ex) => ({
-    ex,
-    ok: gradeLessonExercise(ex, {
-      selectedIndex: choiceMap[ex.id] ?? null,
-      textAnswer: textMap[ex.id] ?? "",
-    }),
-  }));
-  const correctCount = results.filter((r) => r.ok).length;
-  const scorePct =
-    topic.exercises.length > 0 ? Math.round((correctCount / topic.exercises.length) * 100) : 100;
+  const resetCurrentQuiz = () => {
+    setQuizIndex(0);
+    setChoiceMap({});
+    setTextMap({});
+    setSubmittedIds({});
+    setQuizFinished(false);
+  };
 
-  const handleCheck = () => {
-    setChecked(true);
-    for (const r of results) {
-      if (!r.ok) {
-        onRecordMistake({
-          skill: "grammar",
-          itemTitle: topic.title,
-          prompt: r.ex.prompt,
-          userAnswer:
-            r.ex.options && typeof choiceMap[r.ex.id] === "number"
-              ? (r.ex.options[choiceMap[r.ex.id]!] ?? "")
-              : (textMap[r.ex.id] ?? "(blank)"),
-          correctAnswer:
-            r.ex.options && typeof r.ex.correctIndex === "number"
-              ? (r.ex.options[r.ex.correctIndex] ?? "")
-              : (r.ex.acceptedAnswers?.[0] ?? ""),
-          explanation: r.ex.explanation,
-        });
-      }
+  const totalQuestions = topic.exercises.length;
+  const safeIdx = Math.min(quizIndex, Math.max(0, totalQuestions - 1));
+  const currentEx = topic.exercises[safeIdx];
+
+  const correctCount = topic.exercises.filter((ex) =>
+    submittedIds[ex.id]
+      ? gradeLessonExercise(ex, {
+          selectedIndex: choiceMap[ex.id] ?? null,
+          textAnswer: textMap[ex.id] ?? "",
+        })
+      : false,
+  ).length;
+
+  const finalScorePct =
+    totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 100;
+
+  const evaluateExercise = (
+    ex: (typeof topic.exercises)[number],
+    pickedIdx?: number,
+    typedVal?: string,
+  ) => {
+    const ok = gradeLessonExercise(ex, {
+      selectedIndex: pickedIdx ?? choiceMap[ex.id] ?? null,
+      textAnswer: typedVal ?? textMap[ex.id] ?? "",
+    });
+    if (soundAndQuiz.soundEffectsEnabled) {
+      if (ok) playCorrectSound();
+      else playIncorrectSound();
     }
-    onSubmitGrammarScore(topic.id, topic.title, scorePct);
+    if (!ok) {
+      onRecordMistake({
+        skill: "grammar",
+        itemTitle: topic.title,
+        prompt: ex.prompt,
+        userAnswer:
+          ex.options && typeof (pickedIdx ?? choiceMap[ex.id]) === "number"
+            ? (ex.options[(pickedIdx ?? choiceMap[ex.id])!] ?? "")
+            : (typedVal ?? textMap[ex.id]) || "(blank)",
+        correctAnswer:
+          ex.options && typeof ex.correctIndex === "number"
+            ? (ex.options[ex.correctIndex] ?? "")
+            : (ex.acceptedAnswers?.[0] ?? ""),
+        explanation: ex.explanation,
+      });
+    }
+    const nextSubmitted = { ...submittedIds, [ex.id]: true };
+    setSubmittedIds(nextSubmitted);
+    const updatedCorrect = topic.exercises.filter((item) => {
+      if (!nextSubmitted[item.id]) return false;
+      const idx = item.id === ex.id ? pickedIdx : choiceMap[item.id];
+      const txt = item.id === ex.id ? typedVal : textMap[item.id];
+      return gradeLessonExercise(item, {
+        selectedIndex: idx ?? null,
+        textAnswer: txt ?? "",
+      });
+    }).length;
+    if (Object.keys(nextSubmitted).length === totalQuestions) {
+      const pct = totalQuestions > 0 ? Math.round((updatedCorrect / totalQuestions) * 100) : 100;
+      onSubmitGrammarScore(topic.id, topic.title, pct);
+    }
   };
+
+  const handleSelectMcqOption = (ex: (typeof topic.exercises)[number], optIdx: number) => {
+    if (submittedIds[ex.id]) return;
+    setChoiceMap((prev) => ({ ...prev, [ex.id]: optIdx }));
+    evaluateExercise(ex, optIdx, undefined);
+  };
+
+  const handleCheckTextAnswer = (ex: (typeof topic.exercises)[number]) => {
+    if (submittedIds[ex.id]) return;
+    evaluateExercise(ex, undefined, textMap[ex.id] ?? "");
+  };
+
+  const currentAnswered = currentEx ? Boolean(submittedIds[currentEx.id]) : false;
+  const currentOk =
+    currentEx && currentAnswered
+      ? gradeLessonExercise(currentEx, {
+          selectedIndex: choiceMap[currentEx.id] ?? null,
+          textAnswer: textMap[currentEx.id] ?? "",
+        })
+      : false;
+  const praise = isAr
+    ? GRAMMAR_PRAISE_AR[safeIdx % GRAMMAR_PRAISE_AR.length]
+    : GRAMMAR_PRAISE_EN[safeIdx % GRAMMAR_PRAISE_EN.length];
 
   return (
     <div className="grid gap-5 lg:grid-cols-12">
-      <div className="surface-card max-h-[540px] space-y-1.5 overflow-y-auto p-4 lg:col-span-4">
+      <div className="surface-card max-h-[560px] space-y-1.5 overflow-y-auto p-4 lg:col-span-4">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Grammar Syllabus ({GRAMMAR_TOPICS.length} Topics)
+          {isAr
+            ? `منهج القواعد (${GRAMMAR_TOPICS.length} موضوعاً)`
+            : `Grammar Syllabus (${GRAMMAR_TOPICS.length} Topics)`}
         </div>
         {GRAMMAR_TOPICS.map((g) => {
           const active = g.id === topic.id;
@@ -1153,14 +1231,14 @@ export function GrammarAcademyPanel({
               key={g.id}
               type="button"
               onClick={() => selectTopic(g.id)}
-              className={`flex min-h-[44px] w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-start text-xs transition-colors ${
+              className={`flex min-h-[44px] w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-start text-xs leading-snug transition-colors ${
                 active
                   ? "border-primary bg-primary/10 font-semibold text-primary"
                   : "border-border bg-surface-2 text-foreground hover:border-primary/40"
               }`}
             >
-              <span className="truncate">
-                {g.cefr} · {g.title}
+              <span className="min-w-0 flex-1 break-words">
+                {g.cefr} · {isAr ? g.titleAr : g.title}
               </span>
               {typeof prev === "number" && (
                 <span className="shrink-0 text-[11px] font-semibold text-success">{prev}%</span>
@@ -1172,120 +1250,245 @@ export function GrammarAcademyPanel({
 
       <div className="surface-card space-y-4 p-5 lg:col-span-8">
         <div className="border-b border-border pb-3">
-          <div className="text-xs font-medium text-primary">{topic.cefr} · Systematic Grammar</div>
+          <div className="text-xs font-medium text-primary">
+            {topic.cefr} · {isAr ? "قواعد اللغة الإنجليزية" : "Systematic Grammar"}
+          </div>
           <h4 className="mt-1 font-display text-lg font-bold text-foreground">{topic.title}</h4>
-          <p className="text-xs text-muted-foreground">{topic.titleAr}</p>
-          <p className="mt-2 text-sm text-foreground">{topic.summary}</p>
+          <p className="text-xs text-muted-foreground font-arabic" dir="rtl">
+            {topic.titleAr}
+          </p>
+          <p className="mt-2 text-sm text-foreground leading-relaxed">{topic.summary}</p>
         </div>
 
         <ul className="space-y-2 text-sm text-foreground">
           {topic.rules.map((r, i) => (
-            <li key={i} className="rounded-lg border border-border bg-surface-2 px-3.5 py-2.5">
+            <li
+              key={i}
+              className="rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 leading-relaxed"
+            >
               {r}
             </li>
           ))}
         </ul>
 
+        {topic.examples.length > 0 && (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {topic.examples.map((ex, i) => (
+              <div
+                key={i}
+                className="rounded-lg border border-border/80 bg-surface-2/60 p-3 text-xs space-y-1"
+              >
+                <div className="font-semibold text-emerald-700 dark:text-emerald-300">
+                  ✓ {ex.ok}
+                </div>
+                {ex.fixFrom && (
+                  <div className="text-destructive/90 line-through">✗ {ex.fixFrom}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-start gap-2 rounded-lg border border-primary/25 bg-primary/5 p-3 text-xs text-foreground">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-primary" />
-          <div>
-            <strong>Common Pitfall:</strong> {topic.commonPitfall}
+          <div className="leading-relaxed">
+            <strong>{isAr ? "تنبيه شائع:" : "Common Pitfall:"}</strong> {topic.commonPitfall}
           </div>
         </div>
 
-        <div className="space-y-3 border-t border-border pt-4">
-          <h5 className="text-sm font-bold text-foreground">
-            Interactive Grammar Practice ({topic.exercises.length})
-          </h5>
-          {topic.exercises.map((ex, idx) => {
-            const ok = checked ? results[idx]?.ok : null;
-            return (
-              <div
-                key={ex.id}
-                className="rounded-lg border border-border bg-surface-2 p-3.5 space-y-2"
+        {/* Graded Interactive Step-by-Step Quiz */}
+        <div
+          className="space-y-4 border-t border-border pt-4"
+          data-testid="grammar-interactive-quiz"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h5 className="text-sm font-bold text-foreground">
+                {isAr
+                  ? `الاختبار التفاعلي (${totalQuestions} أسئلة)`
+                  : `Interactive Graded Quiz (${totalQuestions} Questions)`}
+              </h5>
+              <p className="text-xs text-muted-foreground tabular-nums">
+                {isAr
+                  ? `السؤال ${safeIdx + 1} من ${totalQuestions} · النتيجة الحالية: ${correctCount}/${Object.keys(submittedIds).length}`
+                  : `Question ${safeIdx + 1} of ${totalQuestions} · Score: ${correctCount}/${Object.keys(submittedIds).length}`}
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={resetCurrentQuiz}
+              className="min-h-[38px] gap-1.5 text-xs"
+            >
+              <RotateCcw className="size-3.5" />
+              <span>{isAr ? "إعادة البدء" : "Restart Quiz"}</span>
+            </Button>
+          </div>
+
+          {quizFinished ? (
+            <div className="rounded-xl border border-primary/40 bg-primary/5 p-5 text-center space-y-3">
+              <div className="text-lg font-bold text-foreground">
+                {isAr
+                  ? `انتهى الاختبار! نتيجتك: ${correctCount} من ${totalQuestions} (${finalScorePct}%)`
+                  : `Quiz Complete! Score: ${correctCount} of ${totalQuestions} (${finalScorePct}%)`}
+              </div>
+              <Button
+                type="button"
+                variant="glow"
+                onClick={resetCurrentQuiz}
+                className="min-h-[44px] gap-1.5"
               >
-                <p className="text-sm font-medium text-foreground">{ex.prompt}</p>
-                {ex.options ? (
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {ex.options.map((opt, oIdx) => (
-                      <button
-                        key={oIdx}
-                        type="button"
-                        disabled={checked}
-                        onClick={() => setChoiceMap((prev) => ({ ...prev, [ex.id]: oIdx }))}
-                        className={`min-h-[44px] rounded-lg border px-3 py-2 text-start text-xs font-medium transition-colors ${
-                          choiceMap[ex.id] === oIdx
-                            ? "border-primary bg-primary/15 text-primary font-semibold"
-                            : "border-border bg-surface text-foreground hover:border-primary/40"
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
+                <RotateCcw className="size-4" />
+                <span>{isAr ? "إعادة الاختبار" : "Practice Again"}</span>
+              </Button>
+            </div>
+          ) : (
+            currentEx && (
+              <div className="rounded-xl border border-border bg-surface-2 p-4 space-y-3">
+                <p className="text-sm sm:text-base font-semibold text-foreground leading-relaxed">
+                  {safeIdx + 1}. {currentEx.prompt}
+                </p>
+
+                {currentEx.options ? (
+                  <div className="grid gap-2.5 sm:grid-cols-2" role="radiogroup">
+                    {currentEx.options.map((opt, oIdx) => {
+                      const isPicked = choiceMap[currentEx.id] === oIdx;
+                      const isRight = oIdx === currentEx.correctIndex;
+                      let stateCls = `border-border bg-surface text-foreground hover:${paletteSpec.activeBorderClass}`;
+                      if (currentAnswered) {
+                        if (isRight) {
+                          stateCls =
+                            "border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold";
+                        } else if (isPicked) {
+                          stateCls = "border-destructive bg-destructive/15 text-destructive";
+                        }
+                      } else if (isPicked) {
+                        stateCls = `${paletteSpec.activeBgClass} ${paletteSpec.activeBorderClass} font-semibold`;
+                      }
+                      return (
+                        <button
+                          key={oIdx}
+                          type="button"
+                          disabled={currentAnswered}
+                          onClick={() => handleSelectMcqOption(currentEx, oIdx)}
+                          className={`min-h-[44px] flex items-center justify-between gap-2 border px-3.5 py-2.5 text-start text-xs sm:text-sm font-medium transition-colors ${radiusClass} ${stateCls}`}
+                        >
+                          <span className="leading-snug">{opt}</span>
+                          {currentAnswered && isRight && (
+                            <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+                          )}
+                          {currentAnswered && isPicked && !isRight && (
+                            <XCircle className="size-4 shrink-0 text-destructive" />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
-                  <Input
-                    value={textMap[ex.id] ?? ""}
-                    disabled={checked}
-                    onChange={(e) => setTextMap((prev) => ({ ...prev, [ex.id]: e.target.value }))}
-                    placeholder="Type corrected word/phrase..."
-                    className="text-sm"
-                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Input
+                      value={textMap[currentEx.id] ?? ""}
+                      disabled={currentAnswered}
+                      onChange={(e) =>
+                        setTextMap((prev) => ({ ...prev, [currentEx.id]: e.target.value }))
+                      }
+                      placeholder={
+                        isAr ? "اكتب الكلمة الصحيحة..." : "Type corrected word/phrase..."
+                      }
+                      className="min-h-[44px] flex-1 text-sm"
+                    />
+                    {!currentAnswered && (
+                      <Button
+                        type="button"
+                        variant="glow"
+                        onClick={() => handleCheckTextAnswer(currentEx)}
+                        className="min-h-[44px]"
+                      >
+                        {isAr ? "تحقق" : "Check"}
+                      </Button>
+                    )}
+                  </div>
                 )}
-                {checked && (
+
+                {currentAnswered && (
                   <div
-                    className={`rounded-lg border p-2.5 text-xs ${
-                      ok
-                        ? "border-success/40 bg-success/10"
+                    role="status"
+                    data-testid="grammar-immediate-feedback"
+                    className={`rounded-xl border p-3.5 text-xs space-y-2 ${
+                      currentOk
+                        ? "border-emerald-500/40 bg-emerald-500/10"
                         : "border-destructive/40 bg-destructive/10"
                     }`}
                   >
-                    <div className="flex items-center gap-1.5 font-semibold text-foreground">
-                      {ok ? (
+                    <div className="flex items-center gap-1.5 font-bold text-foreground">
+                      {currentOk ? (
                         <>
-                          <CheckCircle2 className="size-3.5 text-success" />
-                          <span>Accurate!</span>
+                          <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+                          <span>
+                            {soundAndQuiz.quizFeedbackStyle === "minimal"
+                              ? isAr
+                                ? "إجابة صحيحة!"
+                                : "Correct!"
+                              : isAr
+                                ? `إجابة صحيحة! ${praise}`
+                                : `Correct! ${praise}`}
+                          </span>
                         </>
                       ) : (
                         <>
-                          <XCircle className="size-3.5 text-destructive" />
+                          <XCircle className="size-4 text-destructive shrink-0" />
                           <span>
-                            Answer:{" "}
-                            {ex.options && typeof ex.correctIndex === "number"
-                              ? ex.options[ex.correctIndex]
-                              : ex.acceptedAnswers?.join(" / ")}
+                            {isAr
+                              ? `إجابة غير صحيحة — الإجابة الصحيحة: ${
+                                  currentEx.options && typeof currentEx.correctIndex === "number"
+                                    ? currentEx.options[currentEx.correctIndex]
+                                    : currentEx.acceptedAnswers?.join(" / ")
+                                }`
+                              : `Incorrect — Correct answer: ${
+                                  currentEx.options && typeof currentEx.correctIndex === "number"
+                                    ? currentEx.options[currentEx.correctIndex]
+                                    : currentEx.acceptedAnswers?.join(" / ")
+                                }`}
                           </span>
                         </>
                       )}
                     </div>
-                    <p className="mt-1 text-muted-foreground">{ex.explanation}</p>
+
+                    {soundAndQuiz.quizFeedbackStyle !== "minimal" && (
+                      <p className="text-muted-foreground leading-relaxed">
+                        {currentEx.explanation}
+                      </p>
+                    )}
+
+                    <div className="pt-1">
+                      {safeIdx < totalQuestions - 1 ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="glow"
+                          onClick={() => setQuizIndex((i) => i + 1)}
+                          className="min-h-[40px]"
+                        >
+                          {isAr ? "السؤال التالي" : "Next Question"}
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="glow"
+                          onClick={() => setQuizFinished(true)}
+                          className="min-h-[40px]"
+                        >
+                          {isAr ? "عرض النتيجة النهائية" : "See Final Score"}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
-            );
-          })}
-
-          <div className="flex flex-wrap items-center gap-2">
-            {!checked ? (
-              <Button type="button" variant="glow" onClick={handleCheck} className="min-h-[44px]">
-                Check Grammar Answers
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setChoiceMap({});
-                  setTextMap({});
-                  setChecked(false);
-                }}
-                className="min-h-[44px] gap-1.5"
-              >
-                <RotateCcw className="size-4" />
-                <span>Practice Again ({scorePct}%)</span>
-              </Button>
-            )}
-          </div>
+            )
+          )}
         </div>
       </div>
     </div>

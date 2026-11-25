@@ -71,8 +71,8 @@ const CORE_WORKSPACES = [
   {
     icon: Heart,
     to: "/app/care" as const,
-    enTitle: "Personal Growth & Wellbeing",
-    arTitle: "النمو الشخصي والعافية",
+    enTitle: "Personal Growth",
+    arTitle: "النمو الشخصي",
     enDesc: "Healthy habits, self-reflection journal, mood check-in, and calm routines.",
     arDesc: "العادات الصحية، اليوميات الخاصة، متابعة الحالة، والروتين المتوازن.",
   },
@@ -181,8 +181,8 @@ function Landing() {
 
               <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
                 {isAr
-                  ? "منصة BTC للطلاب: الدراسة، المهارات، التركيز، العافية، المستقبل، حلقة المعرفة، الفرص، الإنجليزية، والقرآن الكريم — بدون تعقيد أو تسجيل حساب."
-                  : "BTC brings Study & Academics, Skills, Focus, Wellbeing, Careers, Knowledge Circle, Opportunities, English World, and Quran together — directly as a guest."}
+                  ? "منصة BTC للطلاب: الدراسة، المهارات، التركيز، النمو الشخصي، المستقبل، حلقة المعرفة، الفرص، الإنجليزية، والقرآن الكريم — بدون تعقيد أو تسجيل حساب."
+                  : "BTC brings Study & Academics, Skills, Focus, Personal Growth, Careers, Knowledge Circle, Opportunities, English World, and Quran together — directly as a guest."}
               </p>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">

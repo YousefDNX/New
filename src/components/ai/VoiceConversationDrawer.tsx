@@ -12,10 +12,19 @@ interface VoiceTurnEntry {
 }
 
 function downsampleTo16kInt16(input: Float32Array, inputSampleRate: number): Int16Array {
+  // Peak detection for gentle auto-gain normalization
+  let peak = 0;
+  for (let i = 0; i < input.length; i++) {
+    const abs = Math.abs(input[i] ?? 0);
+    if (abs > peak) peak = abs;
+  }
+  // Soft gain multiplier: if quiet (<0.6), gently boost up to 1.8x without clipping (target peak ~0.85)
+  const normFactor = peak > 0.05 && peak < 0.6 ? Math.min(1.8, 0.85 / peak) : 1.0;
+
   if (inputSampleRate === 16000) {
     const out = new Int16Array(input.length);
     for (let i = 0; i < input.length; i++) {
-      const s = Math.max(-1, Math.min(1, input[i] ?? 0));
+      const s = Math.max(-1, Math.min(1, (input[i] ?? 0) * normFactor));
       out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
     }
     return out;
@@ -25,7 +34,7 @@ function downsampleTo16kInt16(input: Float32Array, inputSampleRate: number): Int
   const out = new Int16Array(outputLength);
   for (let i = 0; i < outputLength; i++) {
     const srcIdx = Math.min(input.length - 1, Math.floor(i * ratio));
-    const s = Math.max(-1, Math.min(1, input[srcIdx] ?? 0));
+    const s = Math.max(-1, Math.min(1, (input[srcIdx] ?? 0) * normFactor));
     out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
   }
   return out;
@@ -319,8 +328,34 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
     const ctx = new AudioCtx();
     captureCtxRef.current = ctx;
     const source = ctx.createMediaStreamSource(stream);
+
+    // 1. High-Pass Filter (Cuts sub-85Hz rumble, plosives, and table vibration)
+    const highpass = ctx.createBiquadFilter();
+    highpass.type = "highpass";
+    highpass.frequency.setValueAtTime(85, ctx.currentTime);
+    highpass.Q.setValueAtTime(0.707, ctx.currentTime);
+
+    // 2. Low-Pass Filter (Anti-aliasing noise-reduction: cuts high-frequency hiss >7.5kHz before 16kHz resampling)
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = "lowpass";
+    lowpass.frequency.setValueAtTime(7500, ctx.currentTime);
+    lowpass.Q.setValueAtTime(0.707, ctx.currentTime);
+
+    // 3. Dynamics Compressor (Normalizes microphone input dynamics cleanly for clear pronunciation recognition)
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.setValueAtTime(-24, ctx.currentTime);
+    compressor.knee.setValueAtTime(12, ctx.currentTime);
+    compressor.ratio.setValueAtTime(4, ctx.currentTime);
+    compressor.attack.setValueAtTime(0.003, ctx.currentTime);
+    compressor.release.setValueAtTime(0.25, ctx.currentTime);
+
+    // 4. PCM capture script processor
     const processor = ctx.createScriptProcessor(4096, 1, 1);
     processorRef.current = processor;
+
+    // 5. Muted gain node to connect to destination without local loopback feedback
+    const mutedGain = ctx.createGain();
+    mutedGain.gain.setValueAtTime(0, ctx.currentTime);
 
     processor.onaudioprocess = (ev) => {
       if (ws.readyState !== WebSocket.OPEN) return;
@@ -330,8 +365,13 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
       ws.send(JSON.stringify({ type: "audio", data: base64 }));
     };
 
-    source.connect(processor);
-    processor.connect(ctx.destination);
+    // Chain: source -> highpass -> lowpass -> compressor -> processor -> mutedGain -> destination
+    source.connect(highpass);
+    highpass.connect(lowpass);
+    lowpass.connect(compressor);
+    compressor.connect(processor);
+    processor.connect(mutedGain);
+    mutedGain.connect(ctx.destination);
   };
 
   const handleInterrupt = () => {

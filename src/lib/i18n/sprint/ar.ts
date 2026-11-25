@@ -353,7 +353,7 @@ export const sprintAr: Record<keyof typeof sprintEn, string> = {
   "set.bgStyle.solid": "صلبة",
   "set.bgStyle.grid": "شبكية",
   "set.typo.title": "استوديو الخطوط وسهولة القراءة",
-  "set.typo.desc": "خصّص الخطوط المتوافقة مع لغتك والتباعد وحجم القراءة في جميع اللغات السبع.",
+  "set.typo.desc": "خصّص الخطوط المتوافقة مع لغتك والتباعد وحجم القراءة في جميع اللغات الثماني.",
   "set.typo.reset": "إعادة ضبط الخطوط",
   "set.typo.previewLabel": "معاينة حيّة",
   "set.typo.previewHeading": "الخط الواضح يجعل كل جلسة مذاكرة أكثر سلاسة.",

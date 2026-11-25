@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bookmark, ExternalLink, ListTodo, Plus, Radar, Search, Trash2 } from "lucide-react";
+import {
+  BadgeCheck,
+  Bookmark,
+  ExternalLink,
+  ListTodo,
+  Plus,
+  Radar,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/Page";
 import { Button } from "@/components/ui/button";
@@ -11,6 +20,27 @@ import { recordLastVisitedModule } from "@/lib/continue-tracker";
 import type { OpportunityCategory } from "@/lib/firestore-data";
 import { usePrefs } from "@/lib/preferences";
 import { REFERENCE_OPPORTUNITIES, type ReferenceOpportunityItem } from "@/lib/recommendations";
+
+const CATEGORY_LABELS: Record<OpportunityCategory, { en: string; ar: string }> = {
+  scholarship: { en: "Scholarship", ar: "منحة دراسية" },
+  competition: { en: "Competition", ar: "مسابقة" },
+  program: { en: "Program", ar: "برنامج" },
+  course: { en: "Course", ar: "دورة" },
+  initiative: { en: "Initiative", ar: "مبادرة" },
+  internship: { en: "Internship", ar: "تدريب عملي" },
+};
+
+const SCOPE_LABELS: Record<"kuwait" | "gcc" | "global", { en: string; ar: string }> = {
+  kuwait: { en: "Kuwait", ar: "الكويت" },
+  gcc: { en: "GCC", ar: "الخليج" },
+  global: { en: "Global", ar: "عالمي" },
+};
+
+const STATUS_LABELS: Record<"saved" | "applied" | "archived", { en: string; ar: string }> = {
+  saved: { en: "Saved", ar: "محفوظة" },
+  applied: { en: "Applied", ar: "تم التقديم" },
+  archived: { en: "Archived", ar: "مؤرشفة" },
+};
 
 export function SimpleOpportunitiesWorkspace() {
   const { lang } = usePrefs();
@@ -53,8 +83,11 @@ export function SimpleOpportunitiesWorkspace() {
       if (!q) return true;
       return (
         item.title.toLowerCase().includes(q) ||
+        item.titleAr.toLowerCase().includes(q) ||
         item.organizer.toLowerCase().includes(q) ||
-        item.eligibility.toLowerCase().includes(q)
+        item.organizerAr.toLowerCase().includes(q) ||
+        item.eligibility.toLowerCase().includes(q) ||
+        item.eligibilityAr.toLowerCase().includes(q)
       );
     });
   }, [scope, category, search]);
@@ -62,15 +95,15 @@ export function SimpleOpportunitiesWorkspace() {
   const handleSaveCatalogItem = async (item: ReferenceOpportunityItem) => {
     try {
       await saveOpportunity({
-        title: item.title,
-        organizer: item.organizer,
+        title: isAr ? item.titleAr : item.title,
+        organizer: isAr ? item.organizerAr : item.organizer,
         category: item.category,
         region_scope: item.region_scope,
-        eligibility: item.eligibility,
-        deadline: item.deadline,
-        cost: item.cost,
+        eligibility: isAr ? item.eligibilityAr : item.eligibility,
+        deadline: isAr ? item.deadlineAr : item.deadline,
+        cost: isAr ? item.costAr : item.cost,
         url: item.url,
-        source: item.source,
+        source: isAr ? item.sourceAr : item.source,
         source_kind: "reference_catalog",
         last_verified_at: item.last_verified_at,
       });
@@ -92,7 +125,7 @@ export function SimpleOpportunitiesWorkspace() {
         region_scope: mScope,
         deadline: mDeadline.trim() || null,
         url: mUrl.trim() || null,
-        source: "Student Added",
+        source: isAr ? "أُضيفت بواسطة الطالب" : "Student Added",
         source_kind: "manual",
       });
       setMTitle("");
@@ -129,7 +162,7 @@ export function SimpleOpportunitiesWorkspace() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12" dir={isAr ? "rtl" : "ltr"}>
       <PageHeader
         title={isAr ? "رادار الفرص" : "Opportunity Radar"}
         subtitle={
@@ -145,9 +178,9 @@ export function SimpleOpportunitiesWorkspace() {
           size="sm"
           variant={tab === "discover" ? "glow" : "ghost"}
           onClick={() => setTab("discover")}
-          className="gap-1.5 text-xs"
+          className="min-h-11 gap-1.5 px-3 text-xs"
         >
-          <Radar className="size-3.5" />
+          <Radar className="size-3.5 shrink-0" />
           <span>{isAr ? "استكشاف الفرص" : "Discover Opportunities"}</span>
         </Button>
         <Button
@@ -155,9 +188,9 @@ export function SimpleOpportunitiesWorkspace() {
           size="sm"
           variant={tab === "saved" ? "glow" : "ghost"}
           onClick={() => setTab("saved")}
-          className="gap-1.5 text-xs"
+          className="min-h-11 gap-1.5 px-3 text-xs"
         >
-          <Bookmark className="size-3.5" />
+          <Bookmark className="size-3.5 shrink-0" />
           <span>
             {isAr ? `الفرص المحفوظة (${saved.length})` : `My Saved Tracker (${saved.length})`}
           </span>
@@ -181,7 +214,7 @@ export function SimpleOpportunitiesWorkspace() {
                     key={s.id}
                     type="button"
                     onClick={() => setScope(s.id)}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium cursor-pointer ${
+                    className={`min-h-10 rounded-lg px-3 py-1.5 text-xs font-medium cursor-pointer ${
                       scope === s.id
                         ? "bg-primary text-primary-foreground"
                         : "bg-surface-2 text-muted-foreground hover:text-foreground"
@@ -192,14 +225,14 @@ export function SimpleOpportunitiesWorkspace() {
                 ))}
               </div>
               <div className="relative w-full sm:w-64">
-                <Search className="pointer-events-none absolute start-2.5 top-2.5 size-3.5 text-muted-foreground" />
+                <Search className="pointer-events-none absolute start-2.5 top-3 size-3.5 text-muted-foreground" />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={
                     isAr ? "ابحث عن منحة أو مسابقة..." : "Search programs or organizers..."
                   }
-                  className="h-9 ps-8 text-xs"
+                  className="h-10 ps-8 text-xs"
                 />
               </div>
             </div>
@@ -219,7 +252,7 @@ export function SimpleOpportunitiesWorkspace() {
                   key={c.id}
                   type="button"
                   onClick={() => setCategory(c.id)}
-                  className={`rounded-lg px-2.5 py-1 text-xs cursor-pointer ${
+                  className={`min-h-9 rounded-lg px-2.5 py-1 text-xs cursor-pointer ${
                     category === c.id
                       ? "bg-primary/15 text-primary font-semibold"
                       : "bg-surface-2/70 text-muted-foreground hover:text-foreground"
@@ -237,22 +270,47 @@ export function SimpleOpportunitiesWorkspace() {
                 key={item.id}
                 className="surface-card flex flex-col justify-between space-y-4 p-5"
               >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2 text-[11px] font-medium text-muted-foreground">
-                    <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary uppercase">
-                      {item.category} · {item.region_scope}
+                <div className="space-y-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-medium">
+                    <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary">
+                      {isAr ? CATEGORY_LABELS[item.category].ar : CATEGORY_LABELS[item.category].en}{" "}
+                      ·{" "}
+                      {isAr
+                        ? SCOPE_LABELS[item.region_scope].ar
+                        : SCOPE_LABELS[item.region_scope].en}
                     </span>
-                    <span>
-                      {isAr ? "تم التحقق: " : "Verified: "}
-                      {item.last_verified_at}
+                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-emerald-700 dark:text-emerald-300">
+                      <BadgeCheck className="size-3 shrink-0" />
+                      <span>{isAr ? "معلومات رسمية موثقة" : "Verified official information"}</span>
                     </span>
                   </div>
-                  <h2 className="font-display text-base font-bold text-foreground">{item.title}</h2>
-                  <div className="text-xs font-medium text-muted-foreground">{item.organizer}</div>
-                  <p className="text-xs text-foreground">{item.eligibility}</p>
-                  <div className="text-[11px] text-muted-foreground">
-                    {isAr ? "الموعد: " : "Timeline: "}
-                    {item.deadline} · {item.cost}
+
+                  <h2 className="font-display text-base font-bold leading-snug text-foreground">
+                    {isAr ? item.titleAr : item.title}
+                  </h2>
+                  <div className="text-xs font-medium text-muted-foreground">
+                    {isAr ? item.organizerAr : item.organizer}
+                  </div>
+                  <p className="text-xs leading-relaxed text-foreground">
+                    {isAr ? item.eligibilityAr : item.eligibility}
+                  </p>
+                  <div className="space-y-1 text-[11px] text-muted-foreground">
+                    <div>
+                      {isAr ? "الموعد والتكلفة: " : "Timeline & cost: "}
+                      {isAr ? item.deadlineAr : item.deadline} · {isAr ? item.costAr : item.cost}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>
+                        {isAr ? "آخر تحقق: " : "Verified: "}
+                        {item.last_verified_at}
+                      </span>
+                      <span>·</span>
+                      <span>
+                        {isAr
+                          ? "تختلف التفاصيل حسب البلد أو المؤسسة — راجع الرابط الرسمي"
+                          : "Varies by country or institution — confirm on official portal"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -260,18 +318,18 @@ export function SimpleOpportunitiesWorkspace() {
                   <a
                     href={item.url}
                     target="_blank"
-                    rel="noreferrer noopener"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-10 items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
                   >
-                    <span>{isAr ? "المصدر الرسمي" : "Official Source"}</span>
-                    <ExternalLink className="size-3.5" />
+                    <span>{isAr ? item.sourceAr : item.source}</span>
+                    <ExternalLink className="size-3.5 shrink-0" />
                   </a>
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
                     onClick={() => void handleSaveCatalogItem(item)}
-                    className="h-8 gap-1.5 text-xs"
+                    className="min-h-10 gap-1.5 px-3 text-xs"
                   >
                     <Bookmark className="size-3.5" />
                     <span>{isAr ? "حفظ للمتابعة" : "Save"}</span>
@@ -285,7 +343,10 @@ export function SimpleOpportunitiesWorkspace() {
 
       {tab === "saved" && (
         <div className="grid gap-5 lg:grid-cols-12">
-          <form onSubmit={handleAddManual} className="surface-card space-y-3 p-5 lg:col-span-5">
+          <form
+            onSubmit={handleAddManual}
+            className="surface-card space-y-3 p-5 lg:col-span-5 h-fit"
+          >
             <h3 className="font-display text-sm font-bold text-foreground">
               {isAr ? "أضف فرصة يدوياً" : "Add Opportunity Manually"}
             </h3>
@@ -322,12 +383,11 @@ export function SimpleOpportunitiesWorkspace() {
                   onChange={(e) => setMCat(e.target.value as OpportunityCategory)}
                   className="mt-1 flex h-10 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground"
                 >
-                  <option value="scholarship">Scholarship</option>
-                  <option value="competition">Competition</option>
-                  <option value="program">Program</option>
-                  <option value="course">Course</option>
-                  <option value="initiative">Initiative</option>
-                  <option value="internship">Internship</option>
+                  {(Object.keys(CATEGORY_LABELS) as OpportunityCategory[]).map((catKey) => (
+                    <option key={catKey} value={catKey}>
+                      {isAr ? CATEGORY_LABELS[catKey].ar : CATEGORY_LABELS[catKey].en}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -340,9 +400,11 @@ export function SimpleOpportunitiesWorkspace() {
                   onChange={(e) => setMScope(e.target.value as "kuwait" | "gcc" | "global")}
                   className="mt-1 flex h-10 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground"
                 >
-                  <option value="kuwait">Kuwait</option>
-                  <option value="gcc">GCC</option>
-                  <option value="global">Global</option>
+                  {(Object.keys(SCOPE_LABELS) as ("kuwait" | "gcc" | "global")[]).map((sKey) => (
+                    <option key={sKey} value={sKey}>
+                      {isAr ? SCOPE_LABELS[sKey].ar : SCOPE_LABELS[sKey].en}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -376,7 +438,7 @@ export function SimpleOpportunitiesWorkspace() {
               disabled={busy || !mTitle.trim() || !mOrg.trim()}
               size="sm"
               variant="glow"
-              className="gap-1.5"
+              className="min-h-11 gap-1.5"
             >
               <Plus className="size-3.5" />
               <span>{isAr ? "حفظ الفرصة" : "Save Opportunity"}</span>
@@ -392,19 +454,50 @@ export function SimpleOpportunitiesWorkspace() {
               saved.map((opp) => (
                 <div key={opp.id} className="surface-card space-y-3 p-5">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="font-display text-base font-bold text-foreground">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                        <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary font-medium">
+                          {isAr
+                            ? CATEGORY_LABELS[opp.category].ar
+                            : CATEGORY_LABELS[opp.category].en}{" "}
+                          ·{" "}
+                          {isAr
+                            ? SCOPE_LABELS[opp.region_scope].ar
+                            : SCOPE_LABELS[opp.region_scope].en}
+                        </span>
+                        <span className="rounded-md bg-surface-2 px-2 py-0.5 text-muted-foreground">
+                          {opp.source_kind === "reference_catalog"
+                            ? isAr
+                              ? "معلومات رسمية موثقة"
+                              : "Verified official information"
+                            : isAr
+                              ? "أُضيفت يدوياً"
+                              : "Added by student"}
+                        </span>
+                      </div>
+                      <h3 className="font-display text-base font-bold leading-snug text-foreground">
                         {opp.title}
                       </h3>
                       <div className="text-xs text-muted-foreground">
                         {opp.organizer} {opp.deadline ? `· ${opp.deadline}` : ""}
                       </div>
+                      {opp.url && (
+                        <a
+                          href={opp.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                        >
+                          <span>{isAr ? "الرابط الرسمي" : "Official Source"}</span>
+                          <ExternalLink className="size-3" />
+                        </a>
+                      )}
                     </div>
                     <button
                       type="button"
                       onClick={() => void deleteOpportunity(opp.id)}
                       aria-label={isAr ? "حذف" : "Delete"}
-                      className="text-muted-foreground hover:text-destructive cursor-pointer"
+                      className="min-h-10 min-w-10 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive cursor-pointer"
                     >
                       <Trash2 className="size-4" />
                     </button>
@@ -416,13 +509,13 @@ export function SimpleOpportunitiesWorkspace() {
                         key={status}
                         type="button"
                         onClick={() => void updateOpportunityStatus(opp, status)}
-                        className={`rounded-lg px-2.5 py-1 text-xs capitalize cursor-pointer ${
+                        className={`min-h-9 rounded-lg px-2.5 py-1 text-xs cursor-pointer ${
                           opp.status === status
                             ? "bg-primary text-primary-foreground font-semibold"
-                            : "bg-surface-2 text-muted-foreground"
+                            : "bg-surface-2 text-muted-foreground hover:text-foreground"
                         }`}
                       >
-                        {status}
+                        {isAr ? STATUS_LABELS[status].ar : STATUS_LABELS[status].en}
                       </button>
                     ))}
                     <Button
@@ -430,7 +523,7 @@ export function SimpleOpportunitiesWorkspace() {
                       size="sm"
                       variant="outline"
                       onClick={() => void handleAddPrepTask(opp.title, opp.deadline)}
-                      className="h-7 gap-1 text-xs"
+                      className="min-h-9 gap-1 text-xs"
                     >
                       <ListTodo className="size-3" />
                       <span>{isAr ? "أضف مهمة تحضير" : "Add Prep Task"}</span>
@@ -444,7 +537,7 @@ export function SimpleOpportunitiesWorkspace() {
                         setNoteDrafts((prev) => ({ ...prev, [opp.id]: e.target.value }))
                       }
                       placeholder={isAr ? "ملاحظات التقديم..." : "Application notes..."}
-                      className="h-8 text-xs"
+                      className="h-9 text-xs"
                     />
                     <Button
                       type="button"
@@ -454,7 +547,7 @@ export function SimpleOpportunitiesWorkspace() {
                         void updateOpportunityNotes(opp, noteDrafts[opp.id] ?? opp.notes ?? "");
                         toast.success(isAr ? "تم حفظ الملاحظة." : "Note saved.");
                       }}
-                      className="h-8 text-xs"
+                      className="h-9 text-xs"
                     >
                       {isAr ? "حفظ" : "Save"}
                     </Button>

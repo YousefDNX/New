@@ -498,10 +498,12 @@ export interface CommunityPostRow {
   author_id: string;
   author_name: string;
   category: CommunityPostCategory;
+  tag?: string | null;
   body: string;
   media_url?: string | null;
   media_kind?: "image" | "video" | "link" | null;
   media_path?: string | null;
+  edited?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -513,6 +515,7 @@ export interface CommunityCommentRow {
   author_id: string;
   author_name: string;
   body: string;
+  edited?: boolean;
   created_at: string;
   updated_at?: string | null;
 }

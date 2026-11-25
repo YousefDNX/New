@@ -1,4 +1,4 @@
-export const SUPPORTED_LANGS = ["en", "ar", "ja", "fr", "de", "zh-CN", "ko"] as const;
+export const SUPPORTED_LANGS = ["en", "ar", "es", "ja", "fr", "de", "zh-CN", "ko"] as const;
 export type Lang = (typeof SUPPORTED_LANGS)[number];
 
 export const PILOT_LANGS = ["en", "ar"] as const;
@@ -29,6 +29,14 @@ export const LANG_META: Record<Lang, LangMeta> = {
     englishName: "Arabic",
     dir: "rtl",
     shortCode: "AR",
+  },
+  es: {
+    code: "es",
+    bcp47: "es-ES",
+    nativeName: "Español",
+    englishName: "Spanish",
+    dir: "ltr",
+    shortCode: "ES",
   },
   ja: {
     code: "ja",
@@ -81,6 +89,7 @@ export function normalizeLang(value: unknown): Lang {
   if (typeof value === "string") {
     const lower = value.toLowerCase();
     if (lower.startsWith("ar")) return "ar";
+    if (lower.startsWith("es")) return "es";
     if (lower.startsWith("ja")) return "ja";
     if (lower.startsWith("fr")) return "fr";
     if (lower.startsWith("de")) return "de";

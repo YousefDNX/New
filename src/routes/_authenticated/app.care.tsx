@@ -5,10 +5,10 @@ import { BRAND } from "@/config/brand";
 export const Route = createFileRoute("/_authenticated/app/care")({
   head: () => ({
     meta: [
-      { title: `Personal Growth & Wellbeing — ${BRAND.name}` },
+      { title: `Personal Growth — ${BRAND.name}` },
       {
         name: "description",
-        content: `Calm emotional check-ins, private reflections, healthy habits, and grounding routines on ${BRAND.name}.`,
+        content: `Calm emotional check-ins, private reflections, healthy habits, and personal growth on ${BRAND.name}.`,
       },
     ],
   }),

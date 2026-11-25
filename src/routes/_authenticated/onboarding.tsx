@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
+import { SUPPORTED_LANGS, LANG_META } from "@/lib/i18n-dict";
 import { Logo } from "@/components/app/Logo";
 import { useOptionalAuth } from "@/lib/auth.tsx";
 import {
@@ -299,33 +300,31 @@ function GuestOnboardingPage() {
                 </p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setLang("en")}
-                  className={`cursor-pointer rounded-xl border p-4 text-start transition-colors ${
-                    lang === "en"
-                      ? "border-primary bg-primary/10 ring-1 ring-primary/40"
-                      : "border-border bg-surface-2/60 hover:border-primary/40"
-                  }`}
-                >
-                  <div className="text-sm font-bold text-foreground">English</div>
-                  <div className="mt-1 text-xs text-muted-foreground">Left-to-right (LTR)</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLang("ar")}
-                  className={`cursor-pointer rounded-xl border p-4 text-start transition-colors ${
-                    lang === "ar"
-                      ? "border-primary bg-primary/10 ring-1 ring-primary/40"
-                      : "border-border bg-surface-2/60 hover:border-primary/40"
-                  }`}
-                >
-                  <div className="text-sm font-bold text-foreground">العربية</div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    من اليمين إلى اليسار (RTL)
-                  </div>
-                </button>
+              <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-4">
+                {SUPPORTED_LANGS.map((code) => {
+                  const meta = LANG_META[code];
+                  const selected = lang === code;
+                  return (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => setLang(code)}
+                      className={`cursor-pointer rounded-xl border p-3.5 text-start transition-all ${
+                        selected
+                          ? "border-primary bg-primary/10 ring-1 ring-primary/40 shadow-sm"
+                          : "border-border bg-surface-2/60 hover:border-primary/40 hover:bg-surface-2"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-sm font-bold text-foreground">{meta.nativeName}</span>
+                        <span className="rounded-md bg-surface px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground uppercase">
+                          {meta.dir.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">{meta.englishName}</div>
+                    </button>
+                  );
+                })}
               </div>
             </section>
           )}

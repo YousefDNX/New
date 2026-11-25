@@ -60,7 +60,10 @@ export const Route = createFileRoute("/auth")({
       { title: `Sign In or Continue as Guest — ${BRAND.name}` },
       { name: "description", content: `Access ${BRAND.name}: Guest, Email, or Google login.` },
       { property: "og:title", content: `Sign In or Continue as Guest — ${BRAND.name}` },
-      { property: "og:description", content: `Access ${BRAND.name}: Guest, Email, or Google login.` },
+      {
+        property: "og:description",
+        content: `Access ${BRAND.name}: Guest, Email, or Google login.`,
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -454,7 +457,11 @@ function AuthEntryPage() {
                         aria-label={showLoginPassword ? "Hide password" : "Show password"}
                         className="absolute end-3 top-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
                       >
-                        {showLoginPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                        {showLoginPassword ? (
+                          <EyeOff className="size-4" />
+                        ) : (
+                          <Eye className="size-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -542,7 +549,11 @@ function AuthEntryPage() {
                         aria-label={showSignupPassword ? "Hide password" : "Show password"}
                         className="absolute end-3 top-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
                       >
-                        {showSignupPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                        {showSignupPassword ? (
+                          <EyeOff className="size-4" />
+                        ) : (
+                          <Eye className="size-4" />
+                        )}
                       </button>
                     </div>
 

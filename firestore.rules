@@ -159,7 +159,7 @@ service cloud.firestore {
         && data.display_name is string
         && data.display_name.size() >= 1
         && data.display_name.size() <= 60
-        && data.language in ['en', 'ar', 'ja', 'fr', 'de', 'zh-CN', 'ko']
+        && data.language in ['en', 'ar', 'es', 'ja', 'fr', 'de', 'zh-CN', 'ko']
         && data.region in ['kuwait', 'gcc', 'global']
         && data.onboarded is bool
         && data.parental_consent is bool
@@ -343,7 +343,7 @@ service cloud.firestore {
         && isOptionalEnum(data, 'calendar_type', ['gregorian', 'hijri'])
         && isOptionalEnum(data, 'measurement_units', ['metric', 'imperial'])
         && isOptionalEnum(data, 'opportunity_scope', ['local', 'gcc', 'global'])
-        && isOptionalEnum(data, 'study_explanation_lang', ['ui', 'en', 'ar', 'ja', 'fr', 'de', 'zh-CN', 'ko'])
+        && isOptionalEnum(data, 'study_explanation_lang', ['ui', 'en', 'ar', 'es', 'ja', 'fr', 'de', 'zh-CN', 'ko'])
         && isOptionalEnum(data, 'study_complexity', ['simple', 'balanced', 'advanced'])
         && isOptionalEnum(data, 'study_detail_level', ['concise', 'standard', 'detailed'])
         && isOptionalBool(data, 'study_step_by_step')
@@ -358,7 +358,7 @@ service cloud.firestore {
     }
 
     function isValidUserSettingsAiPrivacy(data) {
-      return isOptionalEnum(data, 'ai_response_lang', ['ui', 'en', 'ar', 'ja', 'fr', 'de', 'zh-CN', 'ko'])
+      return isOptionalEnum(data, 'ai_response_lang', ['ui', 'en', 'ar', 'es', 'ja', 'fr', 'de', 'zh-CN', 'ko'])
         && isOptionalEnum(data, 'ai_response_length', ['concise', 'standard', 'detailed'])
         && isOptionalEnum(data, 'ai_tone', ['coach', 'calm', 'academic'])
         && isOptionalBool(data, 'ai_clarifying_questions')
@@ -552,7 +552,7 @@ service cloud.firestore {
         && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
         && data.area in ['academic', 'productivity', 'growth', 'wellbeing', 'career', 'community']
         && isOptionalString(data, 'subject', 60)
-        && data.duration_minutes is number && data.duration_minutes >= 1 && data.duration_minutes <= 180
+        && data.duration_minutes is number && data.duration_minutes >= 1 && data.duration_minutes <= 1440
         && data.completed is bool
         && data.created_at is string && data.created_at.size() <= 40;
     }
@@ -1421,10 +1421,12 @@ service cloud.firestore {
           'author_id',
           'author_name',
           'category',
+          'tag',
           'body',
           'media_url',
           'media_kind',
           'media_path',
+          'edited',
           'created_at',
           'updated_at'
         ])
@@ -1433,10 +1435,12 @@ service cloud.firestore {
         && isValidId(data.author_id)
         && data.author_name is string && data.author_name.size() >= 1 && data.author_name.size() <= 60
         && data.category in ['general', 'question', 'info', 'explanation']
+        && isOptionalString(data, 'tag', 40)
         && data.body is string && data.body.size() >= 1 && data.body.size() <= 3000
         && isOptionalString(data, 'media_url', 1024)
         && isOptionalEnum(data, 'media_kind', ['image', 'video', 'link'])
         && isOptionalString(data, 'media_path', 512)
+        && isOptionalBool(data, 'edited')
         && data.created_at is string && data.created_at.size() <= 40
         && data.updated_at is string && data.updated_at.size() <= 40;
     }
@@ -1450,6 +1454,7 @@ service cloud.firestore {
           'author_id',
           'author_name',
           'body',
+          'edited',
           'created_at',
           'updated_at'
         ])
@@ -1461,6 +1466,7 @@ service cloud.firestore {
         && isOptionalString(data, 'parent_comment_id', 128)
         && data.author_name is string && data.author_name.size() >= 1 && data.author_name.size() <= 60
         && data.body is string && data.body.size() >= 1 && data.body.size() <= 2000
+        && isOptionalBool(data, 'edited')
         && data.created_at is string && data.created_at.size() <= 40
         && isOptionalString(data, 'updated_at', 40);
     }
@@ -2388,11 +2394,13 @@ service cloud.firestore {
         && incoming().created_at == existing().created_at
         && incoming().diff(existing()).affectedKeys().hasOnly([
           'category',
+          'tag',
           'body',
           'author_name',
           'media_url',
           'media_kind',
           'media_path',
+          'edited',
           'updated_at'
         ]);
       allow delete: if isValidId(postId) && isEligibleUser() && (
@@ -2420,6 +2428,7 @@ service cloud.firestore {
           && incoming().diff(existing()).affectedKeys().hasOnly([
             'body',
             'author_name',
+            'edited',
             'updated_at'
           ]);
         allow delete: if isValidId(postId) && isValidId(commentId) && isEligibleUser() && (

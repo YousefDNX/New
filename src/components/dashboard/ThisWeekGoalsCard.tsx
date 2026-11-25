@@ -262,7 +262,7 @@ export function ThisWeekGoalsCard() {
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
                   <label htmlFor="goal-3" className="font-semibold text-foreground">
-                    {isAr ? "الهدف 3 (عادات/تطوير ذاتي)" : "Goal 3 (Habits & Wellbeing)"}
+                    {isAr ? "الهدف 3 (النمو الشخصي والعادات)" : "Goal 3 (Personal Growth & Habits)"}
                   </label>
                   <span className="text-[11px] text-muted-foreground">
                     {isAr ? AREA_CONFIG[area3].nameAr : AREA_CONFIG[area3].nameEn}

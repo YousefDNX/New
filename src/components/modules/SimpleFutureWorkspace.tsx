@@ -6,6 +6,7 @@ import {
   Compass,
   FolderKanban,
   GraduationCap,
+  Info,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -133,10 +134,10 @@ export function SimpleFutureWorkspace() {
     try {
       await saveFuturePlan({
         pathway_id: p.id,
-        title: p.title,
-        interests: p.interests,
-        strengths: p.strengths,
-        milestones: p.milestones.map((m, idx) => ({
+        title: isAr ? p.titleAr : p.title,
+        interests: isAr ? p.interestsAr : p.interests,
+        strengths: isAr ? p.strengthsAr : p.strengths,
+        milestones: (isAr ? p.milestonesAr : p.milestones).map((m, idx) => ({
           id: `${p.id}_m${idx}`,
           title: m,
           done: false,
@@ -181,7 +182,7 @@ export function SimpleFutureWorkspace() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12" dir={isAr ? "rtl" : "ltr"}>
       <PageHeader
         title={isAr ? "المستقبل والمهن" : "Future & Careers"}
         subtitle={
@@ -190,6 +191,19 @@ export function SimpleFutureWorkspace() {
             : "Explore professions, university specializations, educational pathways, and save your own plans."
         }
       />
+
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-surface/60 px-4 py-3 text-xs text-muted-foreground">
+        <Info className="size-4 shrink-0 text-primary" />
+        <span className="font-semibold text-foreground">
+          {isAr ? "إرشاد تعليمي عام" : "General educational guidance"}
+        </span>
+        <span>·</span>
+        <span>
+          {isAr
+            ? "يختلف حسب البلد أو المؤسسة التعليمية — تأكد دائماً من شروط الجامعة أو الجهة الرسمية."
+            : "Varies by country or institution — always confirm local university admission requirements."}
+        </span>
+      </div>
 
       <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface/60 p-1.5">
         {(
@@ -213,9 +227,9 @@ export function SimpleFutureWorkspace() {
               size="sm"
               variant={tab === item.id ? "glow" : "ghost"}
               onClick={() => setTab(item.id)}
-              className="gap-1.5 text-xs"
+              className="min-h-11 gap-1.5 px-3 text-xs"
             >
-              <Icon className="size-3.5" />
+              <Icon className="size-3.5 shrink-0" />
               <span>{isAr ? item.ar : item.en}</span>
             </Button>
           );
@@ -227,7 +241,10 @@ export function SimpleFutureWorkspace() {
           {PROFESSIONS.map((prof) => (
             <div key={prof.id} className="surface-card flex flex-col justify-between space-y-3 p-5">
               <div className="space-y-2">
-                <h2 className="font-display text-base font-bold text-foreground">
+                <span className="inline-block rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                  {isAr ? "إرشاد تعليمي عام" : "General educational guidance"}
+                </span>
+                <h2 className="font-display text-base font-bold leading-snug text-foreground">
                   {isAr ? prof.titleAr : prof.titleEn}
                 </h2>
                 <p className="text-xs text-muted-foreground leading-relaxed">
@@ -252,8 +269,16 @@ export function SimpleFutureWorkspace() {
       {tab === "specializations" && (
         <div className="grid gap-4 sm:grid-cols-2">
           {SPECIALIZATIONS.map((spec, idx) => (
-            <div key={idx} className="surface-card space-y-2 p-5">
-              <h2 className="font-display text-base font-bold text-foreground">
+            <div key={idx} className="surface-card space-y-2.5 p-5">
+              <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                <span className="rounded-md bg-primary/10 px-2 py-0.5 font-medium text-primary">
+                  {isAr ? "إرشاد تعليمي عام" : "General educational guidance"}
+                </span>
+                <span className="rounded-md bg-surface-2 px-2 py-0.5 text-muted-foreground">
+                  {isAr ? "يختلف حسب البلد أو المؤسسة" : "Varies by country or institution"}
+                </span>
+              </div>
+              <h2 className="font-display text-base font-bold leading-snug text-foreground">
                 {isAr ? spec.titleAr : spec.titleEn}
               </h2>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -266,37 +291,61 @@ export function SimpleFutureWorkspace() {
 
       {tab === "pathways" && (
         <div className="grid gap-4 sm:grid-cols-2">
-          {FUTURE_PATHWAYS.map((pathway) => (
-            <div
-              key={pathway.id}
-              className="surface-card flex flex-col justify-between space-y-4 p-5"
-            >
-              <div className="space-y-2">
-                <h2 className="font-display text-base font-bold text-foreground">
-                  {pathway.title}
-                </h2>
-                <p className="text-xs text-muted-foreground leading-relaxed">{pathway.summary}</p>
-                <ul className="space-y-1.5 pt-2 text-xs text-foreground">
-                  {pathway.milestones.map((m, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
-                      <span>{m}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => void handleSavePathway(pathway)}
-                className="w-fit gap-1.5 text-xs"
+          {FUTURE_PATHWAYS.map((pathway) => {
+            const title = isAr ? pathway.titleAr : pathway.title;
+            const summary = isAr ? pathway.summaryAr : pathway.summary;
+            const milestones = isAr ? pathway.milestonesAr : pathway.milestones;
+            const subjects = isAr ? pathway.subjectsAr : pathway.subjects;
+            return (
+              <div
+                key={pathway.id}
+                className="surface-card flex flex-col justify-between space-y-4 p-5"
               >
-                <Plus className="size-3.5" />
-                <span>{isAr ? "حفظ في خططي" : "Save to My Plans"}</span>
-              </Button>
-            </div>
-          ))}
+                <div className="space-y-2.5">
+                  <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                    <span className="rounded-md bg-primary/10 px-2 py-0.5 font-medium text-primary">
+                      {isAr ? "إرشاد تعليمي عام" : "General educational guidance"}
+                    </span>
+                    <span className="rounded-md bg-surface-2 px-2 py-0.5 text-muted-foreground">
+                      {isAr ? "يختلف حسب البلد أو المؤسسة" : "Varies by country or institution"}
+                    </span>
+                  </div>
+                  <h2 className="font-display text-base font-bold leading-snug text-foreground">
+                    {title}
+                  </h2>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{summary}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {subjects.map((subj) => (
+                      <span
+                        key={subj}
+                        className="rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-foreground"
+                      >
+                        {subj}
+                      </span>
+                    ))}
+                  </div>
+                  <ul className="space-y-1.5 pt-2 text-xs text-foreground">
+                    {milestones.map((m, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
+                        <span>{m}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void handleSavePathway(pathway)}
+                  className="min-h-11 w-fit gap-1.5 px-4 text-xs"
+                >
+                  <Plus className="size-3.5" />
+                  <span>{isAr ? "حفظ في خططي" : "Save to My Plans"}</span>
+                </Button>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -304,7 +353,7 @@ export function SimpleFutureWorkspace() {
         <div className="grid gap-5 lg:grid-cols-12">
           <form
             onSubmit={handleCreateCustomPlan}
-            className="surface-card space-y-3 p-5 lg:col-span-5"
+            className="surface-card space-y-3 p-5 lg:col-span-5 h-fit"
           >
             <h3 className="font-display text-sm font-bold text-foreground">
               {isAr ? "أنشئ خطة مهنية خاصة بك" : "Create a Career Plan"}
@@ -352,7 +401,7 @@ export function SimpleFutureWorkspace() {
               disabled={busy || !customTitle.trim()}
               size="sm"
               variant="glow"
-              className="gap-1.5"
+              className="min-h-11 gap-1.5"
             >
               <Plus className="size-3.5" />
               <span>{isAr ? "حفظ الخطة" : "Save Plan"}</span>
@@ -370,14 +419,14 @@ export function SimpleFutureWorkspace() {
               plans.map((plan) => (
                 <div key={plan.id} className="surface-card space-y-3 p-5">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-display text-base font-bold text-foreground">
+                    <h3 className="font-display text-base font-bold leading-snug text-foreground">
                       {plan.title}
                     </h3>
                     <button
                       type="button"
                       onClick={() => void deleteFuturePlan(plan.id)}
                       aria-label={isAr ? "حذف الخطة" : "Delete plan"}
-                      className="text-muted-foreground hover:text-destructive cursor-pointer"
+                      className="min-h-10 min-w-10 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive cursor-pointer"
                     >
                       <Trash2 className="size-4" />
                     </button>
@@ -393,7 +442,7 @@ export function SimpleFutureWorkspace() {
                           );
                           void updateFuturePlan(plan, { milestones: updated });
                         }}
-                        className="flex w-full items-center gap-2.5 rounded-xl border border-border/70 bg-surface-2/40 px-3 py-2 text-start text-xs cursor-pointer"
+                        className="flex min-h-11 w-full items-center gap-2.5 rounded-xl border border-border/70 bg-surface-2/40 px-3 py-2 text-start text-xs cursor-pointer"
                       >
                         {m.done ? (
                           <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />

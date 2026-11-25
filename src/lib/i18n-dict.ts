@@ -1,5 +1,6 @@
 import { en, type DictKey, type TranslationMap } from "./i18n/en";
 import { ar } from "./i18n/ar";
+import { es } from "./i18n/es";
 import { ja } from "./i18n/ja";
 import { fr } from "./i18n/fr";
 import { de } from "./i18n/de";
@@ -17,6 +18,7 @@ import {
 export const dict: Record<Lang, TranslationMap> = {
   en,
   ar,
+  es,
   ja,
   fr,
   de,

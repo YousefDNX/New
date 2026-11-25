@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
+  AlertTriangle,
   Bot,
   Copy,
   Send,
@@ -15,13 +16,31 @@ import {
   GraduationCap,
   Zap,
   Brain,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { usePrefs } from "@/lib/preferences";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { VoiceDictationButton } from "@/components/common/VoiceDictationButton";
-import { generateCurriculumAwareReply, type ChatbotRoleId } from "@/lib/ai-fallback";
+import { SafeMarkdownRenderer } from "@/components/ai/SafeMarkdownRenderer";
+import { speakEnhancedText, stopEnhancedSpeech } from "@/lib/speech-service";
+import type { ChatbotRoleId } from "@/lib/ai-fallback";
+
+export function formatFriendlyModelTier(raw?: string, isAr?: boolean): string {
+  if (!raw) return "";
+  const lower = raw.toLowerCase();
+  if (lower.includes("carbon") || lower.includes("research") || lower.includes("deep")) {
+    return isAr ? "وضع البحث (Research)" : "Research Mode";
+  }
+  if (lower.includes("neon") || lower.includes("pro") || lower.includes("complex")) {
+    return isAr ? "الوضع الاحترافي (Pro)" : "Pro Mode";
+  }
+  if (lower.includes("flash") || lower.includes("fast")) {
+    return isAr ? "الوضع السريع (Fast)" : "Fast Mode";
+  }
+  return isAr ? "الوضع العادي (Normal)" : "Normal Mode";
+}
 
 type ChatModelTier = "balanced" | "fast" | "complex" | "deep";
 
@@ -32,6 +51,8 @@ interface ChatMessage {
   timestamp: string;
   modelUsed?: string | undefined;
   roleId?: ChatbotRoleId | undefined;
+  isError?: boolean | undefined;
+  retryPrompt?: string | undefined;
 }
 
 const AI_SESSION_STORAGE_KEY = "btc_gemini_chatbot_conversation_v2";
@@ -94,8 +115,8 @@ const MODEL_TIERS: Array<{
     modelName: "gemini-4-hydrogen",
     labelEn: "Normal",
     labelAr: "عادي",
-    taskEn: "Standard Q&A",
-    taskAr: "أسئلة عامة",
+    taskEn: "Standard Q&A & tutoring",
+    taskAr: "أسئلة عامة وشرح مبسط",
     icon: Sparkles,
   },
   {
@@ -103,8 +124,8 @@ const MODEL_TIERS: Array<{
     modelName: "gemini-3.1-flash-lite",
     labelEn: "Fast",
     labelAr: "سريع",
-    taskEn: "Quick replies",
-    taskAr: "ردود فورية",
+    taskEn: "Quick replies & summaries",
+    taskAr: "ردود فورية وتلخيص سريع",
     icon: Zap,
   },
   {
@@ -112,17 +133,17 @@ const MODEL_TIERS: Array<{
     modelName: "gemini-4-neon",
     labelEn: "Pro",
     labelAr: "احترافي (Pro)",
-    taskEn: "Detailed reasoning",
-    taskAr: "تفصيل متقدم",
+    taskEn: "Detailed reasoning & coding",
+    taskAr: "تفصيل متقدم وبرمجة",
     icon: Cpu,
   },
   {
     id: "deep",
     modelName: "gemini-4-carbon",
-    labelEn: "Deep Reason (Carbon)",
-    labelAr: "بحث وتفكير عميق (Carbon)",
-    taskEn: "Deep research & reasoning",
-    taskAr: "بحث وتحليل عميق",
+    labelEn: "Research",
+    labelAr: "بحث وتحليل (Research)",
+    taskEn: "Deep study & research",
+    taskAr: "تحليل وبحث عميق",
     icon: Brain,
   },
 ];
@@ -177,6 +198,7 @@ export function AiWorkspace() {
 
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [streamingContent, setStreamingContent] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Accessibility toggles for chatbot
@@ -217,31 +239,62 @@ export function AiWorkspace() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView?.({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, loading, streamingContent]);
 
-  const sendMessage = async (rawText: string) => {
+  const sendMessage = async (rawText: string, opts?: { retryErrorId?: string }) => {
     const cleanPrompt = rawText.trim();
     if (!cleanPrompt || loading) return;
 
-    const userMessage: ChatMessage = {
-      id: `user_${Date.now()}`,
-      role: "user",
-      content: cleanPrompt,
-      timestamp: new Date().toISOString(),
-    };
+    const priorBase = opts?.retryErrorId
+      ? messages.filter((m) => m.id !== opts.retryErrorId && !m.isError)
+      : messages.filter((m) => !m.isError);
 
-    // Pass prior turns as history cleanly (without duplicating the current turn)
-    const priorHistory = messages.slice(-12).map((m) => ({
+    // If retrying a failed turn, avoid duplicating the user's message if it's already the last turn
+    const lastIsSameUser =
+      Boolean(opts?.retryErrorId) &&
+      priorBase.length > 0 &&
+      priorBase[priorBase.length - 1]?.role === "user" &&
+      priorBase[priorBase.length - 1]?.content === cleanPrompt;
+
+    const priorHistorySource = lastIsSameUser ? priorBase.slice(0, -1) : priorBase;
+    const priorHistory = priorHistorySource.slice(-12).map((m) => ({
       role: m.role,
       content: m.content,
     }));
 
-    setMessages((prev) => [...prev, userMessage]);
+    if (opts?.retryErrorId) {
+      setMessages((prev) => prev.filter((m) => m.id !== opts.retryErrorId));
+    } else {
+      const userMessage: ChatMessage = {
+        id: `user_${Date.now()}`,
+        role: "user",
+        content: cleanPrompt,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+    }
+
     setPrompt("");
+    setStreamingContent("");
     setLoading(true);
 
+    const pushErrorMessage = (errorMsg: string) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err_${Date.now()}`,
+          role: "assistant",
+          content: errorMsg,
+          timestamp: new Date().toISOString(),
+          isError: true,
+          retryPrompt: cleanPrompt,
+          roleId: chatbotRole,
+        },
+      ]);
+    };
+
     try {
-      const res = await fetch("/api/ai/chat", {
+      const res = await fetch("/api/ai/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -255,56 +308,122 @@ export function AiWorkspace() {
         }),
       });
 
-      let replyText: string | null = null;
-      let modelUsed: string | undefined;
+      const contentType = res.headers.get("content-type") ?? "";
 
-      if (res.ok) {
-        const data = (await res.json()) as Record<string, unknown>;
-        replyText = extractReplyText(data);
-        if (typeof data["modelUsed"] === "string") {
-          modelUsed = data["modelUsed"];
+      if (res.ok && contentType.includes("text/event-stream") && res.body) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let accumulated = "";
+        let doneModelUsed: string | undefined;
+        let streamError: string | null = null;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const frames = buffer.split("\n\n");
+          buffer = frames.pop() ?? "";
+
+          for (const frame of frames) {
+            const line = frame.split("\n").find((l) => l.startsWith("data:"));
+            if (!line) continue;
+            const rawJson = line.slice(5).trim();
+            if (!rawJson) continue;
+            try {
+              const evt = JSON.parse(rawJson) as {
+                type?: string;
+                text?: string;
+                modelUsed?: string;
+                message?: string;
+              };
+              if (evt.type === "delta" && typeof evt.text === "string") {
+                accumulated += evt.text;
+                setStreamingContent(accumulated);
+              } else if (evt.type === "done") {
+                doneModelUsed = evt.modelUsed;
+              } else if (evt.type === "error") {
+                streamError =
+                  evt.message ||
+                  (isAr
+                    ? "تعذّر الحصول على رد من BTC AI."
+                    : "Failed to receive response from BTC AI.");
+              }
+            } catch {
+              // Ignore malformed partial SSE chunk
+            }
+          }
+        }
+
+        if (streamError && !accumulated.trim()) {
+          pushErrorMessage(streamError);
+          return;
+        }
+
+        if (!accumulated.trim()) {
+          pushErrorMessage(
+            isAr
+              ? "لم يرجع المساعد أي نص للرد. يرجى المحاولة مرة أخرى."
+              : "BTC AI returned an empty response. Please retry.",
+          );
+          return;
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `ai_${Date.now()}`,
+            role: "assistant",
+            content: accumulated.trim(),
+            timestamp: new Date().toISOString(),
+            modelUsed: doneModelUsed,
+            roleId: chatbotRole,
+          },
+        ]);
+        return;
+      }
+
+      // Standard JSON fallback path (or JSON error payload)
+      let payload: Record<string, unknown> | null = null;
+      try {
+        payload = (await res.json()) as Record<string, unknown>;
+      } catch {
+        payload = null;
+      }
+
+      if (res.ok && payload && payload["ok"] !== false) {
+        const replyText = extractReplyText(payload);
+        if (replyText) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `ai_${Date.now()}`,
+              role: "assistant",
+              content: replyText,
+              timestamp: new Date().toISOString(),
+              modelUsed:
+                typeof payload["modelUsed"] === "string" ? payload["modelUsed"] : undefined,
+              roleId: chatbotRole,
+            },
+          ]);
+          return;
         }
       }
 
-      if (!replyText) {
-        replyText = generateCurriculumAwareReply({
-          message: cleanPrompt,
-          history: priorHistory,
-          role: chatbotRole,
-          langHint: lang,
-        });
-        modelUsed = "btc-study-assistant";
-      }
-
-      const aiMessage: ChatMessage = {
-        id: `ai_${Date.now()}`,
-        role: "assistant",
-        content: replyText,
-        timestamp: new Date().toISOString(),
-        modelUsed,
-        roleId: chatbotRole,
-      };
-
-      setMessages((prev) => [...prev, aiMessage]);
+      const errMessage =
+        (payload && typeof payload["message"] === "string" && payload["message"].trim()) ||
+        (isAr
+          ? `تعذّر الاتصال بخدمة BTC AI (رمز ${res.status || "غير متاح"}).`
+          : `Unable to reach BTC AI right now (status ${res.status || "unavailable"}).`);
+      pushErrorMessage(errMessage);
     } catch {
-      // Seamless curriculum-aware study fallback if the network or API route is unreachable
-      const fallbackText = generateCurriculumAwareReply({
-        message: cleanPrompt,
-        history: priorHistory,
-        role: chatbotRole,
-        langHint: lang,
-      });
-
-      const fallbackReply: ChatMessage = {
-        id: `ai_${Date.now()}`,
-        role: "assistant",
-        content: fallbackText,
-        timestamp: new Date().toISOString(),
-        modelUsed: "btc-study-assistant",
-        roleId: chatbotRole,
-      };
-      setMessages((prev) => [...prev, fallbackReply]);
+      pushErrorMessage(
+        isAr
+          ? "حدث خطأ في الاتصال بخدمة BTC AI. تحقق من الشبكة ثم أعد المحاولة."
+          : "Network error reaching BTC AI. Check your connection and retry.",
+      );
     } finally {
+      setStreamingContent("");
       setLoading(false);
     }
   };
@@ -337,46 +456,45 @@ export function AiWorkspace() {
     }
   };
 
-  // Text-To-Speech reader for accessibility
+  // Natural Text-To-Speech reader for accessibility (strips markdown, selects natural voice)
   const handleSpeakText = (id: string, text: string) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    if (speakingId === id) {
+      stopEnhancedSpeech();
+      setSpeakingId(null);
+      return;
+    }
+    stopEnhancedSpeech();
+    setSpeakingId(id);
+    const ok = speakEnhancedText(text, {
+      forcedLang: isAr ? "ar" : "en",
+      preferredLocale: isAr ? "ar-SA" : "en-GB",
+      rate: 0.92,
+      onStart: () => setSpeakingId(id),
+      onEnd: () => setSpeakingId(null),
+      onError: () => setSpeakingId(null),
+    });
+    if (!ok) {
+      setSpeakingId(null);
       toast.info(
         isAr
           ? "قراءة النص غير مدعومة في متصفحك."
           : "Speech synthesis is not supported in your browser.",
       );
-      return;
-    }
-    try {
-      window.speechSynthesis.cancel();
-      if (speakingId === id) {
-        setSpeakingId(null);
-        return;
-      }
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = isAr ? "ar-SA" : "en-GB";
-      utterance.rate = 0.9;
-      setSpeakingId(id);
-      utterance.onend = () => setSpeakingId(null);
-      utterance.onerror = () => setSpeakingId(null);
-      window.speechSynthesis.speak(utterance);
-    } catch {
-      setSpeakingId(null);
     }
   };
 
   const samplePrompts = [
     {
-      textAr: "اشرح لي كلمة hypothesis و algorithm من المفردات المهمة مع أمثلة",
-      textEn: "Explain 'hypothesis' and 'algorithm' from Important Vocabulary with examples",
+      textAr: "أهلاً! إزيك النهارده؟ تقدر تساعدني في إيه؟",
+      textEn: "Hey! What can we work on together today — coding, writing, or studying?",
     },
     {
-      textAr: "اختبرني بسؤال اختيار من متعدد على المفردات المهمة",
-      textEn: "Give me an Important Vocabulary multiple-choice quiz question",
+      textAr: "اكتب دالة بايثون بسيطة لحساب متوسط درجات الطالب مع مثال",
+      textEn: "Write a clean TypeScript function to sort study tasks by priority",
     },
     {
-      textAr: "ساعدني في مراجعة أهم كلمات التفوّق مثل analyse و persevere",
-      textEn: "Help me practise essential academic words like 'analyse' and 'persevere'",
+      textAr: "اشرح لي الفرق بين Both ... and و Neither ... nor مع تدريب سريع",
+      textEn: "Explain 'hypothesis' and 'algorithm' with clear real-world examples",
     },
   ];
 
@@ -396,14 +514,12 @@ export function AiWorkspace() {
             </div>
             <div>
               <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                <span>
-                  {isAr ? "BTC AI — مساعد Gemini الدراسي" : "BTC AI — Gemini Study Chatbot"}
-                </span>
+                <span>{isAr ? "BTC AI — المساعد الذكي" : "BTC AI — Intelligent Assistant"}</span>
               </h1>
               <p className="text-xs text-muted-foreground">
                 {isAr
-                  ? `الدور: ${activeRoleMeta.labelAr} · النموذج: ${activeTierMeta.modelName}`
-                  : `Role: ${activeRoleMeta.labelEn} · Model: ${activeTierMeta.modelName}`}
+                  ? `الدور: ${activeRoleMeta.labelAr} · الوضع: ${activeTierMeta.labelAr}`
+                  : `Role: ${activeRoleMeta.labelEn} · Mode: ${activeTierMeta.labelEn}`}
               </p>
             </div>
           </div>
@@ -495,7 +611,7 @@ export function AiWorkspace() {
                   key={tierItem.id}
                   type="button"
                   onClick={() => setModelTier(tierItem.id)}
-                  title={`${tierItem.modelName} — ${isAr ? tierItem.taskAr : tierItem.taskEn}`}
+                  title={`${isAr ? tierItem.labelAr : tierItem.labelEn} — ${isAr ? tierItem.taskAr : tierItem.taskEn}`}
                   className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-semibold transition-all cursor-pointer ${
                     selected
                       ? "border-primary/60 bg-primary/15 text-primary"
@@ -524,22 +640,22 @@ export function AiWorkspace() {
                 className={`font-display font-bold text-foreground ${largeText ? "text-2xl" : "text-lg"}`}
               >
                 {isAr
-                  ? "مرحباً! أنا BTC الذكي — اسألني عن أي درس أو كلمة إنجليزية"
-                  : "Hello! Ask BTC AI about any study topic, Important Vocabulary word, or quiz"}
+                  ? "مرحباً! أنا BTC AI — اسألني في أي موضوع، برمجة، كتابة، أو دراسة"
+                  : "Hello! Ask BTC AI anything — conversation, coding, writing, or study"}
               </h2>
               <p
                 className={`text-muted-foreground leading-relaxed ${largeText ? "text-base" : "text-xs"}`}
               >
                 {isAr
-                  ? "يحفظ المساعد سياق المحادثة كاملة معك، ويتكيّف حسب الدور المختار ونوع المهمة."
-                  : "Multi-turn conversation stays connected across follow-up questions with dedicated tutor roles."}
+                  ? "يتحدث معك بلغتك ولهجتك بطبيعية، ويدعم الشرح والملخصات والأكواد البرمجية والأسئلة الدراسية."
+                  : "Replies naturally in your language and dialect across multi-turn conversations, code blocks, summaries, and academics."}
               </p>
             </div>
 
             {/* Quick Suggestions */}
             <div className="w-full max-w-lg space-y-2 pt-2 text-start">
               <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {isAr ? "أسئلة مقترحة (انقر للإرسال أو التعديل):" : "Suggested questions:"}
+                {isAr ? "اقتراحات للبدء:" : "Try asking:"}
               </div>
               <div className="space-y-1.5">
                 {samplePrompts.map((p, idx) => {
@@ -568,23 +684,55 @@ export function AiWorkspace() {
                 className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}
               >
                 {!isUser && (
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary mt-1">
-                    <Bot className="size-4" />
+                  <div
+                    className={`flex size-8 shrink-0 items-center justify-center rounded-lg mt-1 ${
+                      m.isError
+                        ? "bg-destructive/15 text-destructive"
+                        : "bg-primary/15 text-primary"
+                    }`}
+                  >
+                    {m.isError ? <AlertTriangle className="size-4" /> : <Bot className="size-4" />}
                   </div>
                 )}
 
                 <div
-                  className={`group relative max-w-[85%] sm:max-w-[78%] rounded-2xl p-4 leading-relaxed ${
+                  className={`group relative max-w-[88%] sm:max-w-[80%] rounded-2xl p-4 leading-relaxed ${
                     largeText ? "text-lg" : "text-sm"
                   } ${
                     isUser
                       ? "bg-primary text-primary-foreground font-medium rounded-tr-xs"
-                      : "surface-card border border-border/80 text-foreground rounded-tl-xs space-y-2"
+                      : m.isError
+                        ? "border border-destructive/40 bg-destructive/10 text-foreground rounded-tl-xs space-y-2.5"
+                        : "surface-card border border-border/80 text-foreground rounded-tl-xs space-y-2"
                   }`}
                 >
-                  <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                  {isUser ? (
+                    <div dir="auto" className="whitespace-pre-wrap break-words">
+                      {m.content}
+                    </div>
+                  ) : m.isError ? (
+                    <div className="space-y-2.5">
+                      <p dir="auto" className="text-sm font-medium text-foreground">
+                        {m.content}
+                      </p>
+                      {m.retryPrompt && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => void sendMessage(m.retryPrompt!, { retryErrorId: m.id })}
+                          className="min-h-[36px] gap-1.5 cursor-pointer"
+                        >
+                          <RefreshCw className="size-3.5" />
+                          <span>{isAr ? "إعادة المحاولة" : "Retry"}</span>
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <SafeMarkdownRenderer content={m.content} />
+                  )}
 
-                  {!isUser && (
+                  {!isUser && !m.isError && (
                     <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/40 mt-2">
                       <div className="flex items-center gap-2">
                         {/* TTS read aloud button for accessibility */}
@@ -611,7 +759,7 @@ export function AiWorkspace() {
 
                         {m.modelUsed && (
                           <span className="font-mono text-[10px] text-muted-foreground/80">
-                            {m.modelUsed}
+                            {formatFriendlyModelTier(m.modelUsed, isAr)}
                           </span>
                         )}
                       </div>
@@ -647,14 +795,30 @@ export function AiWorkspace() {
         )}
 
         {loading && (
-          <div className="flex gap-3 justify-start items-center">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+          <div className="flex gap-3 justify-start items-start">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary mt-1">
               <Bot className="size-4" />
             </div>
-            <div className="surface-card border border-border/80 rounded-2xl rounded-tl-xs p-3.5 flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="size-4 animate-spin text-primary" />
-              <span>{isAr ? "BTC الذكي يعالج سؤالك..." : "BTC AI is generating response..."}</span>
-            </div>
+            {streamingContent ? (
+              <div
+                className={`max-w-[88%] sm:max-w-[80%] surface-card border border-border/80 rounded-2xl rounded-tl-xs p-4 leading-relaxed ${
+                  largeText ? "text-lg" : "text-sm"
+                }`}
+              >
+                <SafeMarkdownRenderer content={streamingContent} />
+                <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Loader2 className="size-3 animate-spin text-primary" />
+                  <span>{isAr ? "يكتب الرد..." : "Streaming..."}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="surface-card border border-border/80 rounded-2xl rounded-tl-xs p-3.5 flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="size-4 animate-spin text-primary" />
+                <span>
+                  {isAr ? "BTC AI يفكر ويكتب الرد..." : "BTC AI is generating response..."}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

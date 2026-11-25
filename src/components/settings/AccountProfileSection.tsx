@@ -1,4 +1,13 @@
-import { CheckCircle2, Download, Loader2, LogOut, RotateCcw, ShieldAlert, Sparkles, User } from "lucide-react";
+import {
+  CheckCircle2,
+  Download,
+  Loader2,
+  LogOut,
+  RotateCcw,
+  ShieldAlert,
+  Sparkles,
+  User,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -293,7 +302,11 @@ export function AccountProfileSection({ profile }: { profile: ProfileRow | null 
               disabled={signOutBusy}
               className="gap-1.5"
             >
-              {signOutBusy ? <Loader2 className="size-3.5 animate-spin" /> : <LogOut className="size-3.5" />}
+              {signOutBusy ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <LogOut className="size-3.5" />
+              )}
               <span>{isAr ? "تسجيل الخروج" : "Sign Out"}</span>
             </Button>
           </div>

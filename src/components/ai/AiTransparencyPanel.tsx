@@ -30,7 +30,7 @@ export function AiTransparencyPanel() {
             <span>Active Model Tier</span>
           </div>
           <div className="font-mono text-xs text-primary font-bold">
-            Gemini 4 Hydrogen / 3.1 Flash Lite ({ecosystem.aiModelTier})
+            Normal / Fast / Pro / Research ({ecosystem.aiModelTier})
           </div>
           <p className="text-[11px] text-muted-foreground">
             Low-latency student tutor optimized for step-by-step reasoning, STEM problem solving,

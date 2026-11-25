@@ -86,4 +86,16 @@ export const FEATURE_GUIDE_UI_STRINGS: Record<Lang, FeatureGuideUiStrings> = {
     limitationsHeading: "참고 사항 및 제한",
     confirmCta: "이해했습니다 · 닫기",
   },
+  es: {
+    triggerLabel: "Guía",
+    triggerAria: "Cómo usar esta función",
+    closeAria: "Cerrar guía",
+    whatItDoesHeading: "Qué es y qué hace esta herramienta",
+    whyAndProblemHeading: "Por qué existe y qué resuelve",
+    whoBenefitsHeading: "Quién se beneficia",
+    stepsHeading: "Cómo usarla (paso a paso)",
+    optionsHeading: "Botones, opciones y resultados esperados",
+    limitationsHeading: "Notas importantes y limitaciones",
+    confirmCta: "Entendido, cerrar guía",
+  },
 };

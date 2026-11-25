@@ -80,15 +80,27 @@ describe("Regression fixes: AI UI sanitization & Unit 3 Context Scenario Mode 8"
     expect(screen.getByRole("button", { name: GRADE_9_UNIT_3_WORDS[1]!.word })).toBeInTheDocument();
   });
 
-  it("gracefully falls back to curriculum study guidance when /api/ai/chat fails instead of showing dead-end connection errors", async () => {
+  it("displays honest retryable errors in AiWorkspace when /api/ai/chat/stream fails without faking curriculum answers", async () => {
+    let callCount = 0;
     const fetchMock = vi.fn(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            code: "UPSTREAM_ERROR",
+            message: "Service temporarily unavailable",
+          }),
+          { status: 503, headers: { "Content-Type": "application/json" } },
+        );
+      }
       return new Response(
         JSON.stringify({
-          ok: false,
-          code: "UPSTREAM_ERROR",
-          message: "Service temporarily unavailable",
+          ok: true,
+          text: "Recovered live reply",
+          modelUsed: "gemini-4-hydrogen",
         }),
-        { status: 503, headers: { "Content-Type": "application/json" } },
+        { status: 200, headers: { "Content-Type": "application/json" } },
       );
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -106,9 +118,15 @@ describe("Regression fixes: AI UI sanitization & Unit 3 Context Scenario Mode 8"
     fireEvent.submit(inputEl.closest("form")!);
 
     await waitFor(() => {
-      expect(screen.getByText(/Grade 9 Study Vocabulary library/i)).toBeInTheDocument();
+      expect(screen.getByText(/Service temporarily unavailable/i)).toBeInTheDocument();
     });
-    expect(screen.queryByText(/Could not connect to BTC AI service/i)).toBeNull();
+    expect(screen.queryByText(/Grade 9 Study Vocabulary library/i)).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Retry$/i }));
+    await waitFor(() => {
+      expect(screen.getByText("Recovered live reply")).toBeInTheDocument();
+    });
+    expect(callCount).toBe(2);
   });
 
   it("parses Google GenAI JSON error payloads in formatGeminiError and matches Hadith/Adhkar/Duas in unified search", () => {

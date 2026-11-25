@@ -21,12 +21,13 @@ import {
 import { awardXpIfUnique, useUser } from "@/hooks/use-nexora";
 import { speakEnglishText } from "@/lib/english-speech";
 import { usePrefs } from "@/lib/preferences";
+import { playCorrectSound, playIncorrectSound } from "@/lib/sound-effects";
 import { buildEventDocId } from "@/lib/xp-rules";
 
 type QuizFilterMode = "all" | "quick" | "context" | "meaning";
 
 export function Unit9VocabQuiz({ onBackToFlashcards }: { onBackToFlashcards?: () => void }) {
-  const { lang } = usePrefs();
+  const { lang, soundAndQuiz } = usePrefs();
   const isAr = lang === "ar";
   const { data: user } = useUser();
 
@@ -96,6 +97,10 @@ export function Unit9VocabQuiz({ onBackToFlashcards }: { onBackToFlashcards?: ()
     }));
 
     const isRight = optionIdx === currentQuestion.correctIndex;
+    if (soundAndQuiz.soundEffectsEnabled) {
+      if (isRight) playCorrectSound();
+      else playIncorrectSound();
+    }
     if (isRight) {
       const nextStreak = streak + 1;
       setStreak(nextStreak);

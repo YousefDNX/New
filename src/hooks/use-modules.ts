@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   arrayRemove,
@@ -7,6 +8,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   setDoc,
   updateDoc,
@@ -433,7 +435,7 @@ export function useFocusActions() {
       }
     }
     const id = generateSafeDocId("focus");
-    const duration = Math.min(Math.max(Math.round(payload.durationMinutes), 1), 180);
+    const duration = Math.min(Math.max(Math.round(payload.durationMinutes), 1), 1440);
 
     const row: FocusSessionRow = {
       id,
@@ -1773,6 +1775,32 @@ export function useTimeBlockActions() {
 /* ─────────────────────────── SHARED KNOWLEDGE CIRCLE ─────────────────────────── */
 
 export function useCommunityPosts() {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    let active = true;
+    let unsub: (() => void) | undefined;
+    void requireEligibleUid().then((userId) => {
+      if (!active || !userId) return;
+      unsub = onSnapshot(
+        collection(db, "community_posts"),
+        (snap) => {
+          const rows = snap.docs
+            .map((d) => d.data() as CommunityPostRow)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at));
+          qc.setQueryData(["community_posts"], rows);
+        },
+        (err) => {
+          console.warn("Realtime community_posts listener error:", err);
+        },
+      );
+    });
+    return () => {
+      active = false;
+      unsub?.();
+    };
+  }, [qc]);
+
   return useQuery({
     queryKey: ["community_posts"],
     queryFn: async (): Promise<CommunityPostRow[]> => {
@@ -1791,6 +1819,33 @@ export function useCommunityPosts() {
 }
 
 export function useCommunityComments(postId: string | null) {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (!postId) return;
+    let active = true;
+    let unsub: (() => void) | undefined;
+    void requireEligibleUid().then((userId) => {
+      if (!active || !userId) return;
+      unsub = onSnapshot(
+        collection(db, "community_posts", postId, "comments"),
+        (snap) => {
+          const rows = snap.docs
+            .map((d) => d.data() as CommunityCommentRow)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at));
+          qc.setQueryData(["community_comments", postId], rows);
+        },
+        (err) => {
+          console.warn(`Realtime comments listener error for ${postId}:`, err);
+        },
+      );
+    });
+    return () => {
+      active = false;
+      unsub?.();
+    };
+  }, [postId, qc]);
+
   return useQuery({
     queryKey: ["community_comments", postId],
     enabled: Boolean(postId),
@@ -1811,6 +1866,31 @@ export function useCommunityComments(postId: string | null) {
 }
 
 export function useCommunityReactions(postId: string | null) {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (!postId) return;
+    let active = true;
+    let unsub: (() => void) | undefined;
+    void requireEligibleUid().then((userId) => {
+      if (!active || !userId) return;
+      unsub = onSnapshot(
+        collection(db, "community_posts", postId, "reactions"),
+        (snap) => {
+          const rows = snap.docs.map((d) => d.data() as CommunityReactionRow);
+          qc.setQueryData(["community_reactions", postId], rows);
+        },
+        (err) => {
+          console.warn(`Realtime reactions listener error for ${postId}:`, err);
+        },
+      );
+    });
+    return () => {
+      active = false;
+      unsub?.();
+    };
+  }, [postId, qc]);
+
   return useQuery({
     queryKey: ["community_reactions", postId],
     enabled: Boolean(postId),
@@ -1829,6 +1909,32 @@ export function useCommunityReactions(postId: string | null) {
 }
 
 export function useSavedPosts() {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    let active = true;
+    let unsub: (() => void) | undefined;
+    void requireEligibleUid().then((userId) => {
+      if (!active || !userId) return;
+      unsub = onSnapshot(
+        collection(db, "users", userId, "saved_posts"),
+        (snap) => {
+          const rows = snap.docs
+            .map((d) => d.data() as SavedPostRow)
+            .sort((a, b) => b.saved_at.localeCompare(a.saved_at));
+          qc.setQueryData(["saved_posts"], rows);
+        },
+        (err) => {
+          console.warn("Realtime saved_posts listener error:", err);
+        },
+      );
+    });
+    return () => {
+      active = false;
+      unsub?.();
+    };
+  }, [qc]);
+
   return useQuery({
     queryKey: ["saved_posts"],
     queryFn: async (): Promise<SavedPostRow[]> => {
@@ -1852,6 +1958,7 @@ export function useCommunityActions() {
   const createPost = async (payload: {
     authorName: string;
     category: CommunityPostCategory;
+    tag?: string | null;
     body: string;
     mediaUrl?: string | null;
   }): Promise<CommunityPostRow> => {
@@ -1859,6 +1966,7 @@ export function useCommunityActions() {
     if (!userId) throw new Error("Sign in required.");
     const body = clampString(payload.body, 3000);
     if (!body) throw new Error("Post message is required.");
+    const tag = clampString(payload.tag, 40);
     const mediaUrl = sanitizeHttpUrl(payload.mediaUrl, 1024);
     const now = new Date().toISOString();
     const id = generateSafeDocId("cpost");
@@ -1867,8 +1975,10 @@ export function useCommunityActions() {
       author_id: userId,
       author_name: clampString(payload.authorName, 60) ?? "Student",
       category: payload.category,
+      ...(tag ? { tag } : {}),
       body,
       ...(mediaUrl ? { media_url: mediaUrl, media_kind: "link" as const } : {}),
+      edited: false,
       created_at: now,
       updated_at: now,
     };
@@ -1879,6 +1989,38 @@ export function useCommunityActions() {
     }
     await qc.invalidateQueries({ queryKey: ["community_posts"] });
     return row;
+  };
+
+  const updatePost = async (payload: {
+    postId: string;
+    category?: CommunityPostCategory;
+    tag?: string | null;
+    body: string;
+    mediaUrl?: string | null;
+  }) => {
+    const userId = await requireEligibleUid();
+    if (!userId) throw new Error("Sign in required.");
+    const body = clampString(payload.body, 3000);
+    if (!body) throw new Error("Post message is required.");
+    const tag = payload.tag !== undefined ? clampString(payload.tag, 40) : undefined;
+    const mediaUrl =
+      payload.mediaUrl !== undefined ? sanitizeHttpUrl(payload.mediaUrl, 1024) : undefined;
+    const now = new Date().toISOString();
+    try {
+      await updateDoc(doc(db, "community_posts", payload.postId), {
+        ...(payload.category ? { category: payload.category } : {}),
+        ...(tag !== undefined ? { tag } : {}),
+        body,
+        ...(mediaUrl !== undefined
+          ? { media_url: mediaUrl, media_kind: mediaUrl ? ("link" as const) : null }
+          : {}),
+        edited: true,
+        updated_at: now,
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `community_posts/${payload.postId}`);
+    }
+    await qc.invalidateQueries({ queryKey: ["community_posts"] });
   };
 
   const deletePost = async (postId: string) => {
@@ -1894,6 +2036,7 @@ export function useCommunityActions() {
 
   const addComment = async (payload: {
     postId: string;
+    parentCommentId?: string | null;
     authorName: string;
     body: string;
   }): Promise<CommunityCommentRow> => {
@@ -1901,14 +2044,17 @@ export function useCommunityActions() {
     if (!userId) throw new Error("Sign in required.");
     const body = clampString(payload.body, 2000);
     if (!body) throw new Error("Comment is required.");
+    const parentCommentId = clampString(payload.parentCommentId, 128);
     const now = new Date().toISOString();
     const id = generateSafeDocId("ccmt");
     const row: CommunityCommentRow = {
       id,
       post_id: payload.postId,
+      ...(parentCommentId ? { parent_comment_id: parentCommentId } : {}),
       author_id: userId,
       author_name: clampString(payload.authorName, 60) ?? "Student",
       body,
+      edited: false,
       created_at: now,
       updated_at: now,
     };
@@ -1923,6 +2069,27 @@ export function useCommunityActions() {
     }
     await qc.invalidateQueries({ queryKey: ["community_comments", payload.postId] });
     return row;
+  };
+
+  const updateComment = async (payload: { postId: string; commentId: string; body: string }) => {
+    const userId = await requireEligibleUid();
+    if (!userId) throw new Error("Sign in required.");
+    const body = clampString(payload.body, 2000);
+    if (!body) throw new Error("Comment is required.");
+    try {
+      await updateDoc(doc(db, "community_posts", payload.postId, "comments", payload.commentId), {
+        body,
+        edited: true,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      handleFirestoreError(
+        err,
+        OperationType.UPDATE,
+        `community_posts/${payload.postId}/comments/${payload.commentId}`,
+      );
+    }
+    await qc.invalidateQueries({ queryKey: ["community_comments", payload.postId] });
   };
 
   const deleteComment = async (postId: string, commentId: string) => {
@@ -1998,12 +2165,43 @@ export function useCommunityActions() {
     ]);
   };
 
+  const reportCommunityContent = async (payload: {
+    targetType: "community_post" | "community_comment";
+    targetId: string;
+    reason: ModerationReportRow["reason"];
+    details?: string | null;
+  }) => {
+    const userId = await requireEligibleUid();
+    if (!userId) throw new Error("Sign in required.");
+    const id = generateSafeDocId("rep");
+    const report: ModerationReportRow = {
+      id,
+      reporter_id: userId,
+      circle_id: null,
+      target_type: payload.targetType,
+      target_id: payload.targetId.slice(0, 128),
+      reason: payload.reason,
+      details: clampString(payload.details, 1000),
+      status: "submitted",
+      created_at: new Date().toISOString(),
+    };
+    try {
+      await setDoc(doc(db, "moderation_reports", id), report);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `moderation_reports/${id}`);
+    }
+    return report;
+  };
+
   return {
     createPost,
+    updatePost,
     deletePost,
     addComment,
+    updateComment,
     deleteComment,
     toggleReaction,
     toggleSavePost,
+    reportCommunityContent,
   };
 }

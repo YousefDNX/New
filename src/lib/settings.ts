@@ -254,6 +254,97 @@ export const ACCENT_PRESETS: Record<
   rose: { hex: "#f43f5e", glowHex: "#ec4899", label: "Coral Rose" },
 };
 
+export type QuizButtonStyle = "rounded" | "pill" | "soft_square";
+export type QuizColorPalette = "default" | "ocean" | "emerald" | "royal" | "amber";
+export type QuizFeedbackStyle = "celebration" | "balanced" | "minimal";
+export type InteractionStylePref = "sound" | "silent";
+
+export interface SoundAndQuizPrefs {
+  soundEffectsEnabled: boolean;
+  interactionStyle: InteractionStylePref;
+  quizButtonStyle: QuizButtonStyle;
+  quizColorPalette: QuizColorPalette;
+  quizFeedbackStyle: QuizFeedbackStyle;
+}
+
+export const defaultSoundAndQuizPrefs: SoundAndQuizPrefs = {
+  soundEffectsEnabled: true,
+  interactionStyle: "sound",
+  quizButtonStyle: "rounded",
+  quizColorPalette: "default",
+  quizFeedbackStyle: "celebration",
+};
+
+export function normalizeInteractionStyle(val: unknown): InteractionStylePref {
+  return val === "silent" ? "silent" : "sound";
+}
+
+export const QUIZ_COLOR_PALETTES: Record<
+  QuizColorPalette,
+  { hex: string; activeBgClass: string; activeBorderClass: string }
+> = {
+  default: {
+    hex: "#14b8a6",
+    activeBgClass: "bg-primary/15",
+    activeBorderClass: "border-primary text-primary",
+  },
+  ocean: {
+    hex: "#0284c7",
+    activeBgClass: "bg-sky-500/15",
+    activeBorderClass: "border-sky-500 text-sky-600 dark:text-sky-400",
+  },
+  emerald: {
+    hex: "#059669",
+    activeBgClass: "bg-emerald-500/15",
+    activeBorderClass: "border-emerald-500 text-emerald-700 dark:text-emerald-400",
+  },
+  royal: {
+    hex: "#6366f1",
+    activeBgClass: "bg-indigo-500/15",
+    activeBorderClass: "border-indigo-500 text-indigo-700 dark:text-indigo-400",
+  },
+  amber: {
+    hex: "#d97706",
+    activeBgClass: "bg-amber-500/15",
+    activeBorderClass: "border-amber-500 text-amber-700 dark:text-amber-400",
+  },
+};
+
+export function normalizeQuizButtonStyle(value: unknown): QuizButtonStyle {
+  if (value === "rounded" || value === "pill" || value === "soft_square") return value;
+  return "rounded";
+}
+
+export function normalizeQuizColorPalette(value: unknown): QuizColorPalette {
+  if (
+    value === "default" ||
+    value === "ocean" ||
+    value === "emerald" ||
+    value === "royal" ||
+    value === "amber"
+  ) {
+    return value;
+  }
+  return "default";
+}
+
+export function normalizeQuizFeedbackStyle(value: unknown): QuizFeedbackStyle {
+  if (value === "celebration" || value === "balanced" || value === "minimal") return value;
+  return "celebration";
+}
+
+export function getQuizButtonRadiusClass(style: QuizButtonStyle): string {
+  switch (style) {
+    case "pill":
+      return "rounded-full";
+    case "soft_square":
+      return "rounded-md";
+    case "rounded":
+    default:
+      return "rounded-xl";
+  }
+}
+
 export interface InterfaceThemePresetSpec {
   id: InterfaceTheme;
   accent: AccentPreset;

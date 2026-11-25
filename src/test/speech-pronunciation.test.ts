@@ -15,7 +15,7 @@ import {
   pauseEnhancedSpeech,
   resumeEnhancedSpeech,
   resetSpeechEngineStateForTests,
-  PRONUNCIATION_LEXICON,
+  fetchVerifiedBritishDictionaryAudio,
 } from "../lib/speech-service";
 import { speakEnglishText } from "../lib/english-speech";
 import { synthesizeSpeechWithGemini } from "../lib/ai.server";
@@ -68,24 +68,19 @@ describe("Speech pronunciation engine, mixed-language routing, and Quranic safet
     ]);
   });
 
-  it("expands difficult STEM, loanword, silent-letter, and proper-name English pronunciations", () => {
+  it("preserves exact natural English spelling without synthetic phonetic mangling or Arabic letters", () => {
     const input = "Cellular hypertrophy and mitosis occur during muscle development";
     const normalized = normalizeTextForSpeech(input, "en");
 
-    expect(normalized).toContain(PRONUNCIATION_LEXICON["hypertrophy"]!);
-    expect(normalized).toContain(PRONUNCIATION_LEXICON["mitosis"]!);
+    expect(normalized).toBe(input);
 
     const chemInput = "We will study stoichiometry and photosynthesis in modern biochemistry";
     const chemNormalized = normalizeTextForSpeech(chemInput, "en");
-    expect(chemNormalized).toContain(PRONUNCIATION_LEXICON["stoichiometry"]!);
-    expect(chemNormalized).toContain(PRONUNCIATION_LEXICON["photosynthesis"]!);
+    expect(chemNormalized).toBe(chemInput);
 
     const hardInput = "The entrepreneur ate Worcestershire sauce with quinoa after Wednesday.";
     const hardNormalized = normalizeTextForSpeech(hardInput, "en");
-    expect(hardNormalized).toContain(PRONUNCIATION_LEXICON["entrepreneur"]!);
-    expect(hardNormalized).toContain(PRONUNCIATION_LEXICON["worcestershire"]!);
-    expect(hardNormalized).toContain(PRONUNCIATION_LEXICON["quinoa"]!);
-    expect(hardNormalized).toContain(PRONUNCIATION_LEXICON["wednesday"]!);
+    expect(hardNormalized).toBe(hardInput);
   });
 
   it("preserves Arabic diacritics (tashkeel), strips tatweel, and converts slashes into pauses", () => {
@@ -207,7 +202,7 @@ describe("Speech pronunciation engine, mixed-language routing, and Quranic safet
 
     expect(spoken[1]!.lang).toBe("en-GB");
     expect(spoken[1]!.voice?.voiceURI).toBe("google-en-gb");
-    expect(spoken[1]!.text).toContain("hoh-mee-oh-STAY-sis".toLowerCase());
+    expect(spoken[1]!.text).toBe("homeostasis");
 
     expect(spoken[2]!.lang).toBe("ar-SA");
     expect(spoken[2]!.voice?.voiceURI).toBe("google-ar");
@@ -255,7 +250,62 @@ describe("Speech pronunciation engine, mixed-language routing, and Quranic safet
     expect(speakEnglishText("stoichiometry", { lang: "en-GB" })).toBe(true);
     expect(spoken[1]!.lang).toBe("en-GB");
     expect(spoken[1]!.voice?.voiceURI).toBe("daniel");
-    expect(spoken[1]!.text).toBe(PRONUNCIATION_LEXICON["stoichiometry"]);
+    expect(spoken[1]!.text).toBe("stoichiometry");
+  });
+
+  it("prioritizes verified British (-uk) dictionary audio for isolated English words before fallback", async () => {
+    const playedUrls: string[] = [];
+    class MockAudio {
+      src: string;
+      playbackRate = 1;
+      volume = 1;
+      onended: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      constructor(src = "") {
+        this.src = src;
+      }
+      pause = vi.fn();
+      currentTime = 0;
+      play = vi.fn(async () => {
+        playedUrls.push(this.src);
+        this.onended?.();
+      });
+    }
+    vi.stubGlobal("Audio", MockAudio);
+
+    const fetchMock = vi.fn(async (url: RequestInfo | URL) => {
+      if (String(url).includes("dictionaryapi.dev")) {
+        return new Response(
+          JSON.stringify([
+            {
+              word: "reflect",
+              phonetics: [
+                { audio: "https://api.dictionaryapi.dev/media/pronunciations/en/reflect-us.mp3" },
+                { audio: "https://api.dictionaryapi.dev/media/pronunciations/en/reflect-uk.mp3" },
+              ],
+            },
+          ]),
+          { status: 200 },
+        );
+      }
+      return new Response("{}", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const ukAudioUrl = await fetchVerifiedBritishDictionaryAudio("reflect");
+    expect(ukAudioUrl).toBe("https://api.dictionaryapi.dev/media/pronunciations/en/reflect-uk.mp3");
+
+    expect(
+      speakEnhancedText("reflect", {
+        forcedLang: "en",
+        preferredLocale: "en-GB",
+        forceDictionaryLookup: true,
+      }),
+    ).toBe(true);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(playedUrls).toEqual([
+      "https://api.dictionaryapi.dev/media/pronunciations/en/reflect-uk.mp3",
+    ]);
   });
 
   it("splits long paragraphs into natural sentence chunks without exceeding bounds", () => {

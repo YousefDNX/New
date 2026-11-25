@@ -45,8 +45,8 @@ const MODULES = [
     icon: BookOpen,
     enTitle: "Study & Academics",
     arTitle: "الدراسة والأكاديميات",
-    enDesc: "Grade 9 vocabulary flashcards (Units 1–4), summaries, practice, and quizzes.",
-    arDesc: "بطاقات مفردات الصف التاسع (الوحدات 1–4)، ملخصات، واختبارات قصيرة.",
+    enDesc: "Organized notes, active flashcards, mistake log, and subject study workspace.",
+    arDesc: "ملاحظات منظمة، بطاقات مراجعة نشطة، سجل أخطاء، ومساحة دراسية شاملة.",
     tone: "text-blue-500 bg-blue-500/10",
   },
   {
@@ -63,15 +63,15 @@ const MODULES = [
     icon: CheckSquare,
     enTitle: "Productivity & Focus",
     arTitle: "الإنتاجية والتركيز",
-    enDesc: "Tasks, goals, focus timer sessions, and a simple time organizer.",
-    arDesc: "المهام، الأهداف، جلسات التركيز، ومنظّم الوقت البسيط.",
+    enDesc: "Tasks, goals, custom hours-minutes-seconds focus timer, and organizer.",
+    arDesc: "المهام، الأهداف، مؤقّت تركيز مرن بالساعات والدقائق والثواني، ومنظّم الوقت.",
     tone: "text-amber-500 bg-amber-500/10",
   },
   {
     to: "/app/care" as const,
     icon: Heart,
-    enTitle: "Personal Growth & Wellbeing",
-    arTitle: "النمو الشخصي والعافية",
+    enTitle: "Personal Growth",
+    arTitle: "النمو الشخصي",
     enDesc: "Habits, private reflection journal, emotional check-in, and healthy routines.",
     arDesc: "العادات، اليوميات الخاصة، متابعة الحالة النفسية، والروتين المتوازن.",
     tone: "text-rose-500 bg-rose-500/10",
@@ -108,8 +108,8 @@ const MODULES = [
     icon: Languages,
     enTitle: "English World",
     arTitle: "عالم الإنجليزية",
-    enDesc: "Vocabulary, listening, reading, grammar, speaking, and writing skills.",
-    arDesc: "تدريبات تفاعلية في المفردات والاستماع والقراءة والقواعد والتحدث والكتابة.",
+    enDesc: "Grade 9 vocabulary, grammar quizzes, listening, reading, speaking, and writing.",
+    arDesc: "مفردات الصف التاسع، اختبارات القواعد، الاستماع، القراءة، التحدث، والكتابة.",
     tone: "text-sky-500 bg-sky-500/10",
   },
   {
@@ -245,11 +245,11 @@ function StudentHomePage() {
             <Sparkles className="size-4.5" />
           </span>
           <div className="min-w-0">
-            <div className="truncate text-xs font-semibold text-foreground">
+            <div className="break-words text-xs font-semibold text-foreground leading-snug">
               {isAr ? "مساعد BTC الذكي" : "BTC AI"}
             </div>
-            <div className="truncate text-[11px] text-muted-foreground">
-              {isAr ? "اسأل عن درس أو سؤال" : "Study guidance"}
+            <div className="break-words text-[11px] text-muted-foreground leading-snug">
+              {isAr ? "اسأل عن أي موضوع أو سؤال" : "General AI & study help"}
             </div>
           </div>
         </Link>
@@ -262,10 +262,10 @@ function StudentHomePage() {
             <HelpCircle className="size-4.5" />
           </span>
           <div className="min-w-0">
-            <div className="truncate text-xs font-semibold text-foreground">
+            <div className="break-words text-xs font-semibold text-foreground leading-snug">
               {isAr ? "مركز المساعدة" : "Help Center"}
             </div>
-            <div className="truncate text-[11px] text-muted-foreground">
+            <div className="break-words text-[11px] text-muted-foreground leading-snug">
               {isAr ? "دليل استخدام المنصة" : "Guides & answers"}
             </div>
           </div>
@@ -293,22 +293,22 @@ function StudentHomePage() {
               <Link
                 key={card.to}
                 to={card.to}
-                className="surface-card group flex min-h-[88px] items-center gap-3.5 p-4 transition-colors hover:border-primary/45 hover:bg-surface-2/50"
+                className="surface-card group flex h-full items-start gap-3.5 p-4 transition-colors hover:border-primary/45 hover:bg-surface-2/50"
               >
                 <span
                   className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${card.tone}`}
                 >
                   <Icon className="size-5" />
                 </span>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-display text-sm font-bold text-foreground transition-colors group-hover:text-primary">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="break-words font-display text-sm font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
                     {isAr ? card.arTitle : card.enTitle}
                   </div>
-                  <div className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                  <div className="break-words text-xs leading-relaxed text-muted-foreground">
                     {isAr ? card.arDesc : card.enDesc}
                   </div>
                 </div>
-                <ArrowRight className="size-4 shrink-0 text-muted-foreground rtl-flip group-hover:text-primary" />
+                <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground rtl-flip group-hover:text-primary" />
               </Link>
             );
           })}

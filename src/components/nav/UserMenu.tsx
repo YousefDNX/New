@@ -100,7 +100,11 @@ export function UserMenu({ compact }: { compact?: boolean }) {
           )}
         >
           <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent font-display text-xs font-bold text-accent-foreground">
-            {isGuest ? <UserCheck className="size-4" /> : <CheckCircle2 className="size-4 text-emerald-500" />}
+            {isGuest ? (
+              <UserCheck className="size-4" />
+            ) : (
+              <CheckCircle2 className="size-4 text-emerald-500" />
+            )}
           </span>
           {!compact && (
             <div className="min-w-0 flex-1">
@@ -200,7 +204,11 @@ export function UserMenu({ compact }: { compact?: boolean }) {
               </DropdownMenuItem>
             </>
           ) : (
-            <DropdownMenuItem onClick={handleSignOut} disabled={signOutBusy} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem
+              onClick={handleSignOut}
+              disabled={signOutBusy}
+              className="text-destructive focus:text-destructive"
+            >
               <LogOut className="size-4" />
               <span>{isAr ? "تسجيل الخروج" : "Sign Out"}</span>
             </DropdownMenuItem>

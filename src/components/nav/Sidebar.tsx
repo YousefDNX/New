@@ -88,7 +88,7 @@ export function Sidebar() {
               strokeWidth={1.9}
             />
             {!collapsed && (
-              <span className="min-w-0 flex-1 truncate">
+              <span className="min-w-0 flex-1 break-words leading-snug">
                 {lang === "ar" ? NAV_ADMIN.labelAr : NAV_ADMIN.labelEn}
               </span>
             )}

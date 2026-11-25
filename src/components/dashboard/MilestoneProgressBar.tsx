@@ -168,7 +168,7 @@ export function MilestoneProgressBar() {
             <div className="flex items-center justify-between text-xs">
               <span className="flex items-center gap-1.5 font-medium text-foreground">
                 <HeartPulse className="size-3.5 text-xp" />
-                <span>{isAr ? "النمو الشخصي والرفاه" : "Personal & Wellbeing"}</span>
+                <span>{isAr ? "النمو الشخصي" : "Personal Growth"}</span>
               </span>
               <span className="text-[11px] font-semibold text-muted-foreground">
                 {formatNumber(progress.personalCount, lang)}/

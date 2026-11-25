@@ -57,8 +57,8 @@ export function WellbeingWorkspace() {
   useEffect(() => {
     recordLastVisitedModule(user?.uid, {
       path: "/app/care",
-      labelEn: "Personal Growth & Wellbeing",
-      labelAr: "النمو الشخصي والعافية",
+      labelEn: "Personal Growth",
+      labelAr: "النمو الشخصي",
     });
   }, [user?.uid]);
 
@@ -191,7 +191,7 @@ export function WellbeingWorkspace() {
   return (
     <div className="space-y-6 pb-12">
       <PageHeader
-        title={isAr ? "النمو الشخصي والعافية" : "Personal Growth & Wellbeing"}
+        title={isAr ? "النمو الشخصي" : "Personal Growth"}
         subtitle={
           isAr
             ? "مساحة هادئة لمتابعة مشاعرك، كتابة تأملاتك، وبناء عادات صحية دون أي ضغط."

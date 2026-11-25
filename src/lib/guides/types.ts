@@ -11,7 +11,8 @@ export interface FeatureGuideLocaleEntry {
   limitations: string;
 }
 
-export type FeatureGuideEntry = Record<Lang, FeatureGuideLocaleEntry>;
+export type FeatureGuideEntry = Partial<Record<"es", FeatureGuideLocaleEntry>> &
+  Record<Exclude<Lang, "es">, FeatureGuideLocaleEntry>;
 
 export interface FeatureGuideUiStrings {
   triggerLabel: string;

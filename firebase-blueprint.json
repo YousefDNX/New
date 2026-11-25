@@ -25,8 +25,8 @@
         },
         "language": {
           "type": "string",
-          "enum": ["en", "ar", "ja", "fr", "de", "zh-CN", "ko"],
-          "description": "Preferred UI language across 7 supported languages."
+          "enum": ["en", "ar", "es", "ja", "fr", "de", "zh-CN", "ko"],
+          "description": "Preferred UI language across 8 supported languages."
         },
         "region": {
           "type": "string",
@@ -216,7 +216,7 @@
         "opportunity_scope": { "type": "string", "enum": ["local", "gcc", "global"] },
         "study_explanation_lang": {
           "type": "string",
-          "enum": ["ui", "en", "ar", "ja", "fr", "de", "zh-CN", "ko"]
+          "enum": ["ui", "en", "ar", "es", "ja", "fr", "de", "zh-CN", "ko"]
         },
         "study_complexity": { "type": "string", "enum": ["simple", "balanced", "advanced"] },
         "study_detail_level": { "type": "string", "enum": ["concise", "standard", "detailed"] },
@@ -234,7 +234,7 @@
         "study_revision_reminders": { "type": "boolean" },
         "ai_response_lang": {
           "type": "string",
-          "enum": ["ui", "en", "ar", "ja", "fr", "de", "zh-CN", "ko"]
+          "enum": ["ui", "en", "ar", "es", "ja", "fr", "de", "zh-CN", "ko"]
         },
         "ai_response_length": { "type": "string", "enum": ["concise", "standard", "detailed"] },
         "ai_tone": { "type": "string", "enum": ["coach", "calm", "academic"] },
@@ -1578,10 +1578,12 @@
         "author_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
         "author_name": { "type": "string", "minLength": 1, "maxLength": 60 },
         "category": { "type": "string", "enum": ["general", "question", "info", "explanation"] },
+        "tag": { "type": "string", "maxLength": 40 },
         "body": { "type": "string", "minLength": 1, "maxLength": 3000 },
         "media_url": { "type": "string", "maxLength": 1024 },
         "media_kind": { "type": "string", "enum": ["image", "video", "link"] },
         "media_path": { "type": "string", "maxLength": 512 },
+        "edited": { "type": "boolean" },
         "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
         "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
       },
@@ -1598,6 +1600,7 @@
         "author_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
         "author_name": { "type": "string", "minLength": 1, "maxLength": 60 },
         "body": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "edited": { "type": "boolean" },
         "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
         "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
       },

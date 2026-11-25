@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  BellRing,
   CalendarClock,
   CheckCircle2,
   Circle,
   Clock,
   ListTodo,
+  Minus,
   Pause,
   Play,
   Plus,
@@ -26,14 +28,28 @@ import {
 } from "@/hooks/use-modules";
 import { useGoalActions, useGoals, useTaskActions, useTasks, useUser } from "@/hooks/use-nexora";
 import { recordLastVisitedModule } from "@/lib/continue-tracker";
+import {
+  FOCUS_PRESETS,
+  calculateSessionMinutesToSave,
+  clampHms,
+  computeRemainingSeconds,
+  formatHmsClock,
+  getFocusTimerStorageKey,
+  hmsToSeconds,
+  loadFocusTimerState,
+  saveFocusTimerState,
+  type PersistedFocusTimerState,
+} from "@/lib/focus-timer";
 import { usePrefs } from "@/lib/preferences";
+import { playCompleteSound } from "@/lib/sound-effects";
 
 type TabId = "tasks" | "goals" | "timer" | "schedule";
 
 export function ProductivityFocusWorkspace() {
-  const { lang } = usePrefs();
+  const { lang, soundAndQuiz } = usePrefs();
   const { data: user } = useUser();
   const isAr = lang === "ar";
+  const soundEnabled = soundAndQuiz.soundEffectsEnabled;
 
   useEffect(() => {
     recordLastVisitedModule(user?.uid, {
@@ -67,12 +83,72 @@ export function ProductivityFocusWorkspace() {
   const [goalIsDaily, setGoalIsDaily] = useState(false);
   const [goalBusy, setGoalBusy] = useState(false);
 
-  // Focus timer state
-  const [presetMinutes, setPresetMinutes] = useState(25);
-  const [secondsLeft, setSecondsLeft] = useState(25 * 60);
-  const [running, setRunning] = useState(false);
-  const [focusTitle, setFocusTitle] = useState("");
+  // Flexible H:M:S focus timer state (timestamp-based + localStorage persisted)
+  const timerStorageKey = getFocusTimerStorageKey(user?.uid);
+  const [timerState, setTimerState] = useState<PersistedFocusTimerState>(() =>
+    loadFocusTimerState(timerStorageKey),
+  );
   const [savingFocus, setSavingFocus] = useState(false);
+  const [timerValidationError, setTimerValidationError] = useState<string | null>(null);
+  const prevStatusRef = useRef(timerState.status);
+
+  // Reload timer state if signed-in user changes
+  useEffect(() => {
+    setTimerState(loadFocusTimerState(timerStorageKey));
+  }, [timerStorageKey]);
+
+  // Persist timer changes
+  useEffect(() => {
+    saveFocusTimerState(timerStorageKey, timerState);
+  }, [timerStorageKey, timerState]);
+
+  // Sound / banner notification upon transition to completed
+  useEffect(() => {
+    if (prevStatusRef.current === "running" && timerState.status === "completed") {
+      if (soundEnabled) {
+        playCompleteSound();
+      }
+      toast.success(isAr ? "انتهت جلسة التركيز! أحسنت." : "Focus session completed! Great work.");
+    }
+    prevStatusRef.current = timerState.status;
+  }, [timerState.status, soundEnabled, isAr]);
+
+  // Accurate interval based on endAtMs timestamp (survives tab sleep / switching)
+  useEffect(() => {
+    if (timerState.status !== "running" || timerState.endAtMs == null) return;
+    const syncTick = () => {
+      setTimerState((prev) => {
+        if (prev.status !== "running" || prev.endAtMs == null) return prev;
+        const { remainingSeconds, completed } = computeRemainingSeconds(prev);
+        if (completed) {
+          return {
+            ...prev,
+            status: "completed",
+            remainingSeconds: 0,
+            endAtMs: null,
+          };
+        }
+        if (remainingSeconds === prev.remainingSeconds) return prev;
+        return {
+          ...prev,
+          remainingSeconds,
+        };
+      });
+    };
+
+    syncTick();
+    const id = window.setInterval(syncTick, 250);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        syncTick();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [timerState.status, timerState.endAtMs]);
 
   // Time organizer state
   const [blockTitle, setBlockTitle] = useState("");
@@ -80,20 +156,6 @@ export function ProductivityFocusWorkspace() {
   const [blockStart, setBlockStart] = useState("16:00");
   const [blockEnd, setBlockEnd] = useState("16:45");
   const [blockBusy, setBlockBusy] = useState(false);
-
-  useEffect(() => {
-    if (!running) return;
-    const id = window.setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          setRunning(false);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [running]);
 
   const filteredTasks = useMemo(() => {
     const q = taskSearch.trim().toLowerCase();
@@ -152,21 +214,124 @@ export function ProductivityFocusWorkspace() {
     }
   };
 
+  const updateHmsField = (patch: Partial<{ hours: number; minutes: number; seconds: number }>) => {
+    setTimerValidationError(null);
+    setTimerState((prev) => {
+      const nextHms = clampHms({
+        hours: patch.hours ?? prev.hours,
+        minutes: patch.minutes ?? prev.minutes,
+        seconds: patch.seconds ?? prev.seconds,
+      });
+      const totalSeconds = hmsToSeconds(nextHms);
+      return {
+        ...prev,
+        ...nextHms,
+        status: "idle",
+        totalSeconds,
+        remainingSeconds: totalSeconds,
+        endAtMs: null,
+      };
+    });
+  };
+
+  const applyFocusPreset = (hours: number, minutes: number, seconds: number) => {
+    setTimerValidationError(null);
+    const totalSeconds = hmsToSeconds({ hours, minutes, seconds });
+    setTimerState((prev) => ({
+      ...prev,
+      status: "idle",
+      hours,
+      minutes,
+      seconds,
+      totalSeconds,
+      remainingSeconds: totalSeconds,
+      endAtMs: null,
+    }));
+  };
+
+  const handleStartOrResume = () => {
+    if (timerState.remainingSeconds <= 0) {
+      if (timerState.totalSeconds <= 0) {
+        setTimerValidationError(
+          isAr
+            ? "اختر مدة أكبر من 00:00:00 لبدء المؤقت."
+            : "Please set a duration greater than 00:00:00 to start.",
+        );
+        return;
+      }
+      // Restart cleanly from configured total duration when previously completed
+      const endAtMs = Date.now() + timerState.totalSeconds * 1000;
+      setTimerValidationError(null);
+      setTimerState((prev) => ({
+        ...prev,
+        status: "running",
+        remainingSeconds: prev.totalSeconds,
+        endAtMs,
+      }));
+      return;
+    }
+
+    const endAtMs = Date.now() + timerState.remainingSeconds * 1000;
+    setTimerValidationError(null);
+    setTimerState((prev) => ({
+      ...prev,
+      status: "running",
+      endAtMs,
+    }));
+  };
+
+  const handlePauseTimer = () => {
+    setTimerState((prev) => {
+      const { remainingSeconds } = computeRemainingSeconds(prev);
+      return {
+        ...prev,
+        status: "paused",
+        remainingSeconds,
+        endAtMs: null,
+      };
+    });
+  };
+
+  const handleResetTimer = () => {
+    setTimerValidationError(null);
+    setTimerState((prev) => {
+      const totalSeconds = hmsToSeconds({
+        hours: prev.hours,
+        minutes: prev.minutes,
+        seconds: prev.seconds,
+      });
+      return {
+        ...prev,
+        status: "idle",
+        totalSeconds,
+        remainingSeconds: totalSeconds,
+        endAtMs: null,
+      };
+    });
+  };
+
   const handleLogFocus = async () => {
+    if (timerState.totalSeconds <= 0) {
+      setTimerValidationError(
+        isAr ? "حدد مدة صالحة قبل حفظ الجلسة." : "Set a valid duration before saving.",
+      );
+      return;
+    }
     setSavingFocus(true);
     try {
-      const elapsedMin = Math.max(
-        1,
-        Math.round((presetMinutes * 60 - secondsLeft) / 60) || presetMinutes,
-      );
+      const durationMinutes = calculateSessionMinutesToSave(timerState);
       await logFocusSession({
-        title: focusTitle.trim() || (isAr ? "جلسة تركيز" : "Focus session"),
-        durationMinutes: elapsedMin,
+        title: timerState.focusTitle.trim() || (isAr ? "جلسة تركيز" : "Focus session"),
+        durationMinutes,
         area: "productivity",
       });
-      setRunning(false);
-      setSecondsLeft(presetMinutes * 60);
-      setFocusTitle("");
+      setTimerState((prev) => ({
+        ...prev,
+        status: "idle",
+        remainingSeconds: prev.totalSeconds,
+        endAtMs: null,
+        focusTitle: "",
+      }));
       toast.success(isAr ? "تم حفظ جلسة التركيز." : "Focus session saved.");
     } catch {
       toast.error(isAr ? "تعذر حفظ الجلسة." : "Could not save focus session.");
@@ -195,8 +360,19 @@ export function ProductivityFocusWorkspace() {
     }
   };
 
-  const mins = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
-  const secs = String(secondsLeft % 60).padStart(2, "0");
+  const timerProgressPct =
+    timerState.totalSeconds > 0
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            Math.round(
+              ((timerState.totalSeconds - timerState.remainingSeconds) / timerState.totalSeconds) *
+                100,
+            ),
+          ),
+        )
+      : 0;
 
   return (
     <div className="space-y-6 pb-12">
@@ -210,7 +386,7 @@ export function ProductivityFocusWorkspace() {
       />
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface/60 p-1.5">
+      <div className="grid grid-cols-2 gap-2 rounded-2xl border border-border bg-surface/60 p-1.5 sm:flex sm:flex-wrap">
         {(
           [
             {
@@ -238,9 +414,9 @@ export function ProductivityFocusWorkspace() {
               size="sm"
               variant={active ? "glow" : "ghost"}
               onClick={() => setTab(item.id)}
-              className="gap-1.5 text-xs"
+              className="min-h-[44px] justify-center gap-1.5 text-xs sm:min-h-[38px]"
             >
-              <Icon className="size-3.5" />
+              <Icon className="size-3.5 shrink-0" />
               <span>{isAr ? item.ar : item.en}</span>
             </Button>
           );
@@ -263,7 +439,7 @@ export function ProductivityFocusWorkspace() {
                   placeholder={
                     isAr ? "مثال: مراجعة كلمات الوحدة ٢" : "e.g. Review Unit 2 vocabulary"
                   }
-                  className="mt-1"
+                  className="mt-1 min-h-[44px]"
                 />
               </div>
               <div className="sm:col-span-3">
@@ -274,7 +450,7 @@ export function ProductivityFocusWorkspace() {
                   id="new-task-priority"
                   value={taskPriority}
                   onChange={(e) => setTaskPriority(e.target.value as "low" | "medium" | "high")}
-                  className="mt-1 flex h-10 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground"
+                  className="mt-1 flex min-h-[44px] w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground"
                 >
                   <option value="low">{isAr ? "منخفضة" : "Low"}</option>
                   <option value="medium">{isAr ? "متوسطة" : "Medium"}</option>
@@ -290,7 +466,7 @@ export function ProductivityFocusWorkspace() {
                   type="date"
                   value={taskDue}
                   onChange={(e) => setTaskDue(e.target.value)}
-                  className="mt-1"
+                  className="mt-1 min-h-[44px]"
                 />
               </div>
             </div>
@@ -300,23 +476,23 @@ export function ProductivityFocusWorkspace() {
                 disabled={taskBusy || !taskTitle.trim()}
                 size="sm"
                 variant="glow"
-                className="gap-1.5"
+                className="min-h-[44px] w-full gap-1.5 sm:w-auto"
               >
-                <Plus className="size-3.5" />
+                <Plus className="size-4" />
                 <span>{isAr ? "إضافة مهمة" : "Add Task"}</span>
               </Button>
             </div>
           </form>
 
           <div className="surface-card space-y-3 p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex gap-1.5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+              <div className="flex flex-wrap gap-1.5">
                 {(["all", "open", "done"] as const).map((f) => (
                   <button
                     key={f}
                     type="button"
                     onClick={() => setTaskFilter(f)}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium cursor-pointer ${
+                    className={`min-h-[40px] rounded-lg px-3 py-1.5 text-xs font-medium cursor-pointer ${
                       taskFilter === f
                         ? "bg-primary text-primary-foreground"
                         : "bg-surface-2 text-muted-foreground hover:text-foreground"
@@ -339,19 +515,19 @@ export function ProductivityFocusWorkspace() {
                   <button
                     type="button"
                     onClick={() => void clearCompletedTasks(tasks)}
-                    className="rounded-lg bg-surface-2 px-3 py-1.5 text-xs text-muted-foreground hover:text-destructive cursor-pointer"
+                    className="min-h-[40px] rounded-lg bg-surface-2 px-3 py-1.5 text-xs text-muted-foreground hover:text-destructive cursor-pointer"
                   >
                     {isAr ? "مسح المكتملة" : "Clear completed"}
                   </button>
                 )}
               </div>
               <div className="relative w-full sm:w-56">
-                <Search className="pointer-events-none absolute start-2.5 top-2.5 size-3.5 text-muted-foreground" />
+                <Search className="pointer-events-none absolute start-3 top-3 size-4 text-muted-foreground" />
                 <Input
                   value={taskSearch}
                   onChange={(e) => setTaskSearch(e.target.value)}
                   placeholder={isAr ? "بحث..." : "Search tasks..."}
-                  className="h-8 ps-8 text-xs"
+                  className="min-h-[40px] ps-9 text-xs"
                 />
               </div>
             </div>
@@ -372,7 +548,7 @@ export function ProductivityFocusWorkspace() {
                       <button
                         type="button"
                         onClick={() => void completeTask(task)}
-                        className="flex flex-1 items-center gap-3 text-start cursor-pointer"
+                        className="flex min-h-[44px] flex-1 items-center gap-3 text-start cursor-pointer"
                       >
                         {done ? (
                           <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
@@ -381,7 +557,7 @@ export function ProductivityFocusWorkspace() {
                         )}
                         <div className="min-w-0">
                           <div
-                            className={`text-sm font-medium ${done ? "line-through text-muted-foreground" : "text-foreground"}`}
+                            className={`break-words text-sm font-medium ${done ? "line-through text-muted-foreground" : "text-foreground"}`}
                           >
                             {task.title}
                           </div>
@@ -395,9 +571,9 @@ export function ProductivityFocusWorkspace() {
                         type="button"
                         onClick={() => void deleteTask(task.id)}
                         aria-label={isAr ? "حذف المهمة" : "Delete task"}
-                        className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive cursor-pointer"
+                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground hover:text-destructive cursor-pointer"
                       >
-                        <Trash2 className="size-3.5" />
+                        <Trash2 className="size-4" />
                       </button>
                     </div>
                   );
@@ -426,10 +602,10 @@ export function ProductivityFocusWorkspace() {
                       ? "مثال: إتمام مراجعة وحدات اللغة الإنجليزية"
                       : "e.g. Finish Grade 9 English revision"
                   }
-                  className="mt-1"
+                  className="mt-1 min-h-[44px]"
                 />
               </div>
-              <label className="flex items-center gap-2 text-xs text-foreground pb-2 cursor-pointer">
+              <label className="flex min-h-[44px] items-center gap-2 text-xs text-foreground cursor-pointer">
                 <input
                   type="checkbox"
                   checked={goalIsDaily}
@@ -442,9 +618,9 @@ export function ProductivityFocusWorkspace() {
                 disabled={goalBusy || !goalTitle.trim()}
                 size="sm"
                 variant="glow"
-                className="gap-1.5"
+                className="min-h-[44px] w-full gap-1.5 sm:w-auto"
               >
-                <Plus className="size-3.5" />
+                <Plus className="size-4" />
                 <span>{isAr ? "إضافة هدف" : "Add Goal"}</span>
               </Button>
             </div>
@@ -466,7 +642,7 @@ export function ProductivityFocusWorkspace() {
                     <button
                       type="button"
                       onClick={() => void toggleGoal(goal)}
-                      className="flex flex-1 items-center gap-3 text-start cursor-pointer"
+                      className="flex min-h-[44px] flex-1 items-center gap-3 text-start cursor-pointer"
                     >
                       {done ? (
                         <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
@@ -475,7 +651,7 @@ export function ProductivityFocusWorkspace() {
                       )}
                       <div>
                         <div
-                          className={`text-sm font-medium ${done ? "line-through text-muted-foreground" : "text-foreground"}`}
+                          className={`break-words text-sm font-medium ${done ? "line-through text-muted-foreground" : "text-foreground"}`}
                         >
                           {goal.title}
                         </div>
@@ -490,9 +666,9 @@ export function ProductivityFocusWorkspace() {
                       type="button"
                       onClick={() => void deleteGoal(goal.id)}
                       aria-label={isAr ? "حذف الهدف" : "Delete goal"}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive cursor-pointer"
+                      className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground hover:text-destructive cursor-pointer"
                     >
-                      <Trash2 className="size-3.5" />
+                      <Trash2 className="size-4" />
                     </button>
                   </div>
                 );
@@ -502,77 +678,233 @@ export function ProductivityFocusWorkspace() {
         </div>
       )}
 
-      {/* FOCUS TIMER TAB */}
+      {/* FLEXIBLE FOCUS TIMER TAB (Hours : Minutes : Seconds) */}
       {tab === "timer" && (
         <div className="grid gap-5 lg:grid-cols-12">
-          <div className="surface-card space-y-5 p-6 text-center lg:col-span-7">
-            <div className="flex flex-wrap justify-center gap-2">
-              {[15, 25, 45].map((m) => (
+          <div className="surface-card space-y-5 p-5 text-center sm:p-6 lg:col-span-7">
+            {/* Completion notification banner */}
+            {timerState.status === "completed" && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex flex-col items-center justify-between gap-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/12 px-4 py-3 text-start sm:flex-row"
+              >
+                <div className="flex items-center gap-2.5">
+                  <BellRing className="size-5 shrink-0 text-emerald-500" />
+                  <div className="text-sm font-medium text-foreground">
+                    {isAr
+                      ? "انتهت مدة التركيز بنجاح! يمكنك حفظ الجلسة الآن."
+                      : "Focus duration completed! Ready to save your session."}
+                  </div>
+                </div>
                 <Button
-                  key={m}
                   type="button"
                   size="sm"
-                  variant={presetMinutes === m ? "glow" : "outline"}
-                  onClick={() => {
-                    setRunning(false);
-                    setPresetMinutes(m);
-                    setSecondsLeft(m * 60);
-                  }}
+                  variant="glow"
+                  disabled={savingFocus}
+                  onClick={() => void handleLogFocus()}
+                  className="min-h-[44px] w-full shrink-0 sm:min-h-[38px] sm:w-auto"
                 >
-                  {m} {isAr ? "دقيقة" : "min"}
+                  {isAr ? "حفظ في السجل" : "Log Session"}
                 </Button>
-              ))}
+              </div>
+            )}
+
+            {/* Quick Presets including multi-hour presets */}
+            <div>
+              <div className="mb-2 text-xs font-semibold text-muted-foreground">
+                {isAr ? "فترات سريعة" : "Quick Presets"}
+              </div>
+              <div className="flex flex-wrap justify-center gap-2">
+                {FOCUS_PRESETS.map((preset) => {
+                  const presetSeconds = hmsToSeconds(preset);
+                  const active = timerState.totalSeconds === presetSeconds;
+                  return (
+                    <Button
+                      key={preset.id}
+                      type="button"
+                      size="sm"
+                      variant={active ? "glow" : "outline"}
+                      onClick={() => applyFocusPreset(preset.hours, preset.minutes, preset.seconds)}
+                      className="min-h-[44px] px-3 sm:min-h-[38px]"
+                    >
+                      {isAr ? preset.labelAr : preset.labelEn}
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="font-mono text-5xl font-bold tracking-tight text-foreground tabular-nums">
-              {mins}:{secs}
+            {/* Custom Hours / Minutes / Seconds Picker */}
+            <div className="rounded-2xl border border-border/80 bg-surface-2/40 p-4">
+              <div className="mb-3 text-xs font-semibold text-muted-foreground">
+                {isAr
+                  ? "مدة مخصصة (ساعات · دقائق · ثوانٍ)"
+                  : "Custom Duration (Hours · Minutes · Seconds)"}
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {(
+                  [
+                    {
+                      key: "hours" as const,
+                      labelEn: "Hours",
+                      labelAr: "الساعات",
+                      max: 23,
+                      value: timerState.hours,
+                    },
+                    {
+                      key: "minutes" as const,
+                      labelEn: "Minutes",
+                      labelAr: "الدقائق",
+                      max: 59,
+                      value: timerState.minutes,
+                    },
+                    {
+                      key: "seconds" as const,
+                      labelEn: "Seconds",
+                      labelAr: "الثواني",
+                      max: 59,
+                      value: timerState.seconds,
+                    },
+                  ] as const
+                ).map((field) => (
+                  <div
+                    key={field.key}
+                    className="flex flex-col items-center gap-1.5 rounded-xl border border-border/70 bg-surface p-2.5"
+                  >
+                    <Label htmlFor={`focus-${field.key}`} className="text-xs font-medium">
+                      {isAr ? field.labelAr : field.labelEn}
+                    </Label>
+                    <div className="flex w-full items-center justify-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={timerState.status === "running"}
+                        onClick={() =>
+                          updateHmsField({
+                            [field.key]: field.value <= 0 ? field.max : field.value - 1,
+                          })
+                        }
+                        aria-label={`${isAr ? "إنقاص" : "Decrease"} ${field.labelEn}`}
+                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-border bg-surface-2 text-foreground hover:bg-surface disabled:opacity-40 cursor-pointer"
+                      >
+                        <Minus className="size-4" />
+                      </button>
+                      <Input
+                        id={`focus-${field.key}`}
+                        type="number"
+                        min={0}
+                        max={field.max}
+                        disabled={timerState.status === "running"}
+                        value={field.value}
+                        onChange={(e) => {
+                          const parsed = Number.parseInt(e.target.value, 10);
+                          updateHmsField({ [field.key]: Number.isNaN(parsed) ? 0 : parsed });
+                        }}
+                        className="min-h-[44px] w-16 text-center font-mono text-base font-bold tabular-nums"
+                      />
+                      <button
+                        type="button"
+                        disabled={timerState.status === "running"}
+                        onClick={() =>
+                          updateHmsField({
+                            [field.key]: field.value >= field.max ? 0 : field.value + 1,
+                          })
+                        }
+                        aria-label={`${isAr ? "زيادة" : "Increase"} ${field.labelEn}`}
+                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-border bg-surface-2 text-foreground hover:bg-surface disabled:opacity-40 cursor-pointer"
+                      >
+                        <Plus className="size-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {timerValidationError && (
+                <p className="mt-2.5 text-xs font-medium text-destructive">
+                  {timerValidationError}
+                </p>
+              )}
+            </div>
+
+            {/* Live HH:MM:SS Readout + Progress */}
+            <div className="space-y-2.5">
+              <div
+                data-testid="focus-timer-clock"
+                className="font-mono text-4xl font-bold tracking-tight text-foreground tabular-nums sm:text-5xl"
+              >
+                {formatHmsClock(timerState.remainingSeconds)}
+              </div>
+              <div className="mx-auto h-2 w-full max-w-md overflow-hidden rounded-full bg-surface-2">
+                <div
+                  className="h-full rounded-full bg-primary transition-[width] duration-300"
+                  style={{ width: `${timerProgressPct}%` }}
+                />
+              </div>
             </div>
 
             <Input
-              value={focusTitle}
-              onChange={(e) => setFocusTitle(e.target.value)}
+              value={timerState.focusTitle}
+              onChange={(e) =>
+                setTimerState((prev) => ({
+                  ...prev,
+                  focusTitle: e.target.value.slice(0, 160),
+                }))
+              }
               placeholder={
                 isAr ? "ماذا تركز عليه الآن؟ (اختياري)" : "What are you focusing on? (optional)"
               }
-              className="mx-auto max-w-sm text-center text-sm"
+              className="mx-auto min-h-[44px] max-w-sm text-center text-sm"
             />
 
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button
-                type="button"
-                variant="glow"
-                onClick={() => setRunning((r) => !r)}
-                className="gap-2"
-              >
-                {running ? <Pause className="size-4" /> : <Play className="size-4" />}
-                <span>
-                  {running
-                    ? isAr
-                      ? "إيقاف مؤقت"
-                      : "Pause"
-                    : isAr
-                      ? "ابدأ التركيز"
-                      : "Start Focus"}
-                </span>
-              </Button>
+            {/* Primary Controls (Mobile-friendly wrapping & 44px hit targets) */}
+            <div className="flex flex-col justify-center gap-2 sm:flex-row sm:flex-wrap">
+              {timerState.status === "running" ? (
+                <Button
+                  type="button"
+                  variant="glow"
+                  onClick={handlePauseTimer}
+                  className="min-h-[44px] gap-2"
+                >
+                  <Pause className="size-4" />
+                  <span>{isAr ? "إيقاف مؤقت" : "Pause"}</span>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="glow"
+                  disabled={timerState.totalSeconds <= 0}
+                  onClick={handleStartOrResume}
+                  className="min-h-[44px] gap-2"
+                >
+                  <Play className="size-4" />
+                  <span>
+                    {timerState.status === "paused"
+                      ? isAr
+                        ? "استئناف التركيز"
+                        : "Resume Focus"
+                      : isAr
+                        ? "ابدأ التركيز"
+                        : "Start Focus"}
+                  </span>
+                </Button>
+              )}
+
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => {
-                  setRunning(false);
-                  setSecondsLeft(presetMinutes * 60);
-                }}
-                className="gap-2"
+                onClick={handleResetTimer}
+                className="min-h-[44px] gap-2"
               >
                 <RotateCcw className="size-4" />
                 <span>{isAr ? "إعادة ضبط" : "Reset"}</span>
               </Button>
+
               <Button
                 type="button"
                 variant="outline"
-                disabled={savingFocus}
+                disabled={savingFocus || timerState.totalSeconds <= 0}
                 onClick={() => void handleLogFocus()}
-                className="gap-2"
+                className="min-h-[44px] gap-2"
               >
                 <CheckCircle2 className="size-4 text-primary" />
                 <span>{isAr ? "حفظ الجلسة" : "Save Session"}</span>
@@ -581,11 +913,11 @@ export function ProductivityFocusWorkspace() {
           </div>
 
           <div className="surface-card space-y-3 p-5 lg:col-span-5">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <h3 className="font-display text-sm font-bold text-foreground">
                 {isAr ? "جلسات التركيز المحفوظة" : "Saved Focus Sessions"}
               </h3>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground tabular-nums">
                 {totalFocusMinutes} {isAr ? "دقيقة" : "min total"}
               </span>
             </div>
@@ -594,14 +926,14 @@ export function ProductivityFocusWorkspace() {
                 {isAr ? "لا توجد جلسات محفوظة بعد." : "No logged sessions yet."}
               </p>
             ) : (
-              <div className="space-y-2 max-h-72 overflow-y-auto">
+              <div className="max-h-80 space-y-2 overflow-y-auto">
                 {focusSessions.slice(0, 12).map((s) => (
                   <div
                     key={s.id}
-                    className="flex items-center justify-between rounded-xl border border-border/70 bg-surface-2/40 px-3 py-2 text-xs"
+                    className="flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-surface-2/40 px-3 py-2 text-xs"
                   >
-                    <span className="font-medium text-foreground truncate">{s.title}</span>
-                    <span className="shrink-0 font-mono text-muted-foreground">
+                    <span className="break-words font-medium text-foreground">{s.title}</span>
+                    <span className="shrink-0 font-mono text-muted-foreground tabular-nums">
                       {s.duration_minutes}m
                     </span>
                   </div>
@@ -626,7 +958,7 @@ export function ProductivityFocusWorkspace() {
                   value={blockTitle}
                   onChange={(e) => setBlockTitle(e.target.value)}
                   placeholder={isAr ? "مثال: مراجعة قواعد اللغة" : "e.g. Grammar review"}
-                  className="mt-1"
+                  className="mt-1 min-h-[44px]"
                 />
               </div>
               <div className="sm:col-span-3">
@@ -638,7 +970,7 @@ export function ProductivityFocusWorkspace() {
                   value={blockDay}
                   onChange={(e) => setBlockDay(e.target.value)}
                   placeholder="Today / Sunday"
-                  className="mt-1"
+                  className="mt-1 min-h-[44px]"
                 />
               </div>
               <div className="sm:col-span-2">
@@ -650,7 +982,7 @@ export function ProductivityFocusWorkspace() {
                   type="time"
                   value={blockStart}
                   onChange={(e) => setBlockStart(e.target.value)}
-                  className="mt-1"
+                  className="mt-1 min-h-[44px]"
                 />
               </div>
               <div className="sm:col-span-2">
@@ -662,7 +994,7 @@ export function ProductivityFocusWorkspace() {
                   type="time"
                   value={blockEnd}
                   onChange={(e) => setBlockEnd(e.target.value)}
-                  className="mt-1"
+                  className="mt-1 min-h-[44px]"
                 />
               </div>
               <div className="flex items-end sm:col-span-1">
@@ -671,7 +1003,7 @@ export function ProductivityFocusWorkspace() {
                   disabled={blockBusy || !blockTitle.trim()}
                   size="sm"
                   variant="glow"
-                  className="w-full h-10"
+                  className="min-h-[44px] w-full"
                 >
                   <Plus className="size-4" />
                 </Button>
@@ -693,7 +1025,7 @@ export function ProductivityFocusWorkspace() {
                   <button
                     type="button"
                     onClick={() => void toggleTimeBlock(block)}
-                    className="flex flex-1 items-center gap-3 text-start cursor-pointer"
+                    className="flex min-h-[44px] flex-1 items-center gap-3 text-start cursor-pointer"
                   >
                     {block.completed ? (
                       <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
@@ -702,7 +1034,7 @@ export function ProductivityFocusWorkspace() {
                     )}
                     <div>
                       <div
-                        className={`text-sm font-medium ${block.completed ? "line-through text-muted-foreground" : "text-foreground"}`}
+                        className={`break-words text-sm font-medium ${block.completed ? "line-through text-muted-foreground" : "text-foreground"}`}
                       >
                         {block.title}
                       </div>
@@ -715,9 +1047,9 @@ export function ProductivityFocusWorkspace() {
                     type="button"
                     onClick={() => void deleteTimeBlock(block.id)}
                     aria-label={isAr ? "حذف الفترة" : "Delete time block"}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive cursor-pointer"
+                    className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground hover:text-destructive cursor-pointer"
                   >
-                    <Trash2 className="size-3.5" />
+                    <Trash2 className="size-4" />
                   </button>
                 </div>
               ))

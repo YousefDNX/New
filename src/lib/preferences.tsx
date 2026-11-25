@@ -15,6 +15,7 @@ import {
   speakEnhancedText,
   stopEnhancedSpeech,
 } from "./speech-service";
+import { setSoundEffectsEnabled } from "./sound-effects";
 import { BRAND, isBtcMode } from "@/config/brand";
 import {
   ACCENT_PRESETS,
@@ -32,13 +33,18 @@ import {
   defaultLocalePrefs,
   defaultNotificationPrefs,
   defaultPrivacyPrefs,
+  defaultSoundAndQuizPrefs,
   defaultStudyPrefs,
   defaultTypographyPrefs,
   getContrastForeground,
   isValidHexColor,
   normalizeFontFamily,
   normalizeHiddenWidgets,
+  normalizeInteractionStyle,
   normalizeLayoutWorkspace,
+  normalizeQuizButtonStyle,
+  normalizeQuizColorPalette,
+  normalizeQuizFeedbackStyle,
   normalizeReadabilityPreset,
   normalizeUiTheme,
   normalizeWidgetOrder,
@@ -54,6 +60,7 @@ import {
   type LocalePrefs,
   type NotificationPrefs,
   type PrivacyPrefs,
+  type SoundAndQuizPrefs,
   type StudyPrefs,
   type Theme,
   type ThemeMode,
@@ -120,6 +127,8 @@ interface Prefs {
   setPrivacy: (p: Partial<PrivacyPrefs>) => void;
   ecosystem: EcosystemPrefs;
   setEcosystem: (e: Partial<EcosystemPrefs>) => void;
+  soundAndQuiz: SoundAndQuizPrefs;
+  setSoundAndQuiz: (s: Partial<SoundAndQuizPrefs>) => void;
   uiMode: UiMode;
   setUiMode: (m: UiMode) => void;
   themePresetId: string | null;
@@ -233,6 +242,8 @@ export function PreferencesProvider({
     useState<NotificationPrefs>(defaultNotificationPrefs);
   const [privacy, setPrivacyState] = useState<PrivacyPrefs>(defaultPrivacyPrefs);
   const [ecosystem, setEcosystemState] = useState<EcosystemPrefs>(defaultEcosystemPrefs);
+  const [soundAndQuiz, setSoundAndQuizState] =
+    useState<SoundAndQuizPrefs>(defaultSoundAndQuizPrefs);
   const [uiMode, setUiModeState] = useState<UiMode>("simplified");
   const [themePresetId, setThemePresetIdState] = useState<string | null>("btc_classic");
   const [layoutMode, setLayoutModeState] = useState<LayoutMode>("classic");
@@ -328,6 +339,26 @@ export function PreferencesProvider({
           lowBandwidth: Boolean(s.ecosystem.lowBandwidth),
           distractionFree: Boolean(s.ecosystem.distractionFree),
         });
+      }
+      if (s.soundAndQuiz) {
+        const nextSoundEnabled =
+          s.soundAndQuiz.soundEffectsEnabled !== undefined
+            ? Boolean(s.soundAndQuiz.soundEffectsEnabled)
+            : true;
+        const nextInteractionStyle =
+          s.soundAndQuiz.interactionStyle !== undefined
+            ? normalizeInteractionStyle(s.soundAndQuiz.interactionStyle)
+            : nextSoundEnabled
+              ? "sound"
+              : "silent";
+        setSoundAndQuizState({
+          soundEffectsEnabled: nextSoundEnabled,
+          interactionStyle: nextInteractionStyle,
+          quizButtonStyle: normalizeQuizButtonStyle(s.soundAndQuiz.quizButtonStyle),
+          quizColorPalette: normalizeQuizColorPalette(s.soundAndQuiz.quizColorPalette),
+          quizFeedbackStyle: normalizeQuizFeedbackStyle(s.soundAndQuiz.quizFeedbackStyle),
+        });
+        setSoundEffectsEnabled(nextSoundEnabled);
       }
       if (s.uiMode === "simplified" || s.uiMode === "advanced") {
         setUiModeState(s.uiMode);
@@ -671,6 +702,7 @@ export function PreferencesProvider({
           notifications,
           privacy,
           ecosystem,
+          soundAndQuiz,
           uiMode,
           themePresetId,
           layoutMode,
@@ -682,6 +714,7 @@ export function PreferencesProvider({
       );
       localStorage.setItem("btc-visual-theme", btcVisualTheme);
       localStorage.setItem("btc-nav-layout", btcNavLayout);
+      setSoundEffectsEnabled(soundAndQuiz.soundEffectsEnabled);
     } catch {
       /* ignore storage quota */
     }
@@ -700,6 +733,7 @@ export function PreferencesProvider({
     notifications,
     privacy,
     ecosystem,
+    soundAndQuiz,
     uiMode,
     themePresetId,
     layoutMode,
@@ -813,6 +847,43 @@ export function PreferencesProvider({
         ? { voiceSpeed: Math.min(1.25, Math.max(0.85, Number(e.voiceSpeed) || 1)) }
         : {}),
     }));
+  }, []);
+  const setSoundAndQuiz = useCallback((s: Partial<SoundAndQuizPrefs>) => {
+    setSoundAndQuizState((prev) => {
+      let nextSound =
+        s.soundEffectsEnabled !== undefined
+          ? Boolean(s.soundEffectsEnabled)
+          : prev.soundEffectsEnabled;
+      let nextStyle =
+        s.interactionStyle !== undefined
+          ? normalizeInteractionStyle(s.interactionStyle)
+          : (prev.interactionStyle ?? (nextSound ? "sound" : "silent"));
+
+      if (s.interactionStyle !== undefined) {
+        nextSound = nextStyle === "sound";
+      } else if (s.soundEffectsEnabled !== undefined) {
+        nextStyle = nextSound ? "sound" : "silent";
+      }
+
+      const next: SoundAndQuizPrefs = {
+        soundEffectsEnabled: nextSound,
+        interactionStyle: nextStyle,
+        quizButtonStyle:
+          s.quizButtonStyle !== undefined
+            ? normalizeQuizButtonStyle(s.quizButtonStyle)
+            : prev.quizButtonStyle,
+        quizColorPalette:
+          s.quizColorPalette !== undefined
+            ? normalizeQuizColorPalette(s.quizColorPalette)
+            : prev.quizColorPalette,
+        quizFeedbackStyle:
+          s.quizFeedbackStyle !== undefined
+            ? normalizeQuizFeedbackStyle(s.quizFeedbackStyle)
+            : prev.quizFeedbackStyle,
+      };
+      setSoundEffectsEnabled(next.soundEffectsEnabled);
+      return next;
+    });
   }, []);
   const setUiMode = useCallback((m: UiMode) => {
     setUiModeState(m);
@@ -954,6 +1025,8 @@ export function PreferencesProvider({
     setNotificationsState(defaultNotificationPrefs);
     setPrivacyState(defaultPrivacyPrefs);
     setEcosystemState(defaultEcosystemPrefs);
+    setSoundAndQuizState(defaultSoundAndQuizPrefs);
+    setSoundEffectsEnabled(defaultSoundAndQuizPrefs.soundEffectsEnabled);
   }, []);
 
   const syncPrefsForUser = useCallback(
@@ -1062,6 +1135,8 @@ export function PreferencesProvider({
       setPrivacy,
       ecosystem,
       setEcosystem,
+      soundAndQuiz,
+      setSoundAndQuiz,
       uiMode,
       setUiMode,
       themePresetId,
@@ -1131,6 +1206,8 @@ export function PreferencesProvider({
       setPrivacy,
       ecosystem,
       setEcosystem,
+      soundAndQuiz,
+      setSoundAndQuiz,
       uiMode,
       setUiMode,
       themePresetId,

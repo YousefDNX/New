@@ -427,9 +427,9 @@ export function normalizeArabicForSpeech(text: string): string {
 }
 
 /**
- * Normalizes text for Web Speech synthesis by expanding academic/difficult English
- * pronunciations or Arabic abbreviations/pauses, stripping markdown noise, and keeping
- * Arabic diacritics intact.
+ * Normalizes text for Web Speech synthesis by expanding Arabic abbreviations/pauses,
+ * stripping markdown noise, keeping Arabic diacritics intact, and preserving exact
+ * natural English words (never distorting spelling or substituting Arabic letters).
  */
 export function normalizeTextForSpeech(text: string, detectedLang: SupportedSpeechLang): string {
   if (!text) return "";
@@ -438,8 +438,8 @@ export function normalizeTextForSpeech(text: string, detectedLang: SupportedSpee
     return normalizeArabicForSpeech(text);
   }
 
-  // 1. Strip HTML tags, URLs, and markdown symbols while preserving apostrophes/hyphens in words
-  let cleaned = text
+  // Strip HTML tags, URLs, and markdown symbols while preserving natural English spelling
+  return text
     .replace(/<[^>]+>/g, " ")
     .replace(/[*_#`~[\]]/g, " ")
     .replace(/https?:\/\/\S+/g, " ")
@@ -447,16 +447,6 @@ export function normalizeTextForSpeech(text: string, detectedLang: SupportedSpee
     .replace(/\s+[—–]\s+/g, ", ")
     .replace(/\s+/g, " ")
     .trim();
-
-  // 2. If English or Latin, apply phonetic lexicon
-  if (detectedLang === "en") {
-    for (const [word, phonetic] of Object.entries(PRONUNCIATION_LEXICON)) {
-      const regex = new RegExp(`\\b${word}\\b`, "gi");
-      cleaned = cleaned.replace(regex, phonetic);
-    }
-  }
-
-  return cleaned;
 }
 
 /**
@@ -680,17 +670,20 @@ export interface EnhancedSpeechOptions {
   preferredLocale?: string | undefined;
   voiceURI?: string | undefined;
   preferNativeOnly?: boolean | undefined;
+  forceDictionaryLookup?: boolean | undefined;
   onStart?: (() => void) | undefined;
   onEnd?: (() => void) | undefined;
   onError?: ((error: Error) => void) | undefined;
 }
 
 /* -------------------------------------------------------------------------- */
-/* HYBRID NEURAL TTS AUDIO CACHE + PLAYBACK                                   */
+/* HYBRID NEURAL TTS + VERIFIED BRITISH DICTIONARY AUDIO CACHE                */
 /* -------------------------------------------------------------------------- */
 
 const TTS_CACHE_LIMIT = 48;
 const ttsAudioCache = new Map<string, string>(); // key -> data URI ("data:audio/wav;base64,...")
+const DICT_CACHE_LIMIT = 96;
+const ukDictionaryAudioCache = new Map<string, string | null>(); // lowercased word -> verified -uk audio URL or null
 let activeAudioElement: HTMLAudioElement | null = null;
 let serverTtsAvailability: "unknown" | "available" | "unavailable" = "unknown";
 let statusProbeInFlight: Promise<void> | null = null;
@@ -711,10 +704,79 @@ function stopActiveAudioElement(): void {
 
 export function resetSpeechEngineStateForTests(): void {
   ttsAudioCache.clear();
+  ukDictionaryAudioCache.clear();
   stopActiveAudioElement();
   serverTtsAvailability = "unknown";
   statusProbeInFlight = null;
   activePlaybackToken = 0;
+}
+
+/**
+ * Extracts a single clean English headword if the input is an isolated word suitable for
+ * verified dictionary audio lookup (never used for sentences or mixed text).
+ */
+export function extractSingleEnglishWord(text: string): string | null {
+  const trimmed = text.trim();
+  if (!/^[A-Za-z][A-Za-z'-]{0,38}$/.test(trimmed)) return null;
+  return trimmed.toLowerCase();
+}
+
+/**
+ * Queries the public Free Dictionary API strictly for a verified HTTPS British (-uk) audio recording.
+ * Returns null cleanly if offline, timed out, or if only non-UK recordings exist.
+ */
+export async function fetchVerifiedBritishDictionaryAudio(rawWord: string): Promise<string | null> {
+  const word = extractSingleEnglishWord(rawWord);
+  if (!word) return null;
+
+  if (ukDictionaryAudioCache.has(word)) {
+    return ukDictionaryAudioCache.get(word) ?? null;
+  }
+
+  if (typeof fetch !== "function") return null;
+
+  const setCachedDictUrl = (url: string | null) => {
+    if (ukDictionaryAudioCache.size >= DICT_CACHE_LIMIT) {
+      const oldest = ukDictionaryAudioCache.keys().next().value;
+      if (oldest) ukDictionaryAudioCache.delete(oldest);
+    }
+    ukDictionaryAudioCache.set(word, url);
+  };
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1800);
+    const res = await fetch(
+      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
+      {
+        method: "GET",
+        signal: controller.signal,
+      },
+    );
+    clearTimeout(timeoutId);
+    if (!res.ok) {
+      setCachedDictUrl(null);
+      return null;
+    }
+
+    const payload = (await res.json()) as Array<{
+      phonetics?: Array<{ audio?: string }>;
+    }>;
+    const candidates: string[] = [];
+    for (const entry of Array.isArray(payload) ? payload : []) {
+      for (const ph of entry.phonetics ?? []) {
+        const audioUrl = typeof ph.audio === "string" ? ph.audio.trim() : "";
+        if (audioUrl.startsWith("https://") && /[-_]uk\.(mp3|ogg|wav)(?:\?.*)?$/i.test(audioUrl)) {
+          candidates.push(audioUrl);
+        }
+      }
+    }
+    const verifiedUrl = candidates[0] ?? null;
+    setCachedDictUrl(verifiedUrl);
+    return verifiedUrl;
+  } catch {
+    return null;
+  }
 }
 
 function getTtsCacheKey(text: string, lang: string, accent?: string): string {
@@ -872,6 +934,17 @@ function speakSegmentsViaWebSpeech(
       chosenVoice = selectBestNativeVoice(item.lang, allVoices, options?.preferredLocale);
     }
 
+    // Never fall back to a cross-language voice when voices are loaded and no matching voice exists
+    if (allVoices.length > 0 && !chosenVoice && !options?.voiceURI) {
+      if (queueIdx < playbackQueue.length) {
+        speakNext();
+      } else if (token === activePlaybackToken) {
+        options?.onError?.(new Error(`No compatible native voice available for "${item.lang}".`));
+        options?.onEnd?.();
+      }
+      return;
+    }
+
     if (chosenVoice) {
       utterance.voice = chosenVoice;
       utterance.lang = chosenVoice.lang;
@@ -967,75 +1040,119 @@ export function speakEnhancedText(text: string, options?: EnhancedSpeechOptions)
     warmServerTtsCapability();
   }
 
-  // Use Server Neural TTS asynchronously only when confirmed available and allowed
-  const canTryServer =
-    !options?.preferNativeOnly &&
-    serverTtsAvailability === "available" &&
-    typeof fetch !== "undefined" &&
-    typeof Audio !== "undefined" &&
-    cleanForServer.length <= 900;
+  // Helper running Gemini Neural TTS -> native Web Speech fallback
+  const runServerOrNativeFallback = () => {
+    const canTryServer =
+      !options?.preferNativeOnly &&
+      serverTtsAvailability === "available" &&
+      typeof fetch !== "undefined" &&
+      typeof Audio !== "undefined" &&
+      cleanForServer.length <= 900;
 
-  if (canTryServer) {
-    options?.onStart?.();
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    if (canTryServer) {
+      options?.onStart?.();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    void fetch("/api/ai/tts", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      signal: controller.signal,
-      body: JSON.stringify({
-        text: cleanForServer,
-        lang: options?.forcedLang ?? "auto",
-        accent,
-      }),
-    })
-      .then(async (res) => {
-        clearTimeout(timeoutId);
-        if (token !== activePlaybackToken) return;
-        if (!res.ok) {
-          if (res.status === 503) serverTtsAvailability = "unavailable";
-          speakSegmentsViaWebSpeech(text, token, options);
-          return;
-        }
-        const payload = (await res.json()) as {
-          ok?: boolean;
-          audioBase64?: string;
-          mimeType?: string;
-        };
-        if (token !== activePlaybackToken) return;
-        if (payload.ok && payload.audioBase64) {
-          const dataUri = `data:${payload.mimeType || "audio/wav"};base64,${payload.audioBase64}`;
-          setCachedAudioDataUri(cacheKey, dataUri);
-          const played = await playDataUriAudio(dataUri, token, options);
-          if (!played && token === activePlaybackToken) {
+      void fetch("/api/ai/tts", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          text: cleanForServer,
+          lang: options?.forcedLang ?? "auto",
+          accent,
+        }),
+      })
+        .then(async (res) => {
+          clearTimeout(timeoutId);
+          if (token !== activePlaybackToken) return;
+          if (!res.ok) {
+            if (res.status === 503) serverTtsAvailability = "unavailable";
+            speakSegmentsViaWebSpeech(text, token, options);
+            return;
+          }
+          const payload = (await res.json()) as {
+            ok?: boolean;
+            audioBase64?: string;
+            mimeType?: string;
+          };
+          if (token !== activePlaybackToken) return;
+          if (payload.ok && payload.audioBase64) {
+            const dataUri = `data:${payload.mimeType || "audio/wav"};base64,${payload.audioBase64}`;
+            setCachedAudioDataUri(cacheKey, dataUri);
+            const played = await playDataUriAudio(dataUri, token, options);
+            if (!played && token === activePlaybackToken) {
+              speakSegmentsViaWebSpeech(text, token, options);
+            }
+          } else {
             speakSegmentsViaWebSpeech(text, token, options);
           }
-        } else {
-          speakSegmentsViaWebSpeech(text, token, options);
-        }
-      })
-      .catch(() => {
-        clearTimeout(timeoutId);
-        if (token === activePlaybackToken) {
-          speakSegmentsViaWebSpeech(text, token, options);
-        }
-      });
+        })
+        .catch(() => {
+          clearTimeout(timeoutId);
+          if (token === activePlaybackToken) {
+            speakSegmentsViaWebSpeech(text, token, options);
+          }
+        });
+      return true;
+    }
+
+    try {
+      const spoke = speakSegmentsViaWebSpeech(text, token, options);
+      if (!spoke) {
+        options?.onError?.(new Error("Speech synthesis is not supported on this device."));
+      }
+      return spoke;
+    } catch (err) {
+      console.error("speakEnhancedText failed:", err);
+      options?.onError?.(err instanceof Error ? err : new Error("Speech synthesis failed"));
+      return false;
+    }
+  };
+
+  // Priority 1 for single British English words: verified -uk.mp3 dictionary recording
+  const singleUkWord =
+    detectedLang === "en" && accent.toLowerCase() === "en-gb" && !options?.preferNativeOnly
+      ? extractSingleEnglishWord(cleanForServer)
+      : null;
+  const cachedUkAudioUrl = singleUkWord ? ukDictionaryAudioCache.get(singleUkWord) : undefined;
+
+  if (cachedUkAudioUrl && typeof Audio !== "undefined") {
+    options?.onStart?.();
+    void playDataUriAudio(cachedUkAudioUrl, token, options).then((played) => {
+      if (!played && token === activePlaybackToken) {
+        runServerOrNativeFallback();
+      }
+    });
     return true;
   }
 
-  // Immediate segmented Web Speech execution
-  try {
-    const spoke = speakSegmentsViaWebSpeech(text, token, options);
-    if (!spoke) {
-      options?.onError?.(new Error("Speech synthesis is not supported on this device."));
-    }
-    return spoke;
-  } catch (err) {
-    console.error("speakEnhancedText failed:", err);
-    options?.onError?.(err instanceof Error ? err : new Error("Speech synthesis failed"));
-    return false;
+  const isAutomatedTestEnv = typeof process !== "undefined" && Boolean(process.env?.["VITEST"]);
+  const shouldTryRemoteDictionary =
+    Boolean(singleUkWord) &&
+    cachedUkAudioUrl === undefined &&
+    typeof fetch === "function" &&
+    typeof Audio !== "undefined" &&
+    (typeof navigator === "undefined" || navigator.onLine !== false) &&
+    (!isAutomatedTestEnv || Boolean(options?.forceDictionaryLookup));
+
+  if (shouldTryRemoteDictionary && singleUkWord) {
+    options?.onStart?.();
+    void fetchVerifiedBritishDictionaryAudio(singleUkWord).then(async (ukUrl) => {
+      if (token !== activePlaybackToken) return;
+      if (ukUrl) {
+        const played = await playDataUriAudio(ukUrl, token, options);
+        if (played) return;
+      }
+      if (token === activePlaybackToken) {
+        runServerOrNativeFallback();
+      }
+    });
+    return true;
   }
+
+  return runServerOrNativeFallback();
 }
 
 /**

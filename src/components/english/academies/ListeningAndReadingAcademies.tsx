@@ -32,6 +32,9 @@ import {
   stopEnglishSpeech,
   type EnglishVoiceOption,
 } from "@/lib/english-speech";
+import { usePrefs } from "@/lib/preferences";
+import { getQuizButtonRadiusClass } from "@/lib/settings";
+import { playCorrectSound, playIncorrectSound } from "@/lib/sound-effects";
 
 export function ListeningAcademyPanel({
   englishState,
@@ -57,6 +60,9 @@ export function ListeningAcademyPanel({
     explanation: string;
   }) => void;
 }) {
+  const { soundAndQuiz } = usePrefs();
+  const radiusClass = getQuizButtonRadiusClass(soundAndQuiz.quizButtonStyle);
+
   const [selectedId, setSelectedId] = useState(LISTENING_TRACKS[0]!.id);
   const [rate, setRate] = useState<0.75 | 1 | 1.25>(1);
   const [voices, setVoices] = useState<EnglishVoiceOption[]>([]);
@@ -120,6 +126,10 @@ export function ListeningAcademyPanel({
 
   const handleCheckAnswers = () => {
     setSubmitted(true);
+    if (soundAndQuiz.soundEffectsEnabled) {
+      if (scorePct >= 50) playCorrectSound();
+      else playIncorrectSound();
+    }
     for (const r of questionResults) {
       if (!r.ok) {
         const expected =
@@ -378,7 +388,7 @@ export function ListeningAcademyPanel({
                         type="button"
                         disabled={submitted}
                         onClick={() => setMcqChoice((prev) => ({ ...prev, [q.id]: optIdx }))}
-                        className={`min-h-[44px] rounded-lg border px-3 py-2 text-start text-xs font-medium transition-colors ${
+                        className={`min-h-[44px] border px-3 py-2 text-start text-xs font-medium transition-colors ${radiusClass} ${
                           mcqChoice[q.id] === optIdx
                             ? "border-primary bg-primary/15 text-primary font-semibold"
                             : "border-border bg-surface text-foreground hover:border-primary/40"
@@ -478,6 +488,9 @@ export function ReadingAcademyPanel({
     explanation: string;
   }) => void;
 }) {
+  const { soundAndQuiz } = usePrefs();
+  const radiusClass = getQuizButtonRadiusClass(soundAndQuiz.quizButtonStyle);
+
   const [levelFilter, setLevelFilter] = useState<CefrExtendedBand | "ALL">("ALL");
   const filteredPassages = useMemo(
     () =>
@@ -521,6 +534,10 @@ export function ReadingAcademyPanel({
   const handleSubmit = () => {
     setSubmitted(true);
     setTimerActive(false);
+    if (soundAndQuiz.soundEffectsEnabled) {
+      if (scorePct >= 50) playCorrectSound();
+      else playIncorrectSound();
+    }
     for (const q of passage.questions) {
       if (answers[q.id] !== q.correctIndex) {
         onRecordMistake({
@@ -661,7 +678,9 @@ export function ReadingAcademyPanel({
                     {v.word} ·{" "}
                     <span className="font-normal text-muted-foreground">{v.meaningAr}</span>
                   </div>
-                  <div className="truncate text-[11px] text-muted-foreground">{v.definition}</div>
+                  <div className="text-[11px] leading-relaxed text-muted-foreground">
+                    {v.definition}
+                  </div>
                 </div>
                 <Button
                   type="button"
@@ -706,7 +725,7 @@ export function ReadingAcademyPanel({
                         type="button"
                         disabled={submitted}
                         onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: oIdx }))}
-                        className={`min-h-[44px] rounded-lg border px-3 py-2 text-start text-xs font-medium transition-colors ${
+                        className={`min-h-[44px] border px-3 py-2 text-start text-xs font-medium transition-colors ${radiusClass} ${
                           chosen === oIdx
                             ? "border-primary bg-primary/15 text-primary font-semibold"
                             : "border-border bg-surface text-foreground hover:border-primary/40"

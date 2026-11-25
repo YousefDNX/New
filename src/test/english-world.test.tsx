@@ -90,7 +90,7 @@ describe("NEXORA English Learning World — Curriculum, Logic & Complete User Jo
     expect(SPEAKING_SCENARIOS.length).toBe(6);
     expect(READING_PASSAGES.length).toBeGreaterThanOrEqual(4);
     expect(WRITING_TASKS.length).toBeGreaterThanOrEqual(7);
-    expect(GRAMMAR_TOPICS.length).toBe(14);
+    expect(GRAMMAR_TOPICS.length).toBe(15);
     expect(PRONUNCIATION_MODULES.length).toBe(6);
     expect(VOCAB_ACADEMY_TOPICS.length).toBeGreaterThanOrEqual(3);
     expect(LEVEL_MASTERY_EXAMS.length).toBe(4);

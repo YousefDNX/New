@@ -45,12 +45,12 @@ export const LISTENING_TRACKS: ListeningTrack[] = [
     titleAr: "الصباح الأول في نادي اللغة الإنجليزية",
     durationSecEst: 25,
     context: "Two new classmates introduce themselves outside Classroom 4.",
-    accentHint: "Clear slow classroom articulation",
+    accentHint: "UK British English Accent (en-GB)",
     dialogue: [
-      { speaker: "Zaid", line: "Good morning! My name is Zaid. Are you in Class 7B?" },
-      { speaker: "Hana", line: "Hi Zaid! Yes, I am Hana. Nice to meet you." },
+      { speaker: "Ahmed", line: "Good morning! My name is Ahmed. Are you in Class 7B?" },
+      { speaker: "Hana", line: "Hi Ahmed! Yes, I am Hana. Nice to meet you." },
       {
-        speaker: "Zaid",
+        speaker: "Ahmed",
         line: "Welcome! Our English session starts at nine o'clock in Room four, not Room two.",
       },
       { speaker: "Hana", line: "Thank you! Let me grab my blue notebook and a pencil." },
@@ -74,7 +74,7 @@ export const LISTENING_TRACKS: ListeningTrack[] = [
         id: "lp1-q1",
         skillTested: "main_idea",
         kind: "mcq",
-        prompt: "What are Zaid and Hana doing in this conversation?",
+        prompt: "What are Ahmed and Hana doing in this conversation?",
         options: [
           "Ordering lunch at a restaurant",
           "Meeting and checking their English class details",
@@ -92,7 +92,7 @@ export const LISTENING_TRACKS: ListeningTrack[] = [
         prompt:
           "Which room number does the English session take place in? (type number word or digit)",
         acceptedAnswers: ["4", "four"],
-        explanation: "Zaid says: 'Room four, not Room two.'",
+        explanation: "Ahmed says: 'Room four, not Room two.'",
       },
       {
         id: "lp1-q3",
@@ -113,7 +113,7 @@ export const LISTENING_TRACKS: ListeningTrack[] = [
     titleAr: "جدول دراستي اليومي يوم الثلاثاء",
     durationSecEst: 30,
     context: "A student explains her afternoon schedule after finishing classes.",
-    accentHint: "Clear A1 everyday speed",
+    accentHint: "US American English Accent (en-US)",
     dialogue: [
       { speaker: "Layla", line: "Hi! On Tuesdays I finish science class at half past one." },
       {
@@ -163,6 +163,32 @@ export const LISTENING_TRACKS: ListeningTrack[] = [
         correctIndex: 0,
         explanation: "True! She reads in the evening before going to sleep at ten.",
       },
+      {
+        id: "la1-q3",
+        skillTested: "detail",
+        kind: "fill_blank",
+        prompt: "How many minutes does Layla spend studying English vocabulary? (number)",
+        acceptedAnswers: ["20", "twenty"],
+        explanation: "Layla studies English vocabulary for 20 minutes.",
+      },
+      {
+        id: "la1-q4",
+        skillTested: "detail",
+        kind: "true_false",
+        prompt: "True or False: Layla eats lunch at two o'clock.",
+        options: ["True", "False"],
+        correctIndex: 0,
+        explanation: "True! She eats lunch at two o'clock.",
+      },
+      {
+        id: "la1-q5",
+        skillTested: "inference",
+        kind: "mcq",
+        prompt: "What does Layla use to study vocabulary?",
+        options: ["Flashcards", "A computer video game", "A dictionary", "A newspaper"],
+        correctIndex: 0,
+        explanation: "She uses flashcards for twenty minutes.",
+      },
     ],
   },
   {
@@ -174,7 +200,7 @@ export const LISTENING_TRACKS: ListeningTrack[] = [
     durationSecEst: 40,
     context:
       "A student and her uncle shop for ingredients for a traditional homemade family lunch.",
-    accentHint: "Everyday natural conversational English",
+    accentHint: "UK British English Accent (en-GB)",
     dialogue: [
       {
         speaker: "Noura",
@@ -245,6 +271,29 @@ export const LISTENING_TRACKS: ListeningTrack[] = [
         ],
         correctIndex: 1,
         explanation: "Preparing cardamom tea for guests reflects warm cultural hospitality.",
+      },
+      {
+        id: "la2-q4",
+        skillTested: "detail",
+        kind: "true_false",
+        prompt: "True or False: Uncle Salih and Noura are buying red lentils for soup.",
+        options: ["True", "False"],
+        correctIndex: 0,
+        explanation: "True! They need red lentils for Grandmother's lentil soup.",
+      },
+      {
+        id: "la2-q5",
+        skillTested: "vocabulary",
+        kind: "mcq",
+        prompt: "What does the word 'produce' mean in this market context?",
+        options: [
+          "Fresh fruits and vegetables grown on farms",
+          "Plastic toys",
+          "Heavy machinery",
+          "Office stationery",
+        ],
+        correctIndex: 0,
+        explanation: "Produce refers to fresh farm-grown fruits and vegetables.",
       },
     ],
   },
@@ -1981,6 +2030,135 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
         correctIndex: 1,
         hint: "Semicolon + transition OR comma + conjunction (', and').",
         explanation: "Using a semicolon cleanly links two related independent clauses.",
+      },
+    ],
+  },
+  {
+    id: "grm-both-neither",
+    title: "Correlative Conjunctions: Both ... and & Neither ... nor",
+    titleAr: "أدوات الربط المتلازمة: Both ... and (كِلا ... و) و Neither ... nor (لا ... ولا)",
+    cefr: "B1",
+    summary:
+      "Connect equal ideas affirmatively with 'both ... and' (always plural verb) or negatively with 'neither ... nor' (positive verb agreeing with the closest noun).",
+    rules: [
+      "'Both A and B' joins two positive ideas together and ALWAYS takes a plural verb: 'Both Sara and Dana ARE ready.' (كِلاهما مستعدتان).",
+      "'Neither A nor B' rejects BOTH options and already carries a negative meaning, so NEVER use 'not / didn't / don't' with it: 'Neither Omar nor Ali enjoys noise.' (لا عمر ولا علي).",
+      "Subject-Verb Agreement with 'Neither A nor B': the verb ALWAYS agrees with B (the noun closer to the verb): 'Neither the teacher nor the students WERE late.' / 'Neither the students nor the teacher WAS late.'",
+      "Parallel Balance: Keep grammar types matched after each word ('both fluent and polite', NOT 'both fluently and polite').",
+    ],
+    commonPitfall:
+      "Never write a double negative ('Neither Ali nor Sami didn't study') and never pair 'Both ... nor' or 'Neither ... or' — keep 'both + and' and 'neither + nor'!",
+    examples: [
+      {
+        ok: "Both reading and listening improve your vocabulary.",
+        fixFrom: "Both reading nor listening improves your vocabulary.",
+      },
+      {
+        ok: "Neither the coach nor the players want to cancel training.",
+        fixFrom: "Neither the coach nor the players doesn't want to cancel training.",
+      },
+    ],
+    exercises: [
+      {
+        id: "gbn1",
+        kind: "mcq",
+        prompt:
+          "[Easy] Complete the pair: '___ Ali ___ Tariq enjoy playing football after school.'",
+        options: ["Both ... and", "Both ... or", "Neither ... and", "Both ... nor"],
+        correctIndex: 0,
+        hint: "The plural verb 'enjoy' affirms both people together.",
+        explanation:
+          "'Both ... and' always pairs 'both' with 'and' to include two items together. («Both ... and» تربط بين شيئين معاً).",
+      },
+      {
+        id: "gbn2",
+        kind: "mcq",
+        prompt:
+          "[Easy] Complete the negative pair: '___ tea ___ coffee is healthy before bedtime.'",
+        options: ["Neither ... or", "Neither ... nor", "Both ... nor", "Either ... nor"],
+        correctIndex: 1,
+        hint: "'Neither' always pairs exclusively with 'nor'.",
+        explanation:
+          "'Neither' is always paired with 'nor' (لا ... ولا). Never mix 'neither' with 'or'.",
+      },
+      {
+        id: "gbn3",
+        kind: "mcq",
+        prompt:
+          "[Easy-Medium] Choose the correct verb: 'Both my sister and my cousin ___ studying English today.'",
+        options: ["is", "was", "are", "has"],
+        correctIndex: 2,
+        hint: "Subjects joined by 'Both ... and' are always treated as plural.",
+        explanation:
+          "'Both A and B' always takes a plural verb ('are'). («Both ... and» تأخذ دائماً فعلاً بصيغة الجمع).",
+      },
+      {
+        id: "gbn4",
+        kind: "mcq",
+        prompt: "[Medium] Avoid double negation: 'I tried both apps, so ___.'",
+        options: [
+          "neither this one nor that one isn't slow",
+          "neither this one nor that one doesn't crash",
+          "neither this one nor that one crashed",
+          "both this one nor that one crashed",
+        ],
+        correctIndex: 2,
+        hint: "'Neither ... nor' already expresses 'not', so the verb must stay positive.",
+        explanation:
+          "Using 'crashed' (positive verb form) avoids an incorrect double negative with 'neither ... nor'. (النفي موجود في neither فلا نضيف not للفعل).",
+      },
+      {
+        id: "gbn5",
+        kind: "mcq",
+        prompt:
+          "[Medium] Subject-Verb Agreement: 'Neither Nadia nor her friends ___ seen the science announcement yet.'",
+        options: ["has", "have", "is", "was"],
+        correctIndex: 1,
+        hint: "Look closely at the noun right before the verb ('her friends' — plural).",
+        explanation:
+          "With 'neither ... nor', the verb agrees with the nearest subject ('her friends' -> 'have'). (الفعل يتبع الفاعل الأقرب إليه).",
+      },
+      {
+        id: "gbn6",
+        kind: "mcq",
+        prompt:
+          "[Medium-Hard] Subject-Verb Agreement: 'Neither the students nor their teacher ___ ready to leave early.'",
+        options: ["were", "are", "was", "have been"],
+        correctIndex: 2,
+        hint: "Focus on the closer subject right next to the blank ('their teacher' — singular).",
+        explanation:
+          "Because 'their teacher' (singular) sits closest to the verb, singular 'was' is required. («their teacher» مفرد وهي الأقرب للفعل فنختار was).",
+      },
+      {
+        id: "gbn7",
+        kind: "mcq",
+        prompt: "[Hard] Spot the only completely grammatical sentence:",
+        options: [
+          "Both Mina and Sara likes classical music.",
+          "Neither the bus nor the train are arriving on time, and neither one doesn't stop here.",
+          "She speaks both Arabic and English clearly and confidently.",
+          "Neither Hassan or Omar remembered to save the link.",
+        ],
+        correctIndex: 2,
+        hint: "Check pair matching ('both ... and' / 'neither ... nor') and subject-verb agreement.",
+        explanation:
+          "Option C keeps 'both Arabic and English' balanced and grammatically clean without pair mismatch or double negation.",
+      },
+      {
+        id: "gbn8",
+        kind: "mcq",
+        prompt:
+          "[Challenge] Rewrite accurately using 'neither ... nor': 'Khaled did not attend the debate, and his classmates did not attend either.'",
+        options: [
+          "Neither Khaled nor his classmates didn't attend the debate.",
+          "Neither Khaled or his classmates attended the debate.",
+          "Neither Khaled nor his classmates attended the debate.",
+          "Both Khaled and his classmates didn't attended the debate.",
+        ],
+        correctIndex: 2,
+        hint: "Drop 'did not' when introducing 'neither ... nor' and use positive past simple 'attended'.",
+        explanation:
+          "'Neither Khaled nor his classmates attended the debate' conveys full past negation cleanly without any extra negative word. (نحذف didn't لأن neither تنفي الجملة كاملة).",
       },
     ],
   },

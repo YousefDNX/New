@@ -456,13 +456,55 @@ export function evaluateWritingSubmission(
     });
   }
 
+  // Active Spelling & Typo Correction Detector (detects intentional or unintentional spelling errors)
+  const COMMON_MISSPELLINGS: Record<string, string> = {
+    yestarday: "yesterday",
+    techer: "teacher",
+    recieve: "receive",
+    beautifull: "beautiful",
+    frind: "friend",
+    becuz: "because",
+    tomororw: "tomorrow",
+    definatly: "definitely",
+    skool: "school",
+    cheep: "cheap",
+    writng: "writing",
+    studyd: "studied",
+    enviroment: "environment",
+    governmet: "government",
+    neccessary: "necessary",
+  };
+  const wordsLower = cleaned.toLowerCase().split(/\s+/);
+  const detectedTypos: string[] = [];
+  for (const [typo, correct] of Object.entries(COMMON_MISSPELLINGS)) {
+    if (wordsLower.includes(typo)) {
+      detectedTypos.push(`'${typo}' -> '${correct}'`);
+    }
+  }
+
+  if (detectedTypos.length > 0) {
+    score = Math.max(0, score - detectedTypos.length * 10);
+    improvements.push({
+      category: "Spelling & Vocabulary Correction",
+      issue: `Spelling error(s) detected: ${detectedTypos.join(", ")}.`,
+      whyItMatters: "Correct spelling and word form ensure professional, clear communication.",
+      howToImprove:
+        "Review the flagged words above and replace them with standard correct spellings.",
+    });
+  }
+
   if (strengths.length === 0 && wordCount > 0) {
     strengths.push(
       "Good initial effort putting ideas into English text—ready for structured revision.",
     );
   }
 
-  const objectiveCategories = new Set(["Capitalization", "Punctuation", "Run-On Prevention"]);
+  const objectiveCategories = new Set([
+    "Capitalization",
+    "Punctuation",
+    "Run-On Prevention",
+    "Spelling & Vocabulary Correction",
+  ]);
   const objectiveErrors = improvements.filter((item) => objectiveCategories.has(item.category));
   const stylisticSuggestions = improvements.filter(
     (item) => !objectiveCategories.has(item.category),

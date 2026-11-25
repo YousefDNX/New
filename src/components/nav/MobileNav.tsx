@@ -71,7 +71,7 @@ export function MobileNav() {
                 <X className="size-4" />
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {drawerItems.map((item) => {
                 const Icon = item.icon;
                 const label = lang === "ar" ? item.labelAr : item.labelEn;
@@ -84,7 +84,7 @@ export function MobileNav() {
                     className="flex min-h-[44px] items-center gap-2.5 rounded-xl border border-border/70 bg-surface-2/60 px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-primary/40 data-[status=active]:border-primary data-[status=active]:bg-primary/10 data-[status=active]:text-primary"
                   >
                     <Icon className="size-4 shrink-0 text-primary" />
-                    <span className="truncate">{label}</span>
+                    <span className="min-w-0 flex-1 break-words leading-snug">{label}</span>
                   </Link>
                 );
               })}
@@ -95,7 +95,7 @@ export function MobileNav() {
                   className="flex min-h-[44px] items-center gap-2.5 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary"
                 >
                   <NAV_ADMIN.icon className="size-4 shrink-0" />
-                  <span className="truncate">
+                  <span className="min-w-0 flex-1 break-words leading-snug">
                     {lang === "ar" ? NAV_ADMIN.labelAr : NAV_ADMIN.labelEn}
                   </span>
                 </Link>

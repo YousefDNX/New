@@ -63,7 +63,7 @@ function playCompletionChime() {
 }
 
 export function PomodoroTimerWidget({ className }: { className?: string }) {
-  const { t, lang, study, notifications } = usePrefs();
+  const { t, lang, study, notifications, soundAndQuiz } = usePrefs();
   const toast = useToast();
   const { data: focusSessions = [] } = useFocusSessions();
   const { logFocusSession } = useFocusActions();
@@ -173,7 +173,7 @@ export function PomodoroTimerWidget({ className }: { className?: string }) {
           durationMinutes: minutesToLog,
         });
         const earnedXp = calculateFocusXp(minutesToLog);
-        if (!muted && !quietActive) {
+        if (!muted && soundAndQuiz.soundEffectsEnabled && !quietActive) {
           playCompletionChime();
         }
         toast.success(t("pomo.title"), t("pomo.toastDone").replace("{xp}", String(earnedXp)));
@@ -205,6 +205,7 @@ export function PomodoroTimerWidget({ className }: { className?: string }) {
       area,
       subject,
       muted,
+      soundAndQuiz.soundEffectsEnabled,
       quietActive,
       toast,
       getDurationSeconds,

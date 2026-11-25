@@ -1,8 +1,19 @@
 import { useEffect, useState } from "react";
-import { BookOpen, Headphones, Layers, Mic, PenTool, Shapes } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  GraduationCap,
+  Headphones,
+  Layers,
+  LayoutDashboard,
+  Mic,
+  PenTool,
+  Shapes,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/Page";
 import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
+import { Grade9StudyCenter } from "@/components/english/Grade9StudyCenter";
 import {
   ListeningAcademyPanel,
   ReadingAcademyPanel,
@@ -13,14 +24,51 @@ import {
   VocabularyAcademyPanel,
   WritingAcademyPanel,
 } from "@/components/english/academies/WritingVocabGrammarAcademies";
-import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-nexora";
 import { recordLastVisitedModule } from "@/lib/continue-tracker";
 import { recordVocabPractice, type WritingSubmissionRecord } from "@/lib/english-world";
 import { usePrefs } from "@/lib/preferences";
 import { useStudentEcosystem } from "@/lib/student-ecosystem";
 
-type EnglishTab = "vocabulary" | "listening" | "reading" | "grammar" | "speaking" | "writing";
+type EnglishTab =
+  | "dashboard"
+  | "grade9"
+  | "vocabulary"
+  | "listening"
+  | "reading"
+  | "grammar"
+  | "speaking"
+  | "writing";
+
+const VALID_TABS = new Set<EnglishTab>([
+  "dashboard",
+  "grade9",
+  "vocabulary",
+  "listening",
+  "reading",
+  "grammar",
+  "speaking",
+  "writing",
+]);
+
+function readInitialEnglishTab(): EnglishTab {
+  if (typeof window === "undefined") return "vocabulary";
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get("tab");
+  if (raw && VALID_TABS.has(raw as EnglishTab)) {
+    return raw as EnglishTab;
+  }
+  return "vocabulary";
+}
+
+function readInitialUnit(): number | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  const unitParam = params.get("unit");
+  if (!unitParam) return null;
+  const n = parseInt(unitParam, 10);
+  return Number.isFinite(n) ? n : null;
+}
 
 export function SimpleEnglishWorkspace() {
   const { lang } = usePrefs();
@@ -36,7 +84,8 @@ export function SimpleEnglishWorkspace() {
     });
   }, [user?.uid]);
 
-  const [tab, setTab] = useState<EnglishTab>("vocabulary");
+  const [tab, setTab] = useState<EnglishTab>(readInitialEnglishTab);
+  const initialUnit = readInitialUnit();
   const englishState = state.englishWorld;
 
   const handleSaveNotebookWord = (entry: {
@@ -158,110 +207,181 @@ export function SimpleEnglishWorkspace() {
 
   const noop = () => undefined;
 
+  const navItems: ReadonlyArray<{
+    id: EnglishTab;
+    en: string;
+    ar: string;
+    icon: typeof Layers;
+  }> = [
+    { id: "dashboard", en: "Learning Dashboard", ar: "لوحة التعلم", icon: LayoutDashboard },
+    { id: "grade9", en: "Grade 9 — Vocabulary", ar: "الصف التاسع — المفردات", icon: GraduationCap },
+    { id: "vocabulary", en: "Vocabulary", ar: "المفردات", icon: Layers },
+    { id: "listening", en: "Listening", ar: "الاستماع", icon: Headphones },
+    { id: "reading", en: "Reading", ar: "القراءة", icon: BookOpen },
+    { id: "grammar", en: "Grammar", ar: "القواعد", icon: Shapes },
+    { id: "speaking", en: "Speaking", ar: "التحدث", icon: Mic },
+    { id: "writing", en: "Writing", ar: "الكتابة", icon: PenTool },
+  ];
+
   return (
     <div className="space-y-6 pb-12">
       <PageHeader
         title={isAr ? "عالم اللغة الإنجليزية" : "English World"}
         subtitle={
           isAr
-            ? "تدرّب على المفردات والاستماع والقراءة والقواعد والتحدث والكتابة بحرية ووضوح."
-            : "Open practice for Vocabulary, Listening, Reading, Grammar, Speaking, and Writing."
+            ? "تدرّب على مفردات الصف التاسع والاستماع والقراءة والقواعد والتحدث والكتابة بوضوح."
+            : "Practice Grade 9 Vocabulary, Listening, Reading, Grammar, Speaking, and Writing in a clear vertical workspace."
         }
       />
 
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface/60 p-1.5">
-        {(
-          [
-            { id: "vocabulary", en: "Vocabulary", ar: "المفردات", icon: Layers },
-            { id: "listening", en: "Listening", ar: "الاستماع", icon: Headphones },
-            { id: "reading", en: "Reading", ar: "القراءة", icon: BookOpen },
-            { id: "grammar", en: "Grammar", ar: "القواعد", icon: Shapes },
-            { id: "speaking", en: "Speaking", ar: "التحدث", icon: Mic },
-            { id: "writing", en: "Writing", ar: "الكتابة", icon: PenTool },
-          ] as const
-        ).map((item) => {
-          const Icon = item.icon;
-          return (
-            <Button
-              key={item.id}
-              type="button"
-              size="sm"
-              variant={tab === item.id ? "glow" : "ghost"}
-              onClick={() => setTab(item.id)}
-              className="gap-1.5 text-xs"
-            >
-              <Icon className="size-3.5" />
-              <span>{isAr ? item.ar : item.en}</span>
-            </Button>
-          );
-        })}
-      </div>
-
-      {tab === "vocabulary" && (
-        <VocabularyAcademyPanel
-          englishState={englishState}
-          onPracticeWord={handlePracticeVocab}
-          onAddNotebookWord={handleSaveNotebookWord}
-          onPushFlashcardToStudy={(entry) =>
-            handleSaveNotebookWord({
-              word: entry.word,
-              meaningAr: entry.back,
-              definition: entry.back,
-              example: "",
-              sourceLabel: "Vocabulary",
-            })
-          }
-        />
-      )}
-
-      {tab === "listening" && (
-        <ListeningAcademyPanel
-          englishState={englishState}
-          onSaveNotebookWord={handleSaveNotebookWord}
-          onSubmitListeningScore={handleListeningScore}
-          onRecordMistake={noop}
-        />
-      )}
-
-      {tab === "reading" && (
-        <ReadingAcademyPanel
-          englishState={englishState}
-          onSaveNotebookWord={handleSaveNotebookWord}
-          onSubmitReadingScore={handleReadingScore}
-          onRecordMistake={noop}
-        />
-      )}
-
-      {tab === "grammar" && (
-        <GrammarAcademyPanel
-          englishState={englishState}
-          onSubmitGrammarScore={handleGrammarScore}
-          onRecordMistake={noop}
-        />
-      )}
-
-      {tab === "speaking" && (
-        <AppErrorBoundary
-          fallbackTitle={isAr ? "تعذر الوصول للميكروفون" : "Speaking playback reset safely"}
-          fallbackDesc={
-            isAr
-              ? "يمكنك كتابة إجابتك وتجربة النماذج الصوتية دون مشكلة."
-              : "You can type responses and use guided audio safely."
-          }
+      <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
+        {/* Clean Vertical Navigation */}
+        <nav
+          aria-label={isAr ? "أقسام عالم الإنجليزية" : "English World sections"}
+          className="surface-card flex flex-col gap-1.5 rounded-2xl border border-border p-2.5 lg:col-span-3"
         >
-          <SpeakingAcademyPanel
-            englishState={englishState}
-            onCompleteSpeakingScenario={handleCompleteSpeaking}
-          />
-        </AppErrorBoundary>
-      )}
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = tab === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setTab(item.id)}
+                className={`flex min-h-[44px] w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-start text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                    : "text-foreground hover:bg-surface-2"
+                }`}
+              >
+                <Icon className="size-4 shrink-0" />
+                <span className="leading-snug">{isAr ? item.ar : item.en}</span>
+              </button>
+            );
+          })}
+        </nav>
 
-      {tab === "writing" && (
-        <WritingAcademyPanel
-          englishState={englishState}
-          onSaveWritingSubmission={handleSaveWriting}
-        />
-      )}
+        {/* Main Content Panel */}
+        <div className="min-w-0 lg:col-span-9">
+          {tab === "dashboard" && (
+            <div className="space-y-4">
+              <div className="surface-card space-y-3 rounded-2xl p-6">
+                <h2 className="font-display text-xl font-bold text-foreground">
+                  {isAr ? "مرحباً بك في عالم الإنجليزية" : "Welcome to English World"}
+                </h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {isAr
+                    ? "اختر القسم المناسب من القائمة الجانبية: وحدات الصف التاسع، الاستماع، القراءة، القواعد التفاعلية (بما فيها Both...and و Neither...nor)، التحدث، والكتابة."
+                    : "Pick any skill from the menu: Grade 9 Vocabulary & Quizzes, Listening, Reading, Interactive Grammar (including Both ... and / Neither ... nor), Speaking, and Writing."}
+                </p>
+                <div className="grid gap-3 pt-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setTab("grade9")}
+                    className="flex min-h-[56px] items-center justify-between rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-start transition-colors hover:bg-primary/15"
+                  >
+                    <div>
+                      <div className="text-sm font-bold text-primary">
+                        {isAr ? "الصف التاسع — المفردات" : "Grade 9 — Vocabulary"}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {isAr ? "١٤١ كلمة واختبارات فورية" : "141 words & instant quizzes"}
+                      </div>
+                    </div>
+                    <ArrowRight className="size-4 text-primary rtl-flip shrink-0" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTab("grammar")}
+                    className="flex min-h-[56px] items-center justify-between rounded-xl border border-border bg-surface-2 px-4 py-3 text-start transition-colors hover:border-primary/40"
+                  >
+                    <div>
+                      <div className="text-sm font-bold text-foreground">
+                        {isAr ? "القواعد والاختبارات التفاعلية" : "Interactive Grammar"}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {isAr
+                          ? `دفترك الشخصي: ${englishState.personalNotebook.length} كلمة`
+                          : `Notebook saved: ${englishState.personalNotebook.length} words`}
+                      </div>
+                    </div>
+                    <ArrowRight className="size-4 text-primary rtl-flip shrink-0" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === "grade9" && <Grade9StudyCenter initialUnit={initialUnit} />}
+
+          {tab === "vocabulary" && (
+            <VocabularyAcademyPanel
+              englishState={englishState}
+              onPracticeWord={handlePracticeVocab}
+              onAddNotebookWord={handleSaveNotebookWord}
+              onPushFlashcardToStudy={(entry) =>
+                handleSaveNotebookWord({
+                  word: entry.word,
+                  meaningAr: entry.back,
+                  definition: entry.back,
+                  example: "",
+                  sourceLabel: "Vocabulary",
+                })
+              }
+            />
+          )}
+
+          {tab === "listening" && (
+            <ListeningAcademyPanel
+              englishState={englishState}
+              onSaveNotebookWord={handleSaveNotebookWord}
+              onSubmitListeningScore={handleListeningScore}
+              onRecordMistake={noop}
+            />
+          )}
+
+          {tab === "reading" && (
+            <ReadingAcademyPanel
+              englishState={englishState}
+              onSaveNotebookWord={handleSaveNotebookWord}
+              onSubmitReadingScore={handleReadingScore}
+              onRecordMistake={noop}
+            />
+          )}
+
+          {tab === "grammar" && (
+            <GrammarAcademyPanel
+              englishState={englishState}
+              onSubmitGrammarScore={handleGrammarScore}
+              onRecordMistake={noop}
+            />
+          )}
+
+          {tab === "speaking" && (
+            <AppErrorBoundary
+              fallbackTitle={isAr ? "تعذر الوصول للميكروفون" : "Speaking playback reset safely"}
+              fallbackDesc={
+                isAr
+                  ? "يمكنك كتابة إجابتك وتجربة النماذج الصوتية دون مشكلة."
+                  : "You can type responses and use guided audio safely."
+              }
+            >
+              <SpeakingAcademyPanel
+                englishState={englishState}
+                onCompleteSpeakingScenario={handleCompleteSpeaking}
+              />
+            </AppErrorBoundary>
+          )}
+
+          {tab === "writing" && (
+            <WritingAcademyPanel
+              englishState={englishState}
+              onSaveWritingSubmission={handleSaveWriting}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

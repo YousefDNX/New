@@ -11,8 +11,12 @@ import {
   clampLineHeight,
   getContrastForeground,
   getContrastRatio,
+  getQuizButtonRadiusClass,
   normalizeFontFamily,
   normalizeLayoutWorkspace,
+  normalizeQuizButtonStyle,
+  normalizeQuizColorPalette,
+  normalizeQuizFeedbackStyle,
   normalizeReadabilityPreset,
   normalizeRegion,
   normalizeUiTheme,
@@ -113,13 +117,25 @@ describe("settings rules", () => {
     expect(getContrastRatio("#ffffff", "#000000")).toBe(21);
     expect(getContrastRatio("#14b8a6", "#14b8a6")).toBe(1);
   });
+  it("normalizes quiz button styles, color palettes, and feedback styles safely", () => {
+    expect(normalizeQuizButtonStyle("pill")).toBe("pill");
+    expect(normalizeQuizButtonStyle("hexagon")).toBe("rounded");
+    expect(normalizeQuizColorPalette("royal")).toBe("royal");
+    expect(normalizeQuizColorPalette("neon")).toBe("default");
+    expect(normalizeQuizFeedbackStyle("minimal")).toBe("minimal");
+    expect(normalizeQuizFeedbackStyle("loud")).toBe("celebration");
+    expect(getQuizButtonRadiusClass("pill")).toBe("rounded-full");
+    expect(getQuizButtonRadiusClass("soft_square")).toBe("rounded-md");
+    expect(getQuizButtonRadiusClass("rounded")).toBe("rounded-xl");
+  });
 });
 
-describe("7-language multilingual coverage and locale formatting", () => {
-  it("supports all 7 languages with matching complete dictionaries and directionality", () => {
-    expect(SUPPORTED_LANGS).toEqual(["en", "ar", "ja", "fr", "de", "zh-CN", "ko"]);
+describe("8-language multilingual coverage and locale formatting", () => {
+  it("supports all 8 languages with matching complete dictionaries and directionality", () => {
+    expect(SUPPORTED_LANGS).toEqual(["en", "ar", "es", "ja", "fr", "de", "zh-CN", "ko"]);
     expect(LANG_META.ar.dir).toBe("rtl");
     expect(LANG_META.en.dir).toBe("ltr");
+    expect(LANG_META.es.dir).toBe("ltr");
     expect(LANG_META.ja.dir).toBe("ltr");
     expect(LANG_META["zh-CN"].dir).toBe("ltr");
     expect(LANG_META.ko.dir).toBe("ltr");
