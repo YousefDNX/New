@@ -132,6 +132,17 @@ function createLiveVoiceProxyPlugin(): Plugin {
 
               const lang = url.searchParams.get("lang") || "en";
               const context = url.searchParams.get("context")?.slice(0, 400) || "";
+              const rawVoice = (url.searchParams.get("voice") || "Zephyr").trim().toLowerCase();
+              const voiceName =
+                rawVoice === "puck"
+                  ? "Puck"
+                  : rawVoice === "charon" || rawVoice === "ahmed"
+                    ? "Charon"
+                    : rawVoice === "fenrir"
+                      ? "Fenrir"
+                      : rawVoice === "kore" || rawVoice === "classic"
+                        ? "Kore"
+                        : "Zephyr";
 
               const ai = new GoogleGenAI({
                 apiKey,
@@ -163,7 +174,7 @@ function createLiveVoiceProxyPlugin(): Plugin {
                     responseModalities: [Modality.AUDIO],
                     speechConfig: {
                       voiceConfig: {
-                        prebuiltVoiceConfig: { voiceName: "Zephyr" },
+                        prebuiltVoiceConfig: { voiceName },
                       },
                     },
                     inputAudioTranscription: {},

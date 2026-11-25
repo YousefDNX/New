@@ -26,13 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   type CommunityCollectionKind,
@@ -446,108 +440,89 @@ export function CommunityLibrariesPanel({
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="space-y-1">
-                      <Label>Collection *</Label>
-                      <Select
-                        value={newCollection}
-                        onValueChange={(v) => setNewCollection(v as CommunityCollectionKind)}
-                      >
-                        <SelectTrigger className="text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="foundational">Foundational Learning</SelectItem>
-                          <SelectItem value="science">Science Fundamentals</SelectItem>
-                          <SelectItem value="languages">Languages &amp; Grammar</SelectItem>
-                          <SelectItem value="mathematics">Mathematics</SelectItem>
-                          <SelectItem value="life_skills">Life Skills &amp; Safety</SelectItem>
-                          <SelectItem value="teacher_curated">Teacher Curated</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <ModernSelect
+                      label="Collection *"
+                      value={newCollection}
+                      onValueChange={(v) => setNewCollection(v as CommunityCollectionKind)}
+                      searchable
+                      searchPlaceholder="Search collections..."
+                      options={[
+                        { value: "foundational", label: "Foundational Learning" },
+                        { value: "science", label: "Science Fundamentals" },
+                        { value: "languages", label: "Languages & Grammar" },
+                        { value: "mathematics", label: "Mathematics" },
+                        { value: "life_skills", label: "Life Skills & Safety" },
+                        { value: "teacher_curated", label: "Teacher Curated" },
+                      ]}
+                    />
 
-                    <div className="space-y-1">
-                      <Label>Resource Kind *</Label>
-                      <Select
-                        value={newKind}
-                        onValueChange={(v) => setNewKind(v as CommunityResourceKind)}
-                      >
-                        <SelectTrigger className="text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="lesson">Structured Lesson</SelectItem>
-                          <SelectItem value="worksheet">Printable Worksheet</SelectItem>
-                          <SelectItem value="guide">Practical Guide</SelectItem>
-                          <SelectItem value="reference">Reference / Vocabulary</SelectItem>
-                          <SelectItem value="book">Open Book Chapter</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <ModernSelect
+                      label="Resource Kind *"
+                      value={newKind}
+                      onValueChange={(v) => setNewKind(v as CommunityResourceKind)}
+                      searchable
+                      searchPlaceholder="Search resource kinds..."
+                      options={[
+                        { value: "lesson", label: "Structured Lesson" },
+                        { value: "worksheet", label: "Printable Worksheet" },
+                        { value: "guide", label: "Practical Guide" },
+                        { value: "reference", label: "Reference / Vocabulary" },
+                        { value: "book", label: "Open Book Chapter" },
+                      ]}
+                    />
 
-                    <div className="space-y-1">
-                      <Label>Grade Band *</Label>
-                      <Select value={newGradeBand} onValueChange={setNewGradeBand}>
-                        <SelectTrigger className="text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Grade 1-4">Primary (Grade 1-4)</SelectItem>
-                          <SelectItem value="Grade 5-7">Middle (Grade 5-7)</SelectItem>
-                          <SelectItem value="Grade 6-9">Middle / Secondary (Grade 6-9)</SelectItem>
-                          <SelectItem value="Grade 8-10">Secondary (Grade 8-10)</SelectItem>
-                          <SelectItem value="Grade 11-12">High School (11-12)</SelectItem>
-                          <SelectItem value="Universal">Universal All Levels</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <ModernSelect
+                      label="Grade Band *"
+                      value={newGradeBand}
+                      onValueChange={setNewGradeBand}
+                      searchable
+                      searchPlaceholder="Search grades..."
+                      options={[
+                        { value: "Grade 1-4", label: "Primary (Grade 1-4)" },
+                        { value: "Grade 5-7", label: "Middle (Grade 5-7)" },
+                        { value: "Grade 6-9", label: "Middle / Secondary (Grade 6-9)" },
+                        { value: "Grade 8-10", label: "Secondary (Grade 8-10)" },
+                        { value: "Grade 11-12", label: "High School (11-12)" },
+                        { value: "Universal", label: "Universal All Levels" },
+                      ]}
+                    />
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       <Label htmlFor="res-subject">Subject *</Label>
                       <Input
                         id="res-subject"
                         value={newSubject}
                         onChange={(e) => setNewSubject(e.target.value)}
                         required
-                        className="text-xs"
+                        className="min-h-[44px] text-sm"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <Label>Language *</Label>
-                      <Select
-                        value={newLanguage}
-                        onValueChange={(v) => setNewLanguage(v as "en" | "ar" | "bilingual")}
-                      >
-                        <SelectTrigger className="text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="en">English</SelectItem>
-                          <SelectItem value="ar">Arabic</SelectItem>
-                          <SelectItem value="bilingual">Bilingual (AR / EN)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label>Difficulty Level *</Label>
-                      <Select
-                        value={newLevel}
-                        onValueChange={(v) =>
-                          setNewLevel(v as "beginner" | "intermediate" | "advanced")
-                        }
-                      >
-                        <SelectTrigger className="text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="beginner">Beginner</SelectItem>
-                          <SelectItem value="intermediate">Intermediate</SelectItem>
-                          <SelectItem value="advanced">Advanced</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <ModernSelect
+                      label="Language *"
+                      value={newLanguage}
+                      onValueChange={(v) => setNewLanguage(v as "en" | "ar" | "bilingual")}
+                      searchable={false}
+                      options={[
+                        { value: "en", label: "English" },
+                        { value: "ar", label: "Arabic" },
+                        { value: "bilingual", label: "Bilingual (AR / EN)" },
+                      ]}
+                    />
+                    <ModernSelect
+                      label="Difficulty Level *"
+                      value={newLevel}
+                      onValueChange={(v) =>
+                        setNewLevel(v as "beginner" | "intermediate" | "advanced")
+                      }
+                      searchable={false}
+                      options={[
+                        { value: "beginner", label: "Beginner" },
+                        { value: "intermediate", label: "Intermediate" },
+                        { value: "advanced", label: "Advanced" },
+                      ]}
+                    />
                   </div>
 
                   <div className="space-y-1">
@@ -699,103 +674,112 @@ export function CommunityLibrariesPanel({
       )}
 
       {/* Filter and Discovery Bar */}
-      <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-border bg-surface-card p-3 text-xs">
-        <div className="relative min-w-[180px] flex-1">
-          <Search className="absolute start-2.5 top-2.5 size-3.5 text-muted-foreground" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search collections, subjects, authors..."
-            className="h-8 ps-8 text-xs"
+      <div className="space-y-3 rounded-2xl border border-border bg-surface-card p-4 text-xs">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 items-end">
+          <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+            <Label htmlFor="com-lib-search" className="text-xs font-semibold">
+              Search Catalog
+            </Label>
+            <div className="relative">
+              <Search className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                id="com-lib-search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Collections, subjects, authors..."
+                className="min-h-[44px] ps-9 text-sm"
+              />
+            </div>
+          </div>
+
+          <ModernSelect
+            label="Collection"
+            value={selectedCollection}
+            onValueChange={(v) => setSelectedCollection(v as "all" | CommunityCollectionKind)}
+            searchable
+            searchPlaceholder="Filter collections..."
+            options={[
+              { value: "all", label: "All Collections" },
+              { value: "foundational", label: "Foundational Learning" },
+              { value: "science", label: "Science Fundamentals" },
+              { value: "languages", label: "Languages & Grammar" },
+              { value: "mathematics", label: "Mathematics" },
+              { value: "life_skills", label: "Life Skills & Safety" },
+              { value: "teacher_curated", label: "Teacher Curated" },
+            ]}
+          />
+
+          <ModernSelect
+            label="Resource Kind"
+            value={selectedKind}
+            onValueChange={(v) => setSelectedKind(v as "all" | CommunityResourceKind)}
+            searchable
+            searchPlaceholder="Filter resource kinds..."
+            options={[
+              { value: "all", label: "All Kinds" },
+              { value: "lesson", label: "Lessons" },
+              { value: "worksheet", label: "Worksheets" },
+              { value: "guide", label: "Guides" },
+              { value: "reference", label: "References" },
+              { value: "book", label: "Books" },
+            ]}
+          />
+
+          <ModernSelect
+            label="Grade Band"
+            value={selectedGradeBand}
+            onValueChange={setSelectedGradeBand}
+            searchable
+            searchPlaceholder="Filter grade bands..."
+            options={[
+              { value: "all", label: "All Grades" },
+              { value: "Grade 1-4", label: "Grade 1-4" },
+              { value: "Grade 5-7", label: "Grade 5-7" },
+              { value: "Grade 6-9", label: "Grade 6-9" },
+              { value: "Grade 8-10", label: "Grade 8-10" },
+              { value: "Grade 11-12", label: "Grade 11-12" },
+              { value: "Universal", label: "Universal" },
+            ]}
+          />
+
+          <ModernSelect
+            label="Language"
+            value={selectedLanguage}
+            onValueChange={(v) => setSelectedLanguage(v as "all" | "en" | "ar" | "bilingual")}
+            searchable
+            searchPlaceholder="Filter languages..."
+            options={[
+              { value: "all", label: "All Languages" },
+              { value: "en", label: "English" },
+              { value: "ar", label: "Arabic" },
+              { value: "bilingual", label: "Bilingual" },
+            ]}
           />
         </div>
 
-        <Select
-          value={selectedCollection}
-          onValueChange={(v) => setSelectedCollection(v as "all" | CommunityCollectionKind)}
-        >
-          <SelectTrigger className="h-8 w-[150px] text-xs">
-            <SelectValue placeholder="Collection" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Collections</SelectItem>
-            <SelectItem value="foundational">Foundational Learning</SelectItem>
-            <SelectItem value="science">Science Fundamentals</SelectItem>
-            <SelectItem value="languages">Languages &amp; Grammar</SelectItem>
-            <SelectItem value="mathematics">Mathematics</SelectItem>
-            <SelectItem value="life_skills">Life Skills &amp; Safety</SelectItem>
-            <SelectItem value="teacher_curated">Teacher Curated</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={teacherCuratedOnly ? "secondary" : "outline"}
+            onClick={() => setTeacherCuratedOnly(!teacherCuratedOnly)}
+            className="min-h-[40px] text-xs"
+          >
+            <GraduationCap className="size-3.5 me-1.5 text-primary" />
+            Curated
+          </Button>
 
-        <Select
-          value={selectedKind}
-          onValueChange={(v) => setSelectedKind(v as "all" | CommunityResourceKind)}
-        >
-          <SelectTrigger className="h-8 w-[130px] text-xs">
-            <SelectValue placeholder="Resource Kind" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Kinds</SelectItem>
-            <SelectItem value="lesson">Lessons</SelectItem>
-            <SelectItem value="worksheet">Worksheets</SelectItem>
-            <SelectItem value="guide">Guides</SelectItem>
-            <SelectItem value="reference">References</SelectItem>
-            <SelectItem value="book">Books</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={selectedGradeBand} onValueChange={setSelectedGradeBand}>
-          <SelectTrigger className="h-8 w-[135px] text-xs">
-            <SelectValue placeholder="Grade Band" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Grades</SelectItem>
-            <SelectItem value="Grade 1-4">Grade 1-4</SelectItem>
-            <SelectItem value="Grade 5-7">Grade 5-7</SelectItem>
-            <SelectItem value="Grade 6-9">Grade 6-9</SelectItem>
-            <SelectItem value="Grade 8-10">Grade 8-10</SelectItem>
-            <SelectItem value="Grade 11-12">Grade 11-12</SelectItem>
-            <SelectItem value="Universal">Universal</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={selectedLanguage}
-          onValueChange={(v) => setSelectedLanguage(v as "all" | "en" | "ar" | "bilingual")}
-        >
-          <SelectTrigger className="h-8 w-[125px] text-xs">
-            <SelectValue placeholder="Language" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Languages</SelectItem>
-            <SelectItem value="en">English</SelectItem>
-            <SelectItem value="ar">Arabic</SelectItem>
-            <SelectItem value="bilingual">Bilingual</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Button
-          type="button"
-          size="sm"
-          variant={teacherCuratedOnly ? "secondary" : "outline"}
-          onClick={() => setTeacherCuratedOnly(!teacherCuratedOnly)}
-          className="h-8 text-xs"
-        >
-          <GraduationCap className="size-3.5 me-1 text-primary" />
-          Curated
-        </Button>
-
-        <Button
-          type="button"
-          size="sm"
-          variant={downloadableOnly ? "secondary" : "outline"}
-          onClick={() => setDownloadableOnly(!downloadableOnly)}
-          className="h-8 text-xs"
-        >
-          <Download className="size-3.5 me-1 text-primary" />
-          Downloadable
-        </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={downloadableOnly ? "secondary" : "outline"}
+            onClick={() => setDownloadableOnly(!downloadableOnly)}
+            className="min-h-[40px] text-xs"
+          >
+            <Download className="size-3.5 me-1.5 text-primary" />
+            Downloadable
+          </Button>
+        </div>
       </div>
 
       {/* Specialized Collections Quick Selectors */}
@@ -1006,21 +990,20 @@ export function CommunityLibrariesPanel({
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitErrorReport} className="space-y-3 text-xs">
-            <div className="space-y-1">
-              <Label>Issue Category</Label>
-              <Select value={reportKind} onValueChange={(v) => setReportKind(v as ErrorReportKind)}>
-                <SelectTrigger className="text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="factual_error">Factual or Math Inaccuracy</SelectItem>
-                  <SelectItem value="broken_link">Broken Source / Reference</SelectItem>
-                  <SelectItem value="outdated">Outdated Information</SelectItem>
-                  <SelectItem value="accessibility">Accessibility Issue</SelectItem>
-                  <SelectItem value="copyright">Copyright / Attribution Issue</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <ModernSelect
+              label="Issue Category"
+              value={reportKind}
+              onValueChange={(v) => setReportKind(v as ErrorReportKind)}
+              searchable
+              searchPlaceholder="Search categories..."
+              options={[
+                { value: "factual_error", label: "Factual or Math Inaccuracy" },
+                { value: "broken_link", label: "Broken Source / Reference" },
+                { value: "outdated", label: "Outdated Information" },
+                { value: "accessibility", label: "Accessibility Issue" },
+                { value: "copyright", label: "Copyright / Attribution Issue" },
+              ]}
+            />
             <div className="space-y-1">
               <Label htmlFor="com-error-details">Exact Description (No PII) *</Label>
               <Textarea

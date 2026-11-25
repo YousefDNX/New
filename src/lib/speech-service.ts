@@ -13,6 +13,15 @@
  * 6. Strict prohibition: Synthetic AI TTS NEVER generates Quran recitation.
  */
 
+import {
+  clampTtsSpeed,
+  normalizeTtsEngine,
+  normalizeTtsVoice,
+  resolveGeminiVoiceName,
+  type TtsEngineMode,
+  type TtsVoicePresetId,
+} from "./settings";
+
 export type SupportedSpeechLang = "ar" | "en" | "fr" | "de" | "es" | "zh" | "ja" | "ko";
 
 export interface SpeechVoiceQuality {
@@ -23,6 +32,131 @@ export interface SpeechVoiceQuality {
 export interface SpeechSegment {
   text: string;
   lang: SupportedSpeechLang;
+}
+
+export interface GlobalTtsConfig {
+  engine: TtsEngineMode;
+  voicePreset: TtsVoicePresetId;
+  rate: number;
+}
+
+export interface PersistedTtsConfig extends GlobalTtsConfig {
+  updatedAt?: string;
+}
+
+export const TTS_PREFS_STORAGE_KEY = "nexora.tts.v1";
+
+export function getTtsPrefsStorageKey(uid?: string | null): string {
+  return uid ? `${TTS_PREFS_STORAGE_KEY}.${uid}` : TTS_PREFS_STORAGE_KEY;
+}
+
+const DEFAULT_TTS_CONFIG: GlobalTtsConfig = {
+  engine: "auto",
+  voicePreset: "Zephyr",
+  rate: 1.0,
+};
+
+function sanitizeTtsConfig(raw: Partial<GlobalTtsConfig> | null | undefined): GlobalTtsConfig {
+  return {
+    engine: normalizeTtsEngine(raw?.engine),
+    voicePreset: normalizeTtsVoice(raw?.voicePreset),
+    rate: clampTtsSpeed(Number(raw?.rate ?? DEFAULT_TTS_CONFIG.rate) || DEFAULT_TTS_CONFIG.rate),
+  };
+}
+
+export function loadPersistedTtsConfig(uid?: string | null): PersistedTtsConfig | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const dedicatedKey = getTtsPrefsStorageKey(uid);
+    const dedicatedRaw = window.localStorage.getItem(dedicatedKey);
+    if (dedicatedRaw) {
+      const parsed = JSON.parse(dedicatedRaw) as Partial<PersistedTtsConfig> | null;
+      if (parsed && typeof parsed === "object") {
+        const sanitized = sanitizeTtsConfig(parsed);
+        return typeof parsed.updatedAt === "string"
+          ? { ...sanitized, updatedAt: parsed.updatedAt }
+          : sanitized;
+      }
+    }
+
+    const prefsKey = uid ? `nexora.prefs.${uid}` : "nexora.prefs";
+    const prefsRaw = window.localStorage.getItem(prefsKey);
+    if (prefsRaw) {
+      const parsedPrefs = JSON.parse(prefsRaw) as {
+        updatedAt?: string;
+        ecosystem?: {
+          ttsEngine?: unknown;
+          ttsVoice?: unknown;
+          ttsSpeed?: unknown;
+        };
+      } | null;
+      const eco = parsedPrefs?.ecosystem;
+      if (
+        eco &&
+        (eco.ttsEngine !== undefined || eco.ttsVoice !== undefined || eco.ttsSpeed !== undefined)
+      ) {
+        const sanitized = sanitizeTtsConfig({
+          engine: eco.ttsEngine as TtsEngineMode,
+          voicePreset: eco.ttsVoice as TtsVoicePresetId,
+          rate: Number(eco.ttsSpeed ?? 1),
+        });
+        return typeof parsedPrefs?.updatedAt === "string"
+          ? { ...sanitized, updatedAt: parsedPrefs.updatedAt }
+          : sanitized;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function savePersistedTtsConfig(config: GlobalTtsConfig, uid?: string | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    const sanitized = sanitizeTtsConfig(config);
+    const payload: PersistedTtsConfig = {
+      ...sanitized,
+      updatedAt: new Date().toISOString(),
+    };
+    window.localStorage.setItem(getTtsPrefsStorageKey(uid), JSON.stringify(payload));
+  } catch {
+    /* ignore storage quota or privacy-mode errors */
+  }
+}
+
+export function clearPersistedTtsConfig(uid?: string | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(getTtsPrefsStorageKey(uid));
+  } catch {
+    /* ignore storage cleanup errors */
+  }
+}
+
+let activeTtsConfig: GlobalTtsConfig = (typeof window !== "undefined"
+  ? loadPersistedTtsConfig()
+  : null) ?? { ...DEFAULT_TTS_CONFIG };
+
+export function setActiveTtsConfig(
+  next: Partial<GlobalTtsConfig>,
+  options?: { persist?: boolean; uid?: string | null },
+): void {
+  activeTtsConfig = {
+    engine: next.engine !== undefined ? normalizeTtsEngine(next.engine) : activeTtsConfig.engine,
+    voicePreset:
+      next.voicePreset !== undefined
+        ? normalizeTtsVoice(next.voicePreset)
+        : activeTtsConfig.voicePreset,
+    rate: next.rate !== undefined ? clampTtsSpeed(next.rate) : activeTtsConfig.rate,
+  };
+  if (options?.persist !== false) {
+    savePersistedTtsConfig(activeTtsConfig, options?.uid);
+  }
+}
+
+export function getActiveTtsConfig(): GlobalTtsConfig {
+  return { ...activeTtsConfig };
 }
 
 /**
@@ -596,6 +730,33 @@ export function selectBestNativeVoice(
       score += 30;
     }
 
+    // Align native voice selection subtly with chosen TTS voice persona
+    const activePreset = activeTtsConfig.voicePreset;
+    if (
+      (activePreset === "Ahmed" || activePreset === "Charon" || activePreset === "Fenrir") &&
+      (voiceName.includes("maged") ||
+        voiceName.includes("tarik") ||
+        voiceName.includes("hamed") ||
+        voiceName.includes("shakir") ||
+        voiceName.includes("daniel") ||
+        voiceName.includes("ryan") ||
+        voiceName.includes("guy"))
+    ) {
+      score += 24;
+    } else if (
+      (activePreset === "Zephyr" || activePreset === "Kore") &&
+      (voiceName.includes("laila") ||
+        voiceName.includes("salma") ||
+        voiceName.includes("zariyah") ||
+        voiceName.includes("samantha") ||
+        voiceName.includes("libby") ||
+        voiceName.includes("sonia") ||
+        voiceName.includes("aria") ||
+        voiceName.includes("jenny"))
+    ) {
+      score += 20;
+    }
+
     // Deprioritize robotic legacy synthesizers when better alternatives exist
     if (
       voiceName.includes("espeak") ||
@@ -669,6 +830,8 @@ export interface EnhancedSpeechOptions {
   forcedLang?: SupportedSpeechLang | undefined;
   preferredLocale?: string | undefined;
   voiceURI?: string | undefined;
+  voicePreset?: TtsVoicePresetId | undefined;
+  engine?: TtsEngineMode | undefined;
   preferNativeOnly?: boolean | undefined;
   forceDictionaryLookup?: boolean | undefined;
   onStart?: (() => void) | undefined;
@@ -709,6 +872,11 @@ export function resetSpeechEngineStateForTests(): void {
   serverTtsAvailability = "unknown";
   statusProbeInFlight = null;
   activePlaybackToken = 0;
+  activeTtsConfig = {
+    engine: "auto",
+    voicePreset: "Zephyr",
+    rate: 1.0,
+  };
 }
 
 /**
@@ -779,8 +947,8 @@ export async function fetchVerifiedBritishDictionaryAudio(rawWord: string): Prom
   }
 }
 
-function getTtsCacheKey(text: string, lang: string, accent?: string): string {
-  return `${lang}|${accent ?? ""}|${text.trim()}`;
+function getTtsCacheKey(text: string, lang: string, accent?: string, voicePreset?: string): string {
+  return `${lang}|${accent ?? ""}|${voicePreset ?? "Zephyr"}|${text.trim()}`;
 }
 
 function setCachedAudioDataUri(key: string, dataUri: string): void {
@@ -839,7 +1007,8 @@ function playDataUriAudio(
     try {
       const audio = new Audio(dataUri);
       activeAudioElement = audio;
-      audio.playbackRate = Math.min(1.5, Math.max(0.65, options?.rate ?? 1.0));
+      const effectiveRate = options?.rate ?? activeTtsConfig.rate;
+      audio.playbackRate = Math.min(1.5, Math.max(0.65, effectiveRate));
       audio.volume = Math.min(1.0, Math.max(0, options?.volume ?? 1.0));
 
       audio.onended = () => {
@@ -950,7 +1119,8 @@ function speakSegmentsViaWebSpeech(
       utterance.lang = chosenVoice.lang;
     }
 
-    utterance.rate = Math.min(1.5, Math.max(0.6, options?.rate ?? 1.0));
+    const effectiveRate = options?.rate ?? activeTtsConfig.rate;
+    utterance.rate = Math.min(1.5, Math.max(0.6, effectiveRate));
     utterance.pitch = Math.min(1.4, Math.max(0.8, options?.pitch ?? 1.0));
     utterance.volume = Math.min(1.0, Math.max(0, options?.volume ?? 1.0));
 
@@ -1022,9 +1192,19 @@ export function speakEnhancedText(text: string, options?: EnhancedSpeechOptions)
 
   if (!cleanForServer) return false;
 
+  const effectiveEngine = options?.engine ?? activeTtsConfig.engine;
+  const effectiveVoicePreset = options?.voicePreset ?? activeTtsConfig.voicePreset;
+  const resolvedNativeOnly = Boolean(options?.preferNativeOnly) || effectiveEngine === "browser";
+  const resolvedGeminiVoice = resolveGeminiVoiceName(effectiveVoicePreset);
+
   // Check cached WAV audio first for instant 0ms neural playback
-  const cacheKey = getTtsCacheKey(cleanForServer, options?.forcedLang ?? "auto", accent);
-  const cachedUri = !options?.preferNativeOnly ? ttsAudioCache.get(cacheKey) : undefined;
+  const cacheKey = getTtsCacheKey(
+    cleanForServer,
+    options?.forcedLang ?? "auto",
+    accent,
+    effectiveVoicePreset,
+  );
+  const cachedUri = !resolvedNativeOnly ? ttsAudioCache.get(cacheKey) : undefined;
   if (cachedUri && typeof Audio !== "undefined") {
     options?.onStart?.();
     void playDataUriAudio(cachedUri, token, options).then((played) => {
@@ -1036,15 +1216,15 @@ export function speakEnhancedText(text: string, options?: EnhancedSpeechOptions)
   }
 
   // Kick off background capability discovery if still unknown
-  if (serverTtsAvailability === "unknown") {
+  if (serverTtsAvailability === "unknown" && !resolvedNativeOnly) {
     warmServerTtsCapability();
   }
 
   // Helper running Gemini Neural TTS -> native Web Speech fallback
   const runServerOrNativeFallback = () => {
     const canTryServer =
-      !options?.preferNativeOnly &&
-      serverTtsAvailability === "available" &&
+      !resolvedNativeOnly &&
+      (serverTtsAvailability === "available" || effectiveEngine === "gemini") &&
       typeof fetch !== "undefined" &&
       typeof Audio !== "undefined" &&
       cleanForServer.length <= 900;
@@ -1062,6 +1242,8 @@ export function speakEnhancedText(text: string, options?: EnhancedSpeechOptions)
           text: cleanForServer,
           lang: options?.forcedLang ?? "auto",
           accent,
+          voiceName: resolvedGeminiVoice,
+          voicePersona: effectiveVoicePreset,
         }),
       })
         .then(async (res) => {

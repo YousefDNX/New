@@ -14,6 +14,7 @@ import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { useTaskActions } from "@/hooks/use-nexora";
 import { useStudentEcosystem } from "@/lib/student-ecosystem";
@@ -252,17 +253,19 @@ export function UniversityAndProjectsPanel({ mode }: { mode: "university" | "pro
           placeholder="Project Title (e.g. Solar Classroom Monitor)"
           className="text-xs"
         />
-        <select
+        <ModernSelect
+          label="Project Category"
+          ariaLabel="Project category"
           value={projCategory}
-          onChange={(e) => setProjCategory(e.target.value)}
-          aria-label="Project category"
-          className="h-9 w-full rounded-md border border-input bg-surface-2 px-2.5 text-xs text-foreground"
-        >
-          <option value="STEM & Innovation">STEM & Innovation</option>
-          <option value="Digital & Software">Digital & Software</option>
-          <option value="Community Impact">Community Impact</option>
-          <option value="Academic Research">Academic Research</option>
-        </select>
+          onValueChange={setProjCategory}
+          searchable={false}
+          options={[
+            { value: "STEM & Innovation", label: "STEM & Innovation" },
+            { value: "Digital & Software", label: "Digital & Software" },
+            { value: "Community Impact", label: "Community Impact" },
+            { value: "Academic Research", label: "Academic Research" },
+          ]}
+        />
         <Textarea
           rows={3}
           value={projProblem}

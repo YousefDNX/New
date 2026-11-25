@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Bookmark, Compass, Info, Scale, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { MARTIAL_ARTS_DISCIPLINES, type MartialArtDiscipline } from "@/data/martial-arts";
 
 export interface MartialArtsExplorerProps {
@@ -278,40 +279,32 @@ export function MartialArtsExplorer({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-foreground">
-              {isAr ? "التخصص الأول" : "Discipline A"}
-            </label>
-            <select
-              aria-label="Discipline A"
-              value={compareA}
-              onChange={(e) => setCompareA(e.target.value)}
-              className="h-9 w-full rounded-md border border-input bg-surface-2 px-2.5 text-xs text-foreground"
-            >
-              {MARTIAL_ARTS_DISCIPLINES.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {isAr ? d.name.ar : d.name.en}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-foreground">
-              {isAr ? "التخصص الثاني" : "Discipline B"}
-            </label>
-            <select
-              aria-label="Discipline B"
-              value={compareB}
-              onChange={(e) => setCompareB(e.target.value)}
-              className="h-9 w-full rounded-md border border-input bg-surface-2 px-2.5 text-xs text-foreground"
-            >
-              {MARTIAL_ARTS_DISCIPLINES.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {isAr ? d.name.ar : d.name.en}
-                </option>
-              ))}
-            </select>
-          </div>
+          <ModernSelect
+            label={isAr ? "التخصص الأول" : "Discipline A"}
+            ariaLabel="Discipline A"
+            value={compareA}
+            onValueChange={setCompareA}
+            searchable
+            searchPlaceholder={isAr ? "ابحث عن فن..." : "Search discipline..."}
+            options={MARTIAL_ARTS_DISCIPLINES.map((d) => ({
+              value: d.id,
+              label: isAr ? d.name.ar : d.name.en,
+              description: isAr ? d.origin.ar : d.origin.en,
+            }))}
+          />
+          <ModernSelect
+            label={isAr ? "التخصص الثاني" : "Discipline B"}
+            ariaLabel="Discipline B"
+            value={compareB}
+            onValueChange={setCompareB}
+            searchable
+            searchPlaceholder={isAr ? "ابحث عن فن..." : "Search discipline..."}
+            options={MARTIAL_ARTS_DISCIPLINES.map((d) => ({
+              value: d.id,
+              label: isAr ? d.name.ar : d.name.en,
+              description: isAr ? d.origin.ar : d.origin.en,
+            }))}
+          />
         </div>
 
         <div className="overflow-x-auto">

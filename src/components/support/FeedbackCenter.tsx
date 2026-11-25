@@ -14,13 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   fetchFeedbackItems,
   createFeedbackItem,
@@ -209,22 +203,19 @@ export function FeedbackCenter() {
                 required
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="fb-category" className="text-xs font-semibold">
-                Category
-              </Label>
-              <Select value={category} onValueChange={(v) => setCategory(v as FeedbackCategory)}>
-                <SelectTrigger id="fb-category" className="w-full text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="feature_suggestion">New Feature Idea</SelectItem>
-                  <SelectItem value="usability_feedback">Usability & UI Polish</SelectItem>
-                  <SelectItem value="content_improvement">Study / Quiz Content</SelectItem>
-                  <SelectItem value="general">General Suggestion</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <ModernSelect
+              id="fb-category"
+              label="Category"
+              value={category}
+              onValueChange={(v) => setCategory(v as FeedbackCategory)}
+              searchable={false}
+              options={[
+                { value: "feature_suggestion", label: "New Feature Idea" },
+                { value: "usability_feedback", label: "Usability & UI Polish" },
+                { value: "content_improvement", label: "Study / Quiz Content" },
+                { value: "general", label: "General Suggestion" },
+              ]}
+            />
           </div>
 
           <div className="space-y-1.5">

@@ -20,6 +20,7 @@ import { PageHeader } from "@/components/app/Page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   useFocusActions,
   useFocusSessions,
@@ -443,19 +444,30 @@ export function ProductivityFocusWorkspace() {
                 />
               </div>
               <div className="sm:col-span-3">
-                <Label htmlFor="new-task-priority" className="text-xs">
-                  {isAr ? "الأولوية" : "Priority"}
-                </Label>
-                <select
+                <ModernSelect
                   id="new-task-priority"
+                  label={isAr ? "الأولوية" : "Priority"}
                   value={taskPriority}
-                  onChange={(e) => setTaskPriority(e.target.value as "low" | "medium" | "high")}
-                  className="mt-1 flex min-h-[44px] w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground"
-                >
-                  <option value="low">{isAr ? "منخفضة" : "Low"}</option>
-                  <option value="medium">{isAr ? "متوسطة" : "Medium"}</option>
-                  <option value="high">{isAr ? "عالية" : "High"}</option>
-                </select>
+                  onValueChange={(v) => setTaskPriority(v as "low" | "medium" | "high")}
+                  searchable={false}
+                  options={[
+                    {
+                      value: "low",
+                      label: isAr ? "منخفضة" : "Low",
+                      description: isAr ? "مرنة خلال الأسبوع" : "Flexible within the week",
+                    },
+                    {
+                      value: "medium",
+                      label: isAr ? "متوسطة" : "Medium",
+                      description: isAr ? "ضمن خطة اليوم" : "Planned for today",
+                    },
+                    {
+                      value: "high",
+                      label: isAr ? "عالية" : "High",
+                      description: isAr ? "أولوية قصوى" : "Top focus item",
+                    },
+                  ]}
+                />
               </div>
               <div className="sm:col-span-3">
                 <Label htmlFor="new-task-due" className="text-xs">

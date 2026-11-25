@@ -272,15 +272,29 @@ export const VERIFIED_RECITER_SIGNATURES: Record<string, ReciterVocalSignature> 
   al_luhaidan_signature: {
     id: "al_luhaidan_signature",
     reciterId: "al-luhaidan",
-    nameAr: "النبرة اللحيدانية",
-    nameEn: "Al-Luhaidan Tearful Cadence",
+    nameAr: "النبرة اللحيدانية (العالية)",
+    nameEn: "Al-Luhaidan High Signature Tone",
     descriptionAr:
-      "انتقال حاد ومؤثر نحو الطبقات الصوتية العالية بنبرة باكية شجية تلامس شغاف القلب.",
+      "انتقال حاد ومؤثر نحو الطبقات الصوتية العالية بنبرة باكية شجية تلامس شغاف القلب في صلوات المحراب والقيام.",
     descriptionEn:
-      "Distinctive emotional shift toward high-register tearful phrasing with powerful resonance.",
-    listenerContextAr: "اشتهر بها في صلوات التراويح والقيام وخاصة في أواخر سورة الفرقان وسورة ق.",
+      "Distinctive emotional shift toward high-register tearful phrasing with powerful live prayer resonance.",
+    listenerContextAr:
+      "اشتهر بها في صلوات التراويح والقيام وخاصة ﴿وَيَسْأَلُونَكَ عَنِ الْجِبَالِ﴾ (طه ٢٠:١٠٥)، ﴿وَكَانَ اللَّهُ غَفُورًا رَحِيمًا﴾ (الفرقان ٢٥:٦٨–٧٠)، وسورة ق ﴿وَجَاءَتْ سَكْرَةُ الْمَوْتِ بِالْحَقِّ﴾ (٥٠:١٩).",
     listenerContextEn:
-      "Renowned during Tahajjud night prayers, especially in Surah Al-Furqan and Surah Qaf.",
+      "Renowned during Tahajjud night prayers, especially Surah Taha (20:105), Surah Al-Furqan (25:68–70), and Surah Qaf (50:19).",
+  },
+  al_luhaidan_calm_signature: {
+    id: "al_luhaidan_calm_signature",
+    reciterId: "al-luhaidan",
+    nameAr: "النبرة الخاشعة والهادئة",
+    nameEn: "Calm & Reverent Cadence",
+    descriptionAr:
+      "أداء متزن رقيق يمتاز بالسكينة والطمأنينة والتدبر والتجويد المنضبط في المصحف المرتل الكامل بصيغتي M4A و MP3.",
+    descriptionEn:
+      "Tranquil, meditative, and soothing delivery fostering peace and precise Tajweed across M4A & MP3 studio recordings.",
+    listenerContextAr:
+      "المصحف المرتل الكامل (١١٤ سورة) بصيغة M4A عالية النقاء وسيرفر MP3Quran وتلاوة البقرة الأولى الهادئة.",
+    listenerContextEn: "Complete 114-Surah Murattal in high-definition M4A and studio MP3 streams.",
   },
   al_husary_signature: {
     id: "al_husary_signature",
@@ -434,20 +448,7 @@ export interface RecordingStyleClassification {
 
 /** Verified catalog of recording classifications (100% matched to GLOBAL_RECITERS_DIRECTORY IDs) */
 export const VERIFIED_RECORDING_CLASSIFICATIONS: Record<string, RecordingStyleClassification> = {
-  // Sheikh Mohammed Al-Luhaidan (1 reciter -> 2 distinct editions -> distinct style nuances)
-  "al-luhaidan-mp3q-server8": {
-    recordingId: "al-luhaidan-mp3q-server8",
-    reciterId: "al-luhaidan",
-    format: "murattal",
-    emotionalStyles: ["khushu", "tearful", "deeply_moving", "powerful_impactful"],
-    vocalQualities: ["distinctive_tone", "strong_resonant", "melodic_phrasing"],
-    signatures: ["al_luhaidan_signature"],
-    editorialReviewNoteAr:
-      "المصحف المرتل الكامل عبر MP3Quran (Server8 ID 107) — إيقاع متزن وضبط تجويدي متسق مع الانتقال إلى الطبقات العالية في المواضع المؤثرة.",
-    editorialReviewNoteEn:
-      "Complete 114-Surah Murattal via MP3Quran (Server8 ID 107) — steady acoustic balance and consistent Hafs Tajweed with expressive register elevation on moving passages.",
-    verifiedByReviewer: true,
-  },
+  // Sheikh Mohammed Al-Luhaidan (2 strictly separated signature tones: High Signature & Calm Cadence across 114 Surahs)
   "al-luhaidan-qa-select": {
     recordingId: "al-luhaidan-qa-select",
     reciterId: "al-luhaidan",
@@ -456,22 +457,61 @@ export const VERIFIED_RECORDING_CLASSIFICATIONS: Record<string, RecordingStyleCl
     vocalQualities: ["distinctive_tone", "strong_resonant", "melodic_phrasing"],
     signatures: ["al_luhaidan_signature"],
     editorialReviewNoteAr:
-      "مختارات تلاوات الصلاة من QuranicAudio (٨٤ سورة موثقة · آخر تعديل للأرشيف يناير ٢٠٢٣؛ بدون سورة البقرة) — تتميز بقوة الإسقاط الصوتي والانتقال الحاد للطبقات العالية والمدود الممتدة عند سورة الفرقان ٢٥:٦٨–٧٠.",
+      "النبرة اللحيدانية (العالية) — مختارات صلوات المحراب والقيام من QuranicAudio (٨٤ سورة موثقة؛ يشمل سورة طه ﴿وَيَسْأَلُونَكَ عَنِ الْجِبَالِ﴾، سورة الفرقان ﴿وَكَانَ اللَّهُ غَفُورًا رَحِيمًا﴾، وسورة ق ﴿وَجَاءَتْ سَكْرَةُ الْمَوْتِ بِالْحَقِّ﴾ بقوة الإسقاط الصوتي).",
     editorialReviewNoteEn:
-      "Selected prayer recitations via QuranicAudio (84 verified Surahs; archive Last-Modified Jan 2023; excludes Al-Baqarah) — notable for stronger loudness & mosque acoustic projection, dynamic high-register transitions, and sustained tearful phrasing at Surah Al-Furqan 25:68–70.",
+      "Primary Al-Luhaidan High Signature collection via QuranicAudio (84 verified Surahs; features Taha 20:105, Al-Furqan 25:68–70, and Surah Qaf 50:19 with live mosque projection).",
+    verifiedByReviewer: true,
+  },
+  "al-luhaidan-high-archive": {
+    recordingId: "al-luhaidan-high-archive",
+    reciterId: "al-luhaidan",
+    format: "archive",
+    emotionalStyles: ["khushu", "tearful", "deeply_moving", "powerful_impactful"],
+    vocalQualities: ["distinctive_tone", "strong_resonant"],
+    signatures: ["al_luhaidan_signature"],
+    editorialReviewNoteAr:
+      "النبرة اللحيدانية (العالية) لكامل سور القرآن (١١٤ سورة كاملة · 320kbps) — صلوات المحراب والقيام وتشمل تسجيل سورة البقرة الإضافي الكامل وسورة ق والفرقان وطه.",
+    editorialReviewNoteEn:
+      "Complete 114-Surah live prayer archive in Al-Luhaidan High Cadence (320kbps MP3) featuring the added complete Surah Al-Baqarah prayer recording, Qaf, Al-Furqan & Taha.",
     verifiedByReviewer: true,
   },
   "al-luhaidan-ltq-archive": {
     recordingId: "al-luhaidan-ltq-archive",
     reciterId: "al-luhaidan",
     format: "archive",
-    emotionalStyles: ["khushu", "deeply_moving", "powerful_impactful"],
-    vocalQualities: ["distinctive_tone", "strong_resonant"],
-    signatures: ["al_luhaidan_signature"],
+    emotionalStyles: ["khushu", "deeply_moving", "calm_contemplative"],
+    vocalQualities: ["distinctive_tone", "balanced_moderate"],
+    signatures: ["al_luhaidan_calm_signature"],
     editorialReviewNoteAr:
-      "أرشيف كامل (١١٤ سورة عبر Archive.org · نُشر في ديسمبر ٢٠١٢) بأزمنة تلاوة مغايرة — يوثق قوة الأداء والصوت الجهوري الممتد عبر سائر السور.",
+      "النبرة الخاشعة والهادئة — تلاوة سورة البقرة الأولى المحبوبة (١:٥٦:٤١ د) والأرشيف المستقل الكامل ١١٤ سورة.",
     editorialReviewNoteEn:
-      "Independent 114-Surah Archive.org collection (archived Dec 2012) with distinct pacing and durations — documents sustained breath control and resonant vocal projection across the full Mushaf.",
+      "Calm & Reverent Cadence — beloved first archival recording of Surah Al-Baqarah (1:56:41) and complete 114-Surah independent set.",
+    verifiedByReviewer: true,
+  },
+  "al-luhaidan-m4a-calm": {
+    recordingId: "al-luhaidan-m4a-calm",
+    reciterId: "al-luhaidan",
+    format: "murattal",
+    emotionalStyles: ["calm_contemplative", "gentle_soothing", "reflective", "khushu"],
+    vocalQualities: ["clear_measured", "soft_delivery", "balanced_moderate"],
+    signatures: ["al_luhaidan_calm_signature"],
+    editorialReviewNoteAr:
+      "النبرة الخاشعة والهادئة — المصحف المرتل الكامل عالي النقاء (١١٤ سورة بصيغة M4A AAC) إتقان وسكينة نفسية.",
+    editorialReviewNoteEn:
+      "Calm & Reverent Cadence — high-definition 114-Surah Murattal in M4A (AAC 128kbps) fostering peaceful contemplation.",
+    verifiedByReviewer: true,
+  },
+  "al-luhaidan-mp3q-server8": {
+    recordingId: "al-luhaidan-mp3q-server8",
+    reciterId: "al-luhaidan",
+    format: "murattal",
+    emotionalStyles: ["calm_contemplative", "reflective", "khushu"],
+    vocalQualities: ["clear_measured", "balanced_moderate"],
+    signatures: ["al_luhaidan_calm_signature"],
+    editorialReviewNoteAr:
+      "النبرة الخاشعة والهادئة — المصحف المرتل الكامل عبر MP3Quran (Server8 ID 107) — إيقاع متزن وضبط تجويدي متسق مع السكينة والوقار.",
+    editorialReviewNoteEn:
+      "Calm & Reverent Cadence — complete 114-Surah Murattal via MP3Quran (Server8 ID 107) — steady acoustic balance and consistent serene Hafs Tajweed.",
     verifiedByReviewer: true,
   },
 

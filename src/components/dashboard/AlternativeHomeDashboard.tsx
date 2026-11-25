@@ -19,6 +19,7 @@ import { useProfile, useStats, useTasks, useUser } from "@/hooks/use-nexora";
 import { GrowthMapExperience } from "@/components/growth/GrowthMapExperience";
 import { GlossyBadgesDisplay, type StudentBadge } from "@/components/growth/GlossyBadgesDisplay";
 import { TasksWidget } from "@/components/dashboard/TasksWidget";
+import { DailyDuaWidget } from "@/components/dashboard/DailyDuaWidget";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { Button } from "@/components/ui/button";
 import { BRAND } from "@/config/brand";
@@ -293,6 +294,11 @@ export function AlternativeHomeDashboard() {
             </p>
           </div>
         </div>
+      </section>
+
+      {/* Daily Dua & Adhkar Rotating Widget */}
+      <section aria-label={isAr ? "الدعاء والذكر اليومي" : "Daily Dua & Adhkar"}>
+        <DailyDuaWidget lang={lang} />
       </section>
 
       {/* Curated Workspace Atlas Grid */}

@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -310,9 +311,9 @@ export function BenefitContinuityRegistryPanel() {
       {/* Tab 1: Registry Browser */}
       {activeTab === "registry" && (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={
                   isAr
@@ -321,30 +322,40 @@ export function BenefitContinuityRegistryPanel() {
                 }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 text-xs"
+                className="min-h-[44px] pl-9 text-xs"
               />
             </div>
-            <select
-              className="text-xs rounded-md border border-input bg-background p-2"
+            <ModernSelect
+              id="benefit-registry-kind-filter"
+              label={isAr ? "منظومة النفع" : "Benefit Domain"}
               value={kindFilter}
-              onChange={(e) => setKindFilter(e.target.value as SystemKind | "all")}
-            >
-              <option value="all">{isAr ? "جميع منظومات النفع" : "All Benefit Domains"}</option>
-              <option value="health_awareness">
-                {isAr ? "التوعية الصحية" : "Health Awareness"}
-              </option>
-              <option value="truth_defender">{isAr ? "حامي الحقيقة" : "Truth Defender"}</option>
-              <option value="earth_care">{isAr ? "رعاية الأرض" : "Earth Care"}</option>
-              <option value="digital_protection">
-                {isAr ? "الحماية الرقمية" : "Digital Protection"}
-              </option>
-              <option value="life_saving">{isAr ? "إنقاذ الحياة" : "Life Saving"}</option>
-              <option value="open_tools">{isAr ? "أدوات مفتوحة" : "Open Tools"}</option>
-              <option value="educational_gift">{isAr ? "هدية علمية" : "Educational Gift"}</option>
-              <option value="islamic_beneficial">
-                {isAr ? "مكارم الأخلاق" : "Islamic Benefit"}
-              </option>
-            </select>
+              onValueChange={(v) => setKindFilter(v as SystemKind | "all")}
+              searchPlaceholder={isAr ? "ابحث في المنظومات..." : "Search domains..."}
+              className="sm:w-72 shrink-0"
+              options={[
+                { value: "all", label: isAr ? "جميع منظومات النفع" : "All Benefit Domains" },
+                {
+                  value: "health_awareness",
+                  label: isAr ? "التوعية الصحية" : "Health Awareness",
+                },
+                { value: "truth_defender", label: isAr ? "حامي الحقيقة" : "Truth Defender" },
+                { value: "earth_care", label: isAr ? "رعاية الأرض" : "Earth Care" },
+                {
+                  value: "digital_protection",
+                  label: isAr ? "الحماية الرقمية" : "Digital Protection",
+                },
+                { value: "life_saving", label: isAr ? "إنقاذ الحياة" : "Life Saving" },
+                { value: "open_tools", label: isAr ? "أدوات مفتوحة" : "Open Tools" },
+                {
+                  value: "educational_gift",
+                  label: isAr ? "هدية علمية" : "Educational Gift",
+                },
+                {
+                  value: "islamic_beneficial",
+                  label: isAr ? "مكارم الأخلاق" : "Islamic Benefit",
+                },
+              ]}
+            />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -829,34 +840,37 @@ export function BenefitContinuityRegistryPanel() {
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-4 space-y-3 text-xs">
-              <div className="space-y-1.5">
-                <Label className="text-xs">{isAr ? "نوع الملاحظة" : "Correction Type"}</Label>
-                <select
-                  className="w-full text-xs rounded-md border border-input bg-background p-2"
-                  value={reportKind}
-                  onChange={(e) =>
-                    setReportKind(e.target.value as ResourceCorrectionReport["kind"])
-                  }
-                >
-                  <option value="factual_error">
-                    {isAr ? "خطأ علمي أو حقيقة غير دقيقة" : "Factual Error"}
-                  </option>
-                  <option value="broken_link">
-                    {isAr ? "رابط أو مصدر معطل" : "Broken Source / Link"}
-                  </option>
-                  <option value="outdated">
-                    {isAr ? "معلومات قديمة تم تحديثها" : "Outdated Information"}
-                  </option>
-                  <option value="inaccessible">
-                    {isAr
+              <ModernSelect
+                id="benefit-report-kind"
+                label={isAr ? "نوع الملاحظة" : "Correction Type"}
+                value={reportKind}
+                onValueChange={(v) => setReportKind(v as ResourceCorrectionReport["kind"])}
+                searchPlaceholder={isAr ? "ابحث في أنواع الملاحظات..." : "Search issue types..."}
+                options={[
+                  {
+                    value: "factual_error",
+                    label: isAr ? "خطأ علمي أو حقيقة غير دقيقة" : "Factual Error",
+                  },
+                  {
+                    value: "broken_link",
+                    label: isAr ? "رابط أو مصدر معطل" : "Broken Source / Link",
+                  },
+                  {
+                    value: "outdated",
+                    label: isAr ? "معلومات قديمة تم تحديثها" : "Outdated Information",
+                  },
+                  {
+                    value: "inaccessible",
+                    label: isAr
                       ? "صعوبة في الوصول أو قارئات الشاشة"
-                      : "Inaccessible / Screen Reader Issue"}
-                  </option>
-                  <option value="misleading">
-                    {isAr ? "صياغة مضللة أو غير واضحة" : "Misleading / Unclear Phrasing"}
-                  </option>
-                </select>
-              </div>
+                      : "Inaccessible / Screen Reader Issue",
+                  },
+                  {
+                    value: "misleading",
+                    label: isAr ? "صياغة مضللة أو غير واضحة" : "Misleading / Unclear Phrasing",
+                  },
+                ]}
+              />
 
               <div className="space-y-1.5">
                 <Label className="text-xs">

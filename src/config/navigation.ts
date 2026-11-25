@@ -27,7 +27,6 @@ export type NavTo =
   | "/app/tasks"
   | "/app/care"
   | "/app/future"
-  | "/app/circle"
   | "/app/opportunities"
   | "/app/english"
   | "/app/quran"
@@ -102,14 +101,6 @@ export const NAV_PRIMARY_ITEMS: NavItem[] = [
     labelEn: "Future & Careers",
     labelAr: "المستقبل والمهن",
     icon: Briefcase,
-  },
-  {
-    id: "circle",
-    to: "/app/circle",
-    label: "nav.circle",
-    labelEn: "Knowledge Circle",
-    labelAr: "حلقة المعرفة",
-    icon: Users,
   },
   {
     id: "opportunities",
@@ -188,7 +179,7 @@ export const NAV_ADMIN: NavItem = {
   staffOnly: true,
 };
 
-export const PRIMARY_TOP_NAV_IDS = ["home", "study", "skills", "tasks", "circle", "quran"] as const;
+export const PRIMARY_TOP_NAV_IDS = ["home", "study", "skills", "tasks", "quran"] as const;
 
 export const ALL_NAV_ITEMS: NavItem[] = [...NAV_PRIMARY_ITEMS, ...NAV_SECONDARY_ITEMS, NAV_ADMIN];
 
@@ -211,7 +202,6 @@ export const ROUTE_META: Record<string, RouteMetaEntry> = {
   "/app/tasks": { labelEn: "Productivity & Focus", labelAr: "الإنتاجية والتركيز" },
   "/app/care": { labelEn: "Personal Growth", labelAr: "النمو الشخصي" },
   "/app/future": { labelEn: "Future & Careers", labelAr: "المستقبل والمهن" },
-  "/app/circle": { labelEn: "Knowledge Circle", labelAr: "حلقة المعرفة" },
   "/app/opportunities": { labelEn: "Opportunity Radar", labelAr: "رادار الفرص" },
   "/app/english": { labelEn: "English World", labelAr: "عالم الإنجليزية" },
   "/app/quran": { labelEn: "Quran & Islamic Center", labelAr: "القرآن والمركز الإسلامي" },
@@ -242,7 +232,7 @@ export const NAV_LAYOUT = {
   },
   mobile: {
     style: "docked" as "floating" | "docked",
-    tabs: ["home", "study", "tasks", "circle"],
+    tabs: ["home", "study", "tasks", "quran"],
     centerAction: null as string | null,
     moreColumns: 2,
   },

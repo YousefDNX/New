@@ -1,6 +1,7 @@
 import { BookOpen, Headphones, Layers, Mic, PenTool, Shapes, Volume2 } from "lucide-react";
 import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
 import { Button } from "@/components/ui/button";
+import { ModernSelect, type ModernSelectOption } from "@/components/ui/modern-select";
 import type { AcademyWorkspaceId } from "@/data/english-curriculum";
 import type { EnglishWorldState, WritingSubmissionRecord } from "@/lib/english-world";
 import {
@@ -20,15 +21,26 @@ import {
 const ACADEMY_TABS: Array<{
   id: AcademyWorkspaceId;
   label: string;
+  desc: string;
   icon: typeof Headphones;
 }> = [
-  { id: "listening", label: "Listening", icon: Headphones },
-  { id: "speaking", label: "Speaking", icon: Mic },
-  { id: "reading", label: "Reading", icon: BookOpen },
-  { id: "writing", label: "Writing", icon: PenTool },
-  { id: "vocabulary", label: "Vocabulary", icon: Layers },
-  { id: "grammar", label: "Grammar", icon: Shapes },
-  { id: "pronunciation", label: "Pronunciation", icon: Volume2 },
+  {
+    id: "listening",
+    label: "Listening",
+    desc: "Audio tracks & comprehension checks",
+    icon: Headphones,
+  },
+  { id: "speaking", label: "Speaking", desc: "Conversations & confidence gauge", icon: Mic },
+  { id: "reading", label: "Reading", desc: "Passages & main-idea analysis", icon: BookOpen },
+  { id: "writing", label: "Writing", desc: "Guided prompts & live checker", icon: PenTool },
+  { id: "vocabulary", label: "Vocabulary", desc: "Grade 9 Units 1–4 & flashcards", icon: Layers },
+  { id: "grammar", label: "Grammar", desc: "14 systematic CEFR grammar topics", icon: Shapes },
+  {
+    id: "pronunciation",
+    label: "Pronunciation",
+    desc: "Contrast pairs & shadowing drills",
+    icon: Volume2,
+  },
 ];
 
 export function SkillAcademiesPanel({
@@ -82,26 +94,50 @@ export function SkillAcademiesPanel({
   }) => void;
   onOpenUnit3FullArena?: (() => void) | undefined;
 }) {
+  const academySelectOptions: ModernSelectOption[] = ACADEMY_TABS.map((item) => {
+    const Icon = item.icon;
+    return {
+      value: item.id,
+      label: item.label,
+      description: item.desc,
+      icon: <Icon className="size-4" />,
+      keywords: `${item.label} ${item.desc} ${item.id}`,
+    };
+  });
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-surface-2/60 p-1.5">
-        {ACADEMY_TABS.map((item) => {
-          const Icon = item.icon;
-          const active = activeAcademy === item.id;
-          return (
-            <Button
-              key={item.id}
-              type="button"
-              size="sm"
-              variant={active ? "glow" : "ghost"}
-              onClick={() => onSelectAcademy(item.id)}
-              className="min-h-[44px] gap-1.5 whitespace-nowrap shrink-0 text-xs"
-            >
-              <Icon className="size-3.5" />
-              <span>{item.label}</span>
-            </Button>
-          );
-        })}
+      <div className="grid gap-3 md:grid-cols-12 md:items-end">
+        <div className="md:col-span-4">
+          <ModernSelect
+            label="Skill Academy"
+            value={activeAcademy}
+            onValueChange={(v) => onSelectAcademy(v as AcademyWorkspaceId)}
+            options={academySelectOptions}
+            searchable
+            searchPlaceholder="Jump to an English skill..."
+            data-testid="english-skill-academy-select"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-surface-2/60 p-1.5 md:col-span-8">
+          {ACADEMY_TABS.map((item) => {
+            const Icon = item.icon;
+            const active = activeAcademy === item.id;
+            return (
+              <Button
+                key={item.id}
+                type="button"
+                size="sm"
+                variant={active ? "glow" : "ghost"}
+                onClick={() => onSelectAcademy(item.id)}
+                className="min-h-[44px] gap-1.5 whitespace-nowrap shrink-0 text-xs"
+              >
+                <Icon className="size-3.5" />
+                <span>{item.label}</span>
+              </Button>
+            );
+          })}
+        </div>
       </div>
 
       {activeAcademy === "listening" && (

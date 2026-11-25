@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/app/Logo";
+import { AppFooter } from "@/components/app/AppFooter";
 import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
 import { usePrefs } from "@/lib/preferences";
 import { BRAND } from "@/config/brand";
@@ -223,6 +224,7 @@ function Reset() {
           </div>
         </form>
       </div>
+      <AppFooter />
     </div>
   );
 }

@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -309,31 +310,34 @@ export function FamilyKnowledgeLegacyPanel() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs">
-                      {isAr ? "المنظور الجيلي" : "Generation Perspective"}
-                    </Label>
-                    <select
-                      className="w-full text-xs rounded-md border border-input bg-background p-2"
+                    <ModernSelect
+                      id="family-generation-perspective"
+                      label={isAr ? "المنظور الجيلي" : "Generation Perspective"}
                       value={generation}
-                      onChange={(e) =>
-                        setGeneration(
-                          e.target.value as "grandparent" | "parent" | "youth" | "collaborative",
-                        )
+                      onValueChange={(v) =>
+                        setGeneration(v as "grandparent" | "parent" | "youth" | "collaborative")
                       }
-                    >
-                      <option value="grandparent">
-                        {isAr ? "الجيل الأول (الأجداد)" : "Grandparent Generation"}
-                      </option>
-                      <option value="parent">
-                        {isAr ? "الجيل الثاني (الوالدان)" : "Parent Generation"}
-                      </option>
-                      <option value="youth">
-                        {isAr ? "جيل الشباب (الأحفاد)" : "Youth / Grandchild"}
-                      </option>
-                      <option value="collaborative">
-                        {isAr ? "حوار مشترك بين الأجيال" : "Collaborative Intergenerational"}
-                      </option>
-                    </select>
+                      options={[
+                        {
+                          value: "grandparent",
+                          label: isAr ? "الجيل الأول (الأجداد)" : "Grandparent Generation",
+                        },
+                        {
+                          value: "parent",
+                          label: isAr ? "الجيل الثاني (الوالدان)" : "Parent Generation",
+                        },
+                        {
+                          value: "youth",
+                          label: isAr ? "جيل الشباب (الأحفاد)" : "Youth / Grandchild",
+                        },
+                        {
+                          value: "collaborative",
+                          label: isAr
+                            ? "حوار مشترك بين الأجيال"
+                            : "Collaborative Intergenerational",
+                        },
+                      ]}
+                    />
                   </div>
                 </div>
 

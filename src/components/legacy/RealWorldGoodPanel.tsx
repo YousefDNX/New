@@ -19,13 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   type RealWorldGoodCategory,
@@ -373,31 +367,24 @@ export function RealWorldGoodPanel() {
                       />
                     </div>
 
-                    <div className="space-y-1">
-                      <Label>Category (All 9 Domains) *</Label>
-                      <Select value={cat} onValueChange={(v) => setCat(v as RealWorldGoodCategory)}>
-                        <SelectTrigger className="text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="reading_initiative">Reading Initiative</SelectItem>
-                          <SelectItem value="educational_support">Educational Support</SelectItem>
-                          <SelectItem value="digital_literacy">Digital Literacy Clinic</SelectItem>
-                          <SelectItem value="environmental_awareness">
-                            Environmental Awareness
-                          </SelectItem>
-                          <SelectItem value="accessibility_awareness">
-                            Accessibility Awareness
-                          </SelectItem>
-                          <SelectItem value="science_education">Science Community Lab</SelectItem>
-                          <SelectItem value="community_knowledge_sharing">
-                            Knowledge Sharing
-                          </SelectItem>
-                          <SelectItem value="responsible_tech">Responsible Technology</SelectItem>
-                          <SelectItem value="student_led_learning">Student-Led Learning</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <ModernSelect
+                      label="Category (All 9 Domains) *"
+                      value={cat}
+                      onValueChange={(v) => setCat(v as RealWorldGoodCategory)}
+                      searchable
+                      searchPlaceholder="Search domain..."
+                      options={[
+                        { value: "reading_initiative", label: "Reading Initiative" },
+                        { value: "educational_support", label: "Educational Support" },
+                        { value: "digital_literacy", label: "Digital Literacy Clinic" },
+                        { value: "environmental_awareness", label: "Environmental Awareness" },
+                        { value: "accessibility_awareness", label: "Accessibility Awareness" },
+                        { value: "science_education", label: "Science Community Lab" },
+                        { value: "community_knowledge_sharing", label: "Knowledge Sharing" },
+                        { value: "responsible_tech", label: "Responsible Technology" },
+                        { value: "student_led_learning", label: "Student-Led Learning" },
+                      ]}
+                    />
                   </div>
 
                   <div className="space-y-1">
@@ -580,34 +567,42 @@ export function RealWorldGoodPanel() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-border bg-surface-card p-3 text-xs">
-        <div className="relative min-w-[200px] flex-1">
-          <Search className="absolute start-2.5 top-2.5 size-3.5 text-muted-foreground" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search community initiatives, beneficiaries, mentors..."
-            className="h-8 ps-8 text-xs"
-          />
+      <div className="grid gap-3 sm:grid-cols-3 items-end rounded-2xl border border-border bg-surface-card p-4 text-xs">
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="rwg-search-input" className="text-xs font-semibold">
+            Search Initiatives
+          </Label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              id="rwg-search-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Community initiatives, beneficiaries, mentors..."
+              className="min-h-[44px] ps-9 text-sm"
+            />
+          </div>
         </div>
 
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="h-8 w-[200px] text-xs">
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All 9 Categories</SelectItem>
-            <SelectItem value="reading_initiative">Reading Initiatives</SelectItem>
-            <SelectItem value="educational_support">Educational Support</SelectItem>
-            <SelectItem value="digital_literacy">Digital Literacy</SelectItem>
-            <SelectItem value="environmental_awareness">Environmental</SelectItem>
-            <SelectItem value="accessibility_awareness">Accessibility</SelectItem>
-            <SelectItem value="science_education">Science Education</SelectItem>
-            <SelectItem value="community_knowledge_sharing">Knowledge Sharing</SelectItem>
-            <SelectItem value="responsible_tech">Responsible Technology</SelectItem>
-            <SelectItem value="student_led_learning">Student-Led Learning</SelectItem>
-          </SelectContent>
-        </Select>
+        <ModernSelect
+          label="Category Filter"
+          value={categoryFilter}
+          onValueChange={setCategoryFilter}
+          searchable
+          searchPlaceholder="Search categories..."
+          options={[
+            { value: "all", label: "All 9 Categories" },
+            { value: "reading_initiative", label: "Reading Initiatives" },
+            { value: "educational_support", label: "Educational Support" },
+            { value: "digital_literacy", label: "Digital Literacy" },
+            { value: "environmental_awareness", label: "Environmental" },
+            { value: "accessibility_awareness", label: "Accessibility" },
+            { value: "science_education", label: "Science Education" },
+            { value: "community_knowledge_sharing", label: "Knowledge Sharing" },
+            { value: "responsible_tech", label: "Responsible Technology" },
+            { value: "student_led_learning", label: "Student-Led Learning" },
+          ]}
+        />
       </div>
 
       {/* Projects Showcase Cards */}

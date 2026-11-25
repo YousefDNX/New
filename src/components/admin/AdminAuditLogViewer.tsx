@@ -16,13 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { fetchAuditLogs, clearAuditLogs, type AuditLogEntry } from "@/lib/support-service";
 import { useRbac } from "@/hooks/use-rbac";
 import { downloadTextFile } from "@/lib/safe-file";
@@ -174,21 +168,25 @@ export function AdminAuditLogViewer() {
           />
         </div>
 
-        <div className="w-56">
-          <Select value={actionFilter} onValueChange={setActionFilter}>
-            <SelectTrigger className="text-xs h-9">
-              <SelectValue placeholder="All Actions" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Event Types ({logs.length})</SelectItem>
-              <SelectItem value="user_role_assigned">User Role Assigned</SelectItem>
-              <SelectItem value="user_role_revoked">User Role Revoked</SelectItem>
-              <SelectItem value="moderation_status_updated">Moderation Action</SelectItem>
-              <SelectItem value="ticket_status_updated">Ticket Status Updated</SelectItem>
-              <SelectItem value="help_article_created">Help Article Created</SelectItem>
-              <SelectItem value="system_settings_updated">System Setting Updated</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="w-60">
+          <ModernSelect
+            ariaLabel="Filter event type"
+            placeholder="All Actions"
+            value={actionFilter}
+            onValueChange={setActionFilter}
+            searchable
+            searchPlaceholder="Search event types..."
+            size="sm"
+            options={[
+              { value: "all", label: `All Event Types (${logs.length})` },
+              { value: "user_role_assigned", label: "User Role Assigned" },
+              { value: "user_role_revoked", label: "User Role Revoked" },
+              { value: "moderation_status_updated", label: "Moderation Action" },
+              { value: "ticket_status_updated", label: "Ticket Status Updated" },
+              { value: "help_article_created", label: "Help Article Created" },
+              { value: "system_settings_updated", label: "System Setting Updated" },
+            ]}
+          />
         </div>
       </div>
 

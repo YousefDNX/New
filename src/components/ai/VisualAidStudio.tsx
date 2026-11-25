@@ -4,13 +4,7 @@ import { toast } from "sonner";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { usePrefs } from "@/lib/preferences";
 import type { AiImageAspectRatio, AiImageMode } from "@/lib/ai.server";
 import { downloadDataUrlFile, readFileAsDataUrlSafe } from "@/lib/safe-file";
@@ -142,47 +136,36 @@ export function VisualAidStudio({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <FeatureGuideTrigger featureId="ai-visual-aid" iconOnly />
-          <Select value={mode} onValueChange={(v) => setMode(v as AiImageMode)}>
-            <SelectTrigger
-              aria-label="Diagram quality"
-              className="h-8 w-auto min-w-[9rem] border-input bg-surface-2 px-2.5 text-xs text-foreground"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="fast" className="text-xs">
-                Standard Diagram
-              </SelectItem>
-              <SelectItem value="quality" className="text-xs">
-                High Detail
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
+          <ModernSelect
+            ariaLabel="Diagram quality"
+            value={mode}
+            onValueChange={(v) => setMode(v as AiImageMode)}
+            searchable={false}
+            size="sm"
+            className="w-44"
+            options={[
+              {
+                value: "fast",
+                label: "Standard Diagram",
+                description: "Fast clean classroom visual",
+              },
+              { value: "quality", label: "High Detail", description: "Higher fidelity diagram" },
+            ]}
+          />
+          <ModernSelect
+            ariaLabel="Aspect ratio"
             value={aspectRatio}
             onValueChange={(v) => setAspectRatio(v as AiImageAspectRatio)}
-          >
-            <SelectTrigger
-              aria-label="Aspect ratio"
-              className="h-8 w-auto min-w-[4.5rem] border-input bg-surface-2 px-2.5 text-xs text-foreground"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="4:3" className="text-xs">
-                4:3
-              </SelectItem>
-              <SelectItem value="16:9" className="text-xs">
-                16:9
-              </SelectItem>
-              <SelectItem value="1:1" className="text-xs">
-                1:1
-              </SelectItem>
-              <SelectItem value="3:4" className="text-xs">
-                3:4
-              </SelectItem>
-            </SelectContent>
-          </Select>
+            searchable={false}
+            size="sm"
+            className="w-28"
+            options={[
+              { value: "4:3", label: "4:3" },
+              { value: "16:9", label: "16:9" },
+              { value: "1:1", label: "1:1" },
+              { value: "3:4", label: "3:4" },
+            ]}
+          />
         </div>
       </div>
 

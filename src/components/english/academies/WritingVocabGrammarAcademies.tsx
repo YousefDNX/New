@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect, type ModernSelectOption } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { RealTimeWritingChecker } from "./RealTimeWritingChecker";
 import {
@@ -64,6 +65,53 @@ export function WritingAcademyPanel({
   const savedSub = englishState.writingSubmissions[task.id];
   const [draft, setDraft] = useState(savedSub?.revisedDraft ?? "");
   const [showCompare, setShowCompare] = useState(false);
+  const [levelFilter, setLevelFilter] = useState<string>("all");
+
+  const availableLevels = useMemo(
+    () => Array.from(new Set(WRITING_TASKS.map((item) => item.level))),
+    [],
+  );
+
+  const levelFilterOptions: ModernSelectOption[] = useMemo(
+    () => [
+      {
+        value: "all",
+        label: `All Levels (${WRITING_TASKS.length})`,
+        description: "Show every writing prompt across levels",
+      },
+      ...availableLevels.map((lvl) => ({
+        value: lvl,
+        label: `CEFR ${lvl} (${WRITING_TASKS.filter((item) => item.level === lvl).length})`,
+        description: `Filter prompts for ${lvl} proficiency`,
+        badge: lvl,
+      })),
+    ],
+    [availableLevels],
+  );
+
+  const visibleTasks = useMemo(
+    () =>
+      levelFilter === "all"
+        ? WRITING_TASKS
+        : WRITING_TASKS.filter((item) => item.level === levelFilter),
+    [levelFilter],
+  );
+
+  const promptSelectOptions: ModernSelectOption[] = useMemo(
+    () =>
+      visibleTasks.map((item) => {
+        const existing = englishState.writingSubmissions[item.id];
+        return {
+          value: item.id,
+          label: item.title,
+          description: `${item.typeLabel} · ${item.minWords}–${item.maxWords} words${existing ? ` · ${existing.latestScorePct}%` : ""}`,
+          badge: item.level,
+          group: `Level ${item.level}`,
+          keywords: `${item.title} ${item.level} ${item.typeLabel} ${item.prompt}`,
+        };
+      }),
+    [visibleTasks, englishState.writingSubmissions],
+  );
 
   useEffect(() => {
     setDraft(englishState.writingSubmissions[task.id]?.revisedDraft ?? "");
@@ -98,38 +146,74 @@ export function WritingAcademyPanel({
 
   return (
     <div className="grid gap-5 lg:grid-cols-12">
-      {/* Task Selector */}
-      <div className="surface-card space-y-2 p-4 lg:col-span-4">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      {/* Organized Writing Prompt Selector & Sidebar */}
+      <div className="surface-card space-y-3.5 p-4 lg:col-span-4">
+        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground">
           <PenTool className="size-4 text-primary" />
           <span>Writing Prompts ({WRITING_TASKS.length})</span>
         </div>
-        {WRITING_TASKS.map((t) => {
-          const active = t.id === task.id;
-          const existing = englishState.writingSubmissions[t.id];
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setSelectedTaskId(t.id)}
-              className={`flex min-h-[44px] w-full flex-col rounded-lg border px-3 py-2.5 text-start transition-colors ${
-                active
-                  ? "border-primary bg-primary/10"
-                  : "border-border bg-surface-2 hover:border-primary/40"
-              }`}
-            >
-              <span className="text-[11px] font-medium text-muted-foreground">
-                {t.level} · {t.typeLabel}
-              </span>
-              <span className="mt-0.5 text-xs font-semibold text-foreground">{t.title}</span>
-              {existing && (
-                <span className="mt-0.5 text-[11px] font-medium text-success">
-                  Latest score: {existing.latestScorePct}% ({existing.revisionCount} revisions)
-                </span>
-              )}
-            </button>
-          );
-        })}
+
+        <ModernSelect
+          label="Level Filter"
+          value={levelFilter}
+          onValueChange={(nextLevel) => {
+            setLevelFilter(nextLevel);
+            if (nextLevel !== "all") {
+              const firstInLevel = WRITING_TASKS.find((item) => item.level === nextLevel);
+              if (firstInLevel && task.level !== nextLevel) {
+                setSelectedTaskId(firstInLevel.id);
+              }
+            }
+          }}
+          options={levelFilterOptions}
+          searchable={false}
+          data-testid="writing-level-select"
+        />
+
+        <ModernSelect
+          label="Select Writing Prompt"
+          value={task.id}
+          onValueChange={(id) => setSelectedTaskId(id)}
+          options={promptSelectOptions}
+          searchable
+          searchPlaceholder="Search prompts by topic or type..."
+          leadingIcon={<PenTool className="size-4" />}
+          data-testid="writing-prompt-select"
+        />
+
+        <div className="space-y-1.5 pt-1">
+          {visibleTasks.map((t) => {
+            const active = t.id === task.id;
+            const existing = englishState.writingSubmissions[t.id];
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setSelectedTaskId(t.id)}
+                className={`flex min-h-[44px] w-full flex-col rounded-xl border px-3.5 py-2.5 text-start transition-colors cursor-pointer ${
+                  active
+                    ? "border-primary bg-primary/10"
+                    : "border-border bg-surface-2 hover:border-primary/40"
+                }`}
+              >
+                <div className="flex w-full items-center justify-between gap-2 text-[11px] font-medium text-muted-foreground">
+                  <span>
+                    {t.level} · {t.typeLabel}
+                  </span>
+                  <span className="font-mono tabular-nums">
+                    {t.minWords}–{t.maxWords}w
+                  </span>
+                </div>
+                <span className="mt-0.5 text-xs font-semibold text-foreground">{t.title}</span>
+                {existing && (
+                  <span className="mt-1 text-[11px] font-medium text-success tabular-nums">
+                    Latest score: {existing.latestScorePct}% ({existing.revisionCount} revisions)
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Drafting & Constructive Feedback Coach */}
@@ -532,6 +616,60 @@ export function VocabularyAcademyPanel({
     setCustomDef("");
   };
 
+  const deckSelectOptions: ModernSelectOption[] = useMemo(
+    () =>
+      allDecks.map((d) => {
+        const practiced = d.words.filter((w) => {
+          const st = englishState.vocabProgress[w.id]?.status;
+          return st === "practicing" || st === "mastered";
+        }).length;
+        const pct = d.words.length > 0 ? Math.round((practiced / d.words.length) * 100) : 0;
+        const isG9 = "unitNumber" in d;
+        return {
+          value: d.id,
+          label: d.title,
+          description: `${practiced}/${d.words.length} practiced · ${d.description}`,
+          badge: d.cefr,
+          group: isG9 ? "Grade 9 Curriculum Units" : "CEFR Vocabulary Modules",
+          progressPct: pct,
+          keywords: `${d.title} ${d.description} ${d.cefr} ${d.id}`,
+        };
+      }),
+    [allDecks, englishState.vocabProgress],
+  );
+
+  const vocabModeOptions: ModernSelectOption[] = useMemo(
+    () => [
+      {
+        value: "cards",
+        label: "Flashcards & Word Families",
+        description: "Reveal Arabic meanings, collocations & examples",
+      },
+      {
+        value: "fill",
+        label: "Fill-in-the-Blank Practice",
+        description: "Type target English terms in real context sentences",
+      },
+      {
+        value: "match",
+        label: "Match Meaning Pairs",
+        description: "Pair English words with their Arabic meanings",
+      },
+      {
+        value: "quiz",
+        label: `Unit ${activeUnitNumber} Quiz (${unitQuizQuestions.length})`,
+        description: "Instant graded check with explanations",
+        badge: `${unitQuizQuestions.length}Q`,
+      },
+      {
+        value: "notebook",
+        label: `Personal Notebook (${englishState.personalNotebook.length})`,
+        description: "Save custom words and personal notes",
+      },
+    ],
+    [activeUnitNumber, unitQuizQuestions.length, englishState.personalNotebook.length],
+  );
+
   return (
     <div className="space-y-4">
       {/* Top Deck & Mastery Legend */}
@@ -551,7 +689,7 @@ export function VocabularyAcademyPanel({
             size="sm"
             variant="outline"
             onClick={onOpenUnit3FullArena}
-            className="h-9 gap-1.5 whitespace-nowrap shrink-0 text-xs"
+            className="min-h-[44px] gap-1.5 whitespace-nowrap shrink-0 text-xs"
           >
             <Sparkles className="size-3.5 text-primary" />
             <span>Open Full Grade 9 Unit 3 (12 Practice Modes)</span>
@@ -560,8 +698,30 @@ export function VocabularyAcademyPanel({
         )}
       </div>
 
+      {/* Unified Searchable Unit/Topic & Study Mode Selectors */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <ModernSelect
+          label="Vocabulary Unit & Deck"
+          value={deck.id}
+          onValueChange={selectDeck}
+          options={deckSelectOptions}
+          searchable
+          searchPlaceholder="Search Unit 1–4 or CEFR topic..."
+          leadingIcon={<Layers className="size-4" />}
+          data-testid="vocab-deck-select"
+        />
+        <ModernSelect
+          label="Practice Mode"
+          value={vocabMode}
+          onValueChange={(v) => setVocabMode(v as typeof vocabMode)}
+          options={vocabModeOptions}
+          searchable={false}
+          data-testid="vocab-mode-select"
+        />
+      </div>
+
       {/* Grade 9 Units 1–4 Quick Selector + Additional CEFR Topics */}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         <div className="flex flex-wrap gap-2" data-testid="g9-unit-tabs">
           {([1, 2, 3, 4] as const).map((unitNum) => {
             const unitDeck = allDecks.find((d) => d.id === `vt-g9-unit${unitNum}`)!;
@@ -578,7 +738,7 @@ export function VocabularyAcademyPanel({
                 data-testid={`vocab-unit-${unitNum}-tab`}
                 variant={active ? "glow" : "outline"}
                 onClick={() => selectDeck(unitDeck.id)}
-                className="h-9 text-xs"
+                className="min-h-[40px] text-xs tabular-nums"
               >
                 Unit {unitNum} ({unitDeck.words.length}) · {practiced}/{unitDeck.words.length}
               </Button>
@@ -591,7 +751,7 @@ export function VocabularyAcademyPanel({
               size="sm"
               variant={selectedDeckId === d.id ? "glow" : "outline"}
               onClick={() => selectDeck(d.id)}
-              className="h-9 text-xs"
+              className="min-h-[40px] text-xs"
             >
               {d.cefr} · {d.title.split(":")[0]} ({d.words.length})
             </Button>
@@ -602,7 +762,7 @@ export function VocabularyAcademyPanel({
         <div className="surface-card flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <div className="text-xs font-bold text-foreground">{deck.title}</div>
-            <div className="text-[11px] text-muted-foreground">
+            <div className="text-[11px] text-muted-foreground tabular-nums">
               {deckPracticedCount}/{deck.words.length} words practiced ({deckMasteredPct}%)
             </div>
           </div>
@@ -614,7 +774,7 @@ export function VocabularyAcademyPanel({
             }}
             placeholder="Search word or Arabic meaning..."
             aria-label="Search unit vocabulary"
-            className="h-8 max-w-xs text-xs"
+            className="min-h-[40px] max-w-xs text-xs"
           />
         </div>
       </div>
@@ -639,7 +799,7 @@ export function VocabularyAcademyPanel({
             size="sm"
             variant={vocabMode === m.id ? "default" : "outline"}
             onClick={() => setVocabMode(m.id)}
-            className="h-9 text-xs"
+            className="min-h-[40px] text-xs"
           >
             {m.label}
           </Button>
@@ -1215,37 +1375,66 @@ export function GrammarAcademyPanel({
     ? GRAMMAR_PRAISE_AR[safeIdx % GRAMMAR_PRAISE_AR.length]
     : GRAMMAR_PRAISE_EN[safeIdx % GRAMMAR_PRAISE_EN.length];
 
+  const grammarTopicOptions: ModernSelectOption[] = useMemo(
+    () =>
+      GRAMMAR_TOPICS.map((g) => {
+        const prev = englishState.grammarScores[g.id];
+        return {
+          value: g.id,
+          label: isAr ? g.titleAr : g.title,
+          description: isAr ? g.title : `${g.exercises.length} drills · ${g.titleAr}`,
+          badge: typeof prev === "number" ? `${prev}%` : g.cefr,
+          group: `CEFR ${g.cefr}`,
+          keywords: `${g.title} ${g.titleAr} ${g.cefr} ${g.summary}`,
+        };
+      }),
+    [englishState.grammarScores, isAr],
+  );
+
   return (
     <div className="grid gap-5 lg:grid-cols-12">
-      <div className="surface-card max-h-[560px] space-y-1.5 overflow-y-auto p-4 lg:col-span-4">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {isAr
-            ? `منهج القواعد (${GRAMMAR_TOPICS.length} موضوعاً)`
-            : `Grammar Syllabus (${GRAMMAR_TOPICS.length} Topics)`}
+      <div className="surface-card space-y-3 p-4 lg:col-span-4">
+        <ModernSelect
+          label={
+            isAr
+              ? `موضوع القواعد (${GRAMMAR_TOPICS.length} موضوعاً)`
+              : `Grammar Topic (${GRAMMAR_TOPICS.length})`
+          }
+          value={topic.id}
+          onValueChange={selectTopic}
+          options={grammarTopicOptions}
+          searchable
+          searchPlaceholder={isAr ? "ابحث في قواعد اللغة..." : "Search grammar rules & CEFR..."}
+          data-testid="grammar-topic-select"
+        />
+
+        <div className="max-h-[440px] space-y-1.5 overflow-y-auto pt-1">
+          {GRAMMAR_TOPICS.map((g) => {
+            const active = g.id === topic.id;
+            const prev = englishState.grammarScores[g.id];
+            return (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => selectTopic(g.id)}
+                className={`flex min-h-[44px] w-full items-center justify-between gap-2 rounded-xl border px-3.5 py-2 text-start text-xs leading-snug transition-colors cursor-pointer ${
+                  active
+                    ? "border-primary bg-primary/10 font-semibold text-primary"
+                    : "border-border bg-surface-2 text-foreground hover:border-primary/40"
+                }`}
+              >
+                <span className="min-w-0 flex-1 break-words">
+                  {g.cefr} · {isAr ? g.titleAr : g.title}
+                </span>
+                {typeof prev === "number" && (
+                  <span className="shrink-0 text-[11px] font-semibold text-success tabular-nums">
+                    {prev}%
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
-        {GRAMMAR_TOPICS.map((g) => {
-          const active = g.id === topic.id;
-          const prev = englishState.grammarScores[g.id];
-          return (
-            <button
-              key={g.id}
-              type="button"
-              onClick={() => selectTopic(g.id)}
-              className={`flex min-h-[44px] w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-start text-xs leading-snug transition-colors ${
-                active
-                  ? "border-primary bg-primary/10 font-semibold text-primary"
-                  : "border-border bg-surface-2 text-foreground hover:border-primary/40"
-              }`}
-            >
-              <span className="min-w-0 flex-1 break-words">
-                {g.cefr} · {isAr ? g.titleAr : g.title}
-              </span>
-              {typeof prev === "number" && (
-                <span className="shrink-0 text-[11px] font-semibold text-success">{prev}%</span>
-              )}
-            </button>
-          );
-        })}
       </div>
 
       <div className="surface-card space-y-4 p-5 lg:col-span-8">

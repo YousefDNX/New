@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -380,23 +381,20 @@ export function EarthCareIncubatorPanel() {
             </div>
 
             {/* Form Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs">
-                  {isAr ? "التحدي البيئي الأساسي" : "Selected Challenge Framework"}
-                </Label>
-                <select
-                  className="w-full text-xs rounded-md border border-input bg-background p-2"
-                  value={selectedChallengeId}
-                  onChange={(e) => setSelectedChallengeId(e.target.value)}
-                >
-                  {INITIAL_EARTH_CARE_CHALLENGES.map((ch) => (
-                    <option key={ch.id} value={ch.id}>
-                      {isAr ? ch.titleAr : ch.title} ({DOMAIN_CONFIG[ch.domain]?.labelEn})
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+              <ModernSelect
+                id="earthcare-challenge-framework"
+                label={isAr ? "التحدي البيئي الأساسي" : "Selected Challenge Framework"}
+                value={selectedChallengeId}
+                onValueChange={setSelectedChallengeId}
+                searchPlaceholder={isAr ? "ابحث في التحديات..." : "Search challenges..."}
+                options={INITIAL_EARTH_CARE_CHALLENGES.map((ch) => ({
+                  value: ch.id,
+                  label: isAr ? ch.titleAr : ch.title,
+                  description: DOMAIN_CONFIG[ch.domain]?.[isAr ? "labelAr" : "labelEn"],
+                  keywords: `${ch.title} ${ch.titleAr} ${DOMAIN_CONFIG[ch.domain]?.labelEn ?? ""}`,
+                }))}
+              />
 
               <div className="space-y-1.5">
                 <Label className="text-xs">
@@ -410,7 +408,7 @@ export function EarthCareIncubatorPanel() {
                   }
                   value={projectTitle}
                   onChange={(e) => setProjectTitle(e.target.value)}
-                  className="text-xs"
+                  className="min-h-[44px] text-xs"
                 />
               </div>
             </div>

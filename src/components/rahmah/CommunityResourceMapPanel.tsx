@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -238,34 +239,32 @@ export function CommunityResourceMapPanel() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs">{isAr ? "التصنيف" : "Category"}</Label>
-                <select
-                  className="w-full text-xs rounded-md border border-input bg-background p-2"
-                  value={suggestCategory}
-                  onChange={(e) => setSuggestCategory(e.target.value as CommunityResourceCategory)}
-                >
-                  {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {isAr ? v.ar : v.en}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <ModernSelect
+                id="community-suggest-category"
+                label={isAr ? "التصنيف" : "Category"}
+                value={suggestCategory}
+                onValueChange={(v) => setSuggestCategory(v as CommunityResourceCategory)}
+                searchPlaceholder={isAr ? "ابحث في التصنيفات..." : "Search categories..."}
+                options={Object.entries(CATEGORY_LABELS).map(([k, v]) => ({
+                  value: k,
+                  label: isAr ? v.ar : v.en,
+                  keywords: `${v.en} ${v.ar}`,
+                }))}
+              />
 
-              <div className="space-y-1.5">
-                <Label className="text-xs">{isAr ? "النطاق الجغرافي" : "Region"}</Label>
-                <select
-                  className="w-full text-xs rounded-md border border-input bg-background p-2"
-                  value={suggestRegion}
-                  onChange={(e) => setSuggestRegion(e.target.value as "kuwait" | "gcc" | "global")}
-                >
-                  <option value="kuwait">{isAr ? "دولة الكويت" : "Kuwait"}</option>
-                  <option value="gcc">{isAr ? "دول مجلس التعاون" : "GCC Region"}</option>
-                  <option value="global">{isAr ? "عالمي" : "Global"}</option>
-                </select>
-              </div>
+              <ModernSelect
+                id="community-suggest-region"
+                label={isAr ? "النطاق الجغرافي" : "Region"}
+                value={suggestRegion}
+                onValueChange={(v) => setSuggestRegion(v as "kuwait" | "gcc" | "global")}
+                searchable={false}
+                options={[
+                  { value: "kuwait", label: isAr ? "دولة الكويت" : "Kuwait" },
+                  { value: "gcc", label: isAr ? "دول مجلس التعاون" : "GCC Region" },
+                  { value: "global", label: isAr ? "عالمي" : "Global" },
+                ]}
+              />
 
               <div className="space-y-1.5">
                 <Label className="text-xs">{isAr ? "المدينة والموقع" : "City & Location"}</Label>
@@ -273,7 +272,7 @@ export function CommunityResourceMapPanel() {
                   placeholder={isAr ? "مثال: مدينة الكويت، شرق" : "E.g. Kuwait City, Sharq"}
                   value={suggestCity}
                   onChange={(e) => setSuggestCity(e.target.value)}
-                  className="text-xs"
+                  className="min-h-[44px] text-xs"
                 />
               </div>
             </div>
@@ -325,9 +324,9 @@ export function CommunityResourceMapPanel() {
       )}
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-end gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder={
               isAr
@@ -336,33 +335,40 @@ export function CommunityResourceMapPanel() {
             }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 text-xs"
+            className="min-h-[44px] ps-9 text-xs"
           />
         </div>
 
-        <select
-          className="text-xs rounded-md border border-input bg-background p-2"
+        <ModernSelect
+          id="community-region-filter"
+          label={isAr ? "المنطقة" : "Region"}
           value={regionFilter}
-          onChange={(e) => setRegionFilter(e.target.value as "all" | "kuwait" | "gcc" | "global")}
-        >
-          <option value="all">{isAr ? "جميع المناطق" : "All Regions"}</option>
-          <option value="kuwait">{isAr ? "الكويت" : "Kuwait"}</option>
-          <option value="gcc">{isAr ? "دول الخليج العربي" : "GCC"}</option>
-          <option value="global">{isAr ? "عالمي" : "Global"}</option>
-        </select>
+          onValueChange={(v) => setRegionFilter(v as "all" | "kuwait" | "gcc" | "global")}
+          className="sm:w-48 shrink-0"
+          options={[
+            { value: "all", label: isAr ? "جميع المناطق" : "All Regions" },
+            { value: "kuwait", label: isAr ? "الكويت" : "Kuwait" },
+            { value: "gcc", label: isAr ? "دول الخليج العربي" : "GCC" },
+            { value: "global", label: isAr ? "عالمي" : "Global" },
+          ]}
+        />
 
-        <select
-          className="text-xs rounded-md border border-input bg-background p-2"
+        <ModernSelect
+          id="community-category-filter"
+          label={isAr ? "التصنيف" : "Category"}
           value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value as CommunityResourceCategory | "all")}
-        >
-          <option value="all">{isAr ? "جميع التصنيفات" : "All Categories"}</option>
-          {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-            <option key={k} value={k}>
-              {isAr ? v.ar : v.en}
-            </option>
-          ))}
-        </select>
+          onValueChange={(v) => setCategoryFilter(v as CommunityResourceCategory | "all")}
+          searchPlaceholder={isAr ? "ابحث في التصنيفات..." : "Search categories..."}
+          className="sm:w-64 shrink-0"
+          options={[
+            { value: "all", label: isAr ? "جميع التصنيفات" : "All Categories" },
+            ...Object.entries(CATEGORY_LABELS).map(([k, v]) => ({
+              value: k,
+              label: isAr ? v.ar : v.en,
+              keywords: `${v.en} ${v.ar}`,
+            })),
+          ]}
+        />
       </div>
 
       {/* Directory Cards Grid */}

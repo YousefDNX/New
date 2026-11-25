@@ -60,15 +60,19 @@ export function AccountPrefsSync() {
 
   useEffect(() => {
     const uid = user?.uid ?? null;
-    if (lastScopedUid.current === uid) return;
+    const prevUid = lastScopedUid.current;
+    if (prevUid === uid) return;
     lastScopedUid.current = uid;
     syncedSettingsUid.current = null;
     syncedProfileUid.current = null;
-    if (!uid) {
+    if (uid) {
+      syncPrefsForUser(uid);
+      setEcosystemActiveUid(uid);
+    } else if (typeof prevUid === "string") {
       clearSettingsMemoryCache();
+      syncPrefsForUser(null);
+      setEcosystemActiveUid(null);
     }
-    syncPrefsForUser(uid);
-    setEcosystemActiveUid(uid);
   }, [user?.uid, syncPrefsForUser]);
 
   useEffect(() => {

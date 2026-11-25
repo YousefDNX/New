@@ -12,13 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   fetchAllModerationReports,
   fetchAllTechnicalReports,
@@ -180,8 +174,9 @@ export function AdminModerationManager() {
                     <div className="text-xs text-muted-foreground">
                       Reporter ID: <span className="font-mono">{report.reporter_id}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Select
+                    <div className="w-44">
+                      <ModernSelect
+                        ariaLabel="Moderation report status"
                         value={selectStatus}
                         onValueChange={(v) =>
                           handleUpdateModStatus(
@@ -189,17 +184,15 @@ export function AdminModerationManager() {
                             v as "pending" | "reviewed" | "action_taken" | "dismissed",
                           )
                         }
-                      >
-                        <SelectTrigger className="text-xs h-7 w-36">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="reviewed">Under Review</SelectItem>
-                          <SelectItem value="action_taken">Action Taken</SelectItem>
-                          <SelectItem value="dismissed">Dismissed</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        searchable={false}
+                        size="sm"
+                        options={[
+                          { value: "pending", label: "Pending" },
+                          { value: "reviewed", label: "Under Review" },
+                          { value: "action_taken", label: "Action Taken" },
+                          { value: "dismissed", label: "Dismissed" },
+                        ]}
+                      />
                     </div>
                   </div>
                 </div>

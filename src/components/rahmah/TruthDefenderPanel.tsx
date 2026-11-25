@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -372,23 +373,19 @@ export function TruthDefenderPanel() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">
-                      {isAr ? "الحكم الموضوعي المتزن" : "Calibrated Evidence Verdict"}
-                    </Label>
-                    <select
-                      className="w-full text-xs rounded-md border border-input bg-background p-2"
-                      value={newVerdict}
-                      onChange={(e) => setNewVerdict(e.target.value as ClaimVerdict)}
-                    >
-                      {Object.entries(VERDICT_META).map(([key, meta]) => (
-                        <option key={key} value={key}>
-                          {isAr ? meta.labelAr : meta.labelEn}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                  <ModernSelect
+                    id="truth-claim-verdict"
+                    label={isAr ? "الحكم الموضوعي المتزن" : "Calibrated Evidence Verdict"}
+                    value={newVerdict}
+                    onValueChange={(v) => setNewVerdict(v as ClaimVerdict)}
+                    searchPlaceholder={isAr ? "ابحث في الأحكام..." : "Search verdicts..."}
+                    options={Object.entries(VERDICT_META).map(([key, meta]) => ({
+                      value: key,
+                      label: isAr ? meta.labelAr : meta.labelEn,
+                      keywords: `${meta.labelEn} ${meta.labelAr}`,
+                    }))}
+                  />
                   <div className="space-y-1.5">
                     <Label className="text-xs">
                       {isAr ? "شرح مستوى الثقة والنتيجة" : "Confidence & Reasoning Summary"}
@@ -401,7 +398,7 @@ export function TruthDefenderPanel() {
                       }
                       value={newConfidence}
                       onChange={(e) => setNewConfidence(e.target.value)}
-                      className="text-xs"
+                      className="min-h-[44px] text-xs"
                     />
                   </div>
                 </div>

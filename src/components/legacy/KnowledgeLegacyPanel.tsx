@@ -25,13 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   type KnowledgeLegacyContribution,
@@ -331,37 +325,30 @@ export function KnowledgeLegacyPanel({
                       className="text-xs"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label>Contributor Role *</Label>
-                    <Select
-                      value={contributorRole}
-                      onValueChange={(v) =>
-                        setContributorRole(v as "student" | "teacher" | "volunteer_scholar")
-                      }
-                    >
-                      <SelectTrigger className="text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="student">Student Peer Tutor</SelectItem>
-                        <SelectItem value="teacher">Classroom Teacher</SelectItem>
-                        <SelectItem value="volunteer_scholar">Volunteer Scholar</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Open License *</Label>
-                    <Select value={license} onValueChange={(v) => setLicense(v as ResourceLicense)}>
-                      <SelectTrigger className="text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="CC-BY-4.0">CC-BY 4.0</SelectItem>
-                        <SelectItem value="CC-BY-SA-4.0">CC-BY-SA 4.0</SelectItem>
-                        <SelectItem value="NEXORA-OER-FREE">NEXORA OER Free</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <ModernSelect
+                    label="Contributor Role *"
+                    value={contributorRole}
+                    onValueChange={(v) =>
+                      setContributorRole(v as "student" | "teacher" | "volunteer_scholar")
+                    }
+                    searchable={false}
+                    options={[
+                      { value: "student", label: "Student Peer Tutor" },
+                      { value: "teacher", label: "Classroom Teacher" },
+                      { value: "volunteer_scholar", label: "Volunteer Scholar" },
+                    ]}
+                  />
+                  <ModernSelect
+                    label="Open License *"
+                    value={license}
+                    onValueChange={(v) => setLicense(v as ResourceLicense)}
+                    searchable={false}
+                    options={[
+                      { value: "CC-BY-4.0", label: "CC-BY 4.0" },
+                      { value: "CC-BY-SA-4.0", label: "CC-BY-SA 4.0" },
+                      { value: "NEXORA-OER-FREE", label: "NEXORA OER Free" },
+                    ]}
+                  />
                 </div>
 
                 <div className="space-y-1">
@@ -421,40 +408,48 @@ export function KnowledgeLegacyPanel({
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-border bg-surface-card p-3 text-xs">
-        <div className="relative min-w-[200px] flex-1">
-          <Search className="absolute start-2.5 top-2.5 size-3.5 text-muted-foreground" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search original explanations, authors, subjects..."
-            className="h-8 ps-8 text-xs"
-          />
+      <div className="grid gap-3 sm:grid-cols-4 items-end rounded-2xl border border-border bg-surface-card p-4 text-xs">
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="leg-search-input" className="text-xs font-semibold">
+            Search Explanations &amp; Authors
+          </Label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              id="leg-search-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Original explanations, authors, subjects..."
+              className="min-h-[44px] ps-9 text-sm"
+            />
+          </div>
         </div>
 
-        <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="h-8 w-[140px] text-xs">
-            <SelectValue placeholder="Role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="student">Student Tutors</SelectItem>
-            <SelectItem value="teacher">Teachers</SelectItem>
-            <SelectItem value="volunteer_scholar">Scholars</SelectItem>
-          </SelectContent>
-        </Select>
+        <ModernSelect
+          label="Role Filter"
+          value={roleFilter}
+          onValueChange={setRoleFilter}
+          searchable={false}
+          options={[
+            { value: "all", label: "All Roles" },
+            { value: "student", label: "Student Tutors" },
+            { value: "teacher", label: "Teachers" },
+            { value: "volunteer_scholar", label: "Scholars" },
+          ]}
+        />
 
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-8 w-[150px] text-xs">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="deprecated_outdated">Deprecated</SelectItem>
-            <SelectItem value="archived">Archived</SelectItem>
-          </SelectContent>
-        </Select>
+        <ModernSelect
+          label="Status Filter"
+          value={statusFilter}
+          onValueChange={setStatusFilter}
+          searchable={false}
+          options={[
+            { value: "all", label: "All Status" },
+            { value: "active", label: "Active" },
+            { value: "deprecated_outdated", label: "Deprecated" },
+            { value: "archived", label: "Archived" },
+          ]}
+        />
       </div>
 
       {/* Grid of Contributions */}

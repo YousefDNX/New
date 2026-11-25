@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/app/Page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { useOptionalAuth } from "@/lib/auth";
 import { recordLastVisitedModule } from "@/lib/continue-tracker";
@@ -313,19 +314,20 @@ export function StudyWorkspace() {
             <h2 className="font-display text-base font-bold text-foreground">
               {isAr ? "أضف ملخص درس أو ملاحظة" : "Add Study Note or Lesson Summary"}
             </h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <select
+            <div className="grid items-end gap-3 sm:grid-cols-2">
+              <ModernSelect
+                id="study-note-subject"
+                label={isAr ? "المادة الدراسية" : "Subject"}
+                ariaLabel={isAr ? "المادة الدراسية" : "Subject"}
                 value={noteSubject}
-                onChange={(e) => setNoteSubject(e.target.value)}
-                aria-label={isAr ? "المادة الدراسية" : "Subject"}
-                className="min-h-[44px] rounded-xl border border-border bg-surface-2 px-3 text-sm text-foreground"
-              >
-                {GENERAL_SUBJECTS.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {isAr ? s.ar : s.en}
-                  </option>
-                ))}
-              </select>
+                onValueChange={setNoteSubject}
+                searchPlaceholder={isAr ? "ابحث في المواد..." : "Search subjects..."}
+                options={GENERAL_SUBJECTS.map((s) => ({
+                  value: s.id,
+                  label: isAr ? s.ar : s.en,
+                  keywords: `${s.en} ${s.ar}`,
+                }))}
+              />
               <Input
                 value={noteTitle}
                 onChange={(e) => setNoteTitle(e.target.value)}
@@ -427,19 +429,20 @@ export function StudyWorkspace() {
             <h2 className="font-display text-base font-bold text-foreground">
               {isAr ? "أنشئ بطاقة مراجعة سريعة" : "Create Active Recall Flashcard"}
             </h2>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <select
+            <div className="grid items-end gap-3 sm:grid-cols-3">
+              <ModernSelect
+                id="study-card-subject"
+                label={isAr ? "المادة" : "Subject"}
+                ariaLabel={isAr ? "المادة" : "Subject"}
                 value={cardSubject}
-                onChange={(e) => setCardSubject(e.target.value)}
-                aria-label={isAr ? "المادة" : "Subject"}
-                className="min-h-[44px] rounded-xl border border-border bg-surface-2 px-3 text-sm text-foreground"
-              >
-                {GENERAL_SUBJECTS.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {isAr ? s.ar : s.en}
-                  </option>
-                ))}
-              </select>
+                onValueChange={setCardSubject}
+                searchPlaceholder={isAr ? "ابحث في المواد..." : "Search subjects..."}
+                options={GENERAL_SUBJECTS.map((s) => ({
+                  value: s.id,
+                  label: isAr ? s.ar : s.en,
+                  keywords: `${s.en} ${s.ar}`,
+                }))}
+              />
               <Input
                 value={cardFront}
                 onChange={(e) => setCardFront(e.target.value)}
@@ -550,19 +553,20 @@ export function StudyWorkspace() {
             <h2 className="font-display text-base font-bold text-foreground">
               {isAr ? "سجل خطأً لتجنّبه مستقبلاً" : "Log a Mistake & Correction"}
             </h2>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <select
+            <div className="grid items-end gap-3 sm:grid-cols-3">
+              <ModernSelect
+                id="study-mistake-subject"
+                label={isAr ? "المادة" : "Subject"}
+                ariaLabel={isAr ? "المادة" : "Subject"}
                 value={mistakeSubject}
-                onChange={(e) => setMistakeSubject(e.target.value)}
-                aria-label={isAr ? "المادة" : "Subject"}
-                className="min-h-[44px] rounded-xl border border-border bg-surface-2 px-3 text-sm text-foreground"
-              >
-                {GENERAL_SUBJECTS.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {isAr ? s.ar : s.en}
-                  </option>
-                ))}
-              </select>
+                onValueChange={setMistakeSubject}
+                searchPlaceholder={isAr ? "ابحث في المواد..." : "Search subjects..."}
+                options={GENERAL_SUBJECTS.map((s) => ({
+                  value: s.id,
+                  label: isAr ? s.ar : s.en,
+                  keywords: `${s.en} ${s.ar}`,
+                }))}
+              />
               <Input
                 value={mistakeQuestion}
                 onChange={(e) => setMistakeQuestion(e.target.value)}

@@ -1,13 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { LANG_META, SUPPORTED_LANGS, type Lang } from "@/lib/i18n-dict";
@@ -56,25 +50,32 @@ export function AiPreferencesSection({
       badge={<FeatureGuideTrigger featureId="ai-transparency" />}
     >
       <SettingsRow id="ai-lang" label={t("set.ai.lang")}>
-        <Select
-          value={ai.responseLanguage}
-          onValueChange={(value) => {
-            const v = value as "ui" | Lang;
-            updateAi({ responseLanguage: v }, { ai_response_lang: v });
-          }}
-        >
-          <SelectTrigger id="ai-lang" aria-label={t("set.ai.lang")} className="h-9 min-w-[13rem]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ui">{t("set.study.followUi")}</SelectItem>
-            {SUPPORTED_LANGS.map((code) => (
-              <SelectItem key={code} value={code}>
-                {LANG_META[code].nativeName}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="w-full sm:w-64">
+          <ModernSelect
+            id="ai-lang"
+            ariaLabel={t("set.ai.lang")}
+            value={ai.responseLanguage}
+            onValueChange={(value) => {
+              const v = value as "ui" | Lang;
+              updateAi({ responseLanguage: v }, { ai_response_lang: v });
+            }}
+            searchable
+            options={[
+              {
+                value: "ui",
+                label: t("set.study.followUi"),
+                description: "Match active interface language",
+              },
+              ...SUPPORTED_LANGS.map((code) => ({
+                value: code,
+                label: LANG_META[code].nativeName,
+                description: LANG_META[code].englishName,
+                badge: code.toUpperCase(),
+                keywords: `${code} ${LANG_META[code].nativeName} ${LANG_META[code].englishName}`,
+              })),
+            ]}
+          />
+        </div>
       </SettingsRow>
 
       <SettingsRow label={t("set.ai.length")}>

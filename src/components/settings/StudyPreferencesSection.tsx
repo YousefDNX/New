@@ -4,13 +4,7 @@ import { clampMinutes, type StudyPrefs } from "@/lib/settings";
 import type { UserSettingsRow } from "@/lib/firestore-data";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { SegmentedChoice, SettingsRow, SettingsSectionCard } from "./SettingsPrimitives";
@@ -41,29 +35,32 @@ export function StudyPreferencesSection({
       badge={<FeatureGuideTrigger featureId="settings-notifications" />}
     >
       <SettingsRow id="study-expl-lang" label={t("set.study.explLang")}>
-        <Select
-          value={study.explanationLanguage}
-          onValueChange={(value) => {
-            const v = value as "ui" | Lang;
-            updateStudy({ explanationLanguage: v }, { study_explanation_lang: v });
-          }}
-        >
-          <SelectTrigger
+        <div className="w-full sm:w-64">
+          <ModernSelect
             id="study-expl-lang"
-            aria-label={t("set.study.explLang")}
-            className="h-9 min-w-[13rem]"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ui">{t("set.study.followUi")}</SelectItem>
-            {SUPPORTED_LANGS.map((code) => (
-              <SelectItem key={code} value={code}>
-                {LANG_META[code].nativeName}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            ariaLabel={t("set.study.explLang")}
+            value={study.explanationLanguage}
+            onValueChange={(value) => {
+              const v = value as "ui" | Lang;
+              updateStudy({ explanationLanguage: v }, { study_explanation_lang: v });
+            }}
+            searchable
+            options={[
+              {
+                value: "ui",
+                label: t("set.study.followUi"),
+                description: "Match active interface language",
+              },
+              ...SUPPORTED_LANGS.map((code) => ({
+                value: code,
+                label: LANG_META[code].nativeName,
+                description: LANG_META[code].englishName,
+                badge: code.toUpperCase(),
+                keywords: `${code} ${LANG_META[code].nativeName} ${LANG_META[code].englishName}`,
+              })),
+            ]}
+          />
+        </div>
       </SettingsRow>
 
       <SettingsRow label={t("set.study.complexity")}>

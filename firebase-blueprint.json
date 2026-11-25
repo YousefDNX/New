@@ -872,11 +872,22 @@
         },
         "reporter_email": { "type": "string", "maxLength": 160 },
         "circle_id": { "type": "string", "maxLength": 128 },
-        "target_type": { "type": "string", "enum": ["post", "resource", "task", "team", "community_post", "community_comment"] },
+        "target_type": {
+          "type": "string",
+          "enum": ["post", "resource", "task", "team", "community_post", "community_comment"]
+        },
         "target_id": { "type": "string", "maxLength": 128 },
         "reported_target_type": {
           "type": "string",
-          "enum": ["circle_post", "circle_member", "comment", "resource", "community_post", "community_comment", "other"]
+          "enum": [
+            "circle_post",
+            "circle_member",
+            "comment",
+            "resource",
+            "community_post",
+            "community_comment",
+            "other"
+          ]
         },
         "reported_target_id": { "type": "string", "maxLength": 128 },
         "reason": {
@@ -1556,8 +1567,18 @@
       "description": "Private daily time organizer entry owned by user_id == request.auth.uid.",
       "type": "object",
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
-        "user_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
         "title": { "type": "string", "minLength": 1, "maxLength": 160 },
         "day_label": { "type": "string", "minLength": 1, "maxLength": 60 },
         "start_time": { "type": "string", "minLength": 1, "maxLength": 10 },
@@ -1567,15 +1588,34 @@
         "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
         "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
       },
-      "required": ["id", "user_id", "title", "day_label", "start_time", "end_time", "created_at", "updated_at"]
+      "required": [
+        "id",
+        "user_id",
+        "title",
+        "day_label",
+        "start_time",
+        "end_time",
+        "created_at",
+        "updated_at"
+      ]
     },
     "CommunityPost": {
       "title": "Knowledge Circle Shared Community Post",
       "description": "Shared educational post across all guest learners with category, optional media, and non-PII author display name.",
       "type": "object",
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
-        "author_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "author_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
         "author_name": { "type": "string", "minLength": 1, "maxLength": 60 },
         "category": { "type": "string", "enum": ["general", "question", "info", "explanation"] },
         "tag": { "type": "string", "maxLength": 40 },
@@ -1594,10 +1634,25 @@
       "description": "Shared discussion comment or nested reply on a community post.",
       "type": "object",
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
-        "post_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "post_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
         "parent_comment_id": { "type": "string", "maxLength": 128 },
-        "author_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "author_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
         "author_name": { "type": "string", "minLength": 1, "maxLength": 60 },
         "body": { "type": "string", "minLength": 1, "maxLength": 2000 },
         "edited": { "type": "boolean" },
@@ -1611,8 +1666,18 @@
       "description": "Per-guest unique reaction keyed by userId under community_posts/{postId}/reactions/{userId}.",
       "type": "object",
       "properties": {
-        "user_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
-        "post_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "post_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
         "type": { "type": "string", "enum": ["like", "helpful", "insightful"] },
         "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
         "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
@@ -1624,8 +1689,18 @@
       "description": "Strictly private bookmark reference stored under users/{userId}/saved_posts/{postId}.",
       "type": "object",
       "properties": {
-        "post_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
-        "user_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "post_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128
+        },
         "saved_at": { "type": "string", "format": "date-time", "maxLength": 40 }
       },
       "required": ["post_id", "user_id", "saved_at"]

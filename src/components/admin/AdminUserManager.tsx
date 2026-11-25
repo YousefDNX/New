@@ -16,13 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   Dialog,
   DialogContent,
@@ -164,21 +158,25 @@ export function AdminUserManager() {
           />
         </div>
 
-        <div className="w-44">
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="text-xs h-9">
-              <SelectValue placeholder="All Roles" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Roles ({users.length})</SelectItem>
-              <SelectItem value="student">Students</SelectItem>
-              <SelectItem value="support">Support Staff</SelectItem>
-              <SelectItem value="moderator">Moderators</SelectItem>
-              <SelectItem value="content_manager">Content Managers</SelectItem>
-              <SelectItem value="admin">Administrators</SelectItem>
-              <SelectItem value="founder">Founder</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="w-52">
+          <ModernSelect
+            ariaLabel="Filter users by role"
+            placeholder="All Roles"
+            value={roleFilter}
+            onValueChange={setRoleFilter}
+            searchable
+            searchPlaceholder="Search roles..."
+            size="sm"
+            options={[
+              { value: "all", label: `All Roles (${users.length})` },
+              { value: "student", label: "Students" },
+              { value: "support", label: "Support Staff" },
+              { value: "moderator", label: "Moderators" },
+              { value: "content_manager", label: "Content Managers" },
+              { value: "admin", label: "Administrators" },
+              { value: "founder", label: "Founder" },
+            ]}
+          />
         </div>
       </div>
 
@@ -329,28 +327,19 @@ export function AdminUserManager() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">Select New Role</label>
-                <Select
-                  value={targetRole}
-                  onValueChange={(val) => setTargetRole(val as StaffRoleType)}
-                >
-                  <SelectTrigger className="text-xs h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="student">Student (Standard user)</SelectItem>
-                    <SelectItem value="support">Support Agent (Respond to tickets)</SelectItem>
-                    <SelectItem value="moderator">Moderator (Review safety reports)</SelectItem>
-                    <SelectItem value="content_manager">
-                      Content Manager (Edit help docs)
-                    </SelectItem>
-                    <SelectItem value="admin">
-                      Administrator (Manage users &amp; settings)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <ModernSelect
+                label="Select New Role"
+                value={targetRole}
+                onValueChange={(val) => setTargetRole(val as StaffRoleType)}
+                searchable
+                options={[
+                  { value: "student", label: "Student (Standard user)" },
+                  { value: "support", label: "Support Agent (Respond to tickets)" },
+                  { value: "moderator", label: "Moderator (Review safety reports)" },
+                  { value: "content_manager", label: "Content Manager (Edit help docs)" },
+                  { value: "admin", label: "Administrator (Manage users & settings)" },
+                ]}
+              />
 
               <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20 text-[11px] text-muted-foreground flex items-start gap-2">
                 <Lock className="size-3.5 text-primary mt-0.5 shrink-0" />

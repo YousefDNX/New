@@ -341,12 +341,30 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
 
   const playSpecialAlBaqarah = () => {
     const luhaidan = getAuthenticReciter("al-luhaidan");
-    selectReciterAndLoad(luhaidan, 2, "al-luhaidan-mp3q-server8", true);
+    selectReciterAndLoad(luhaidan, 2, "al-luhaidan-ltq-archive", true);
+  };
+
+  const playSpecialAlBaqarahExtra = () => {
+    const luhaidan = getAuthenticReciter("al-luhaidan");
+    selectReciterAndLoad(luhaidan, 2, "al-luhaidan-high-archive", true);
+    setDirectoryStep("country_detail");
   };
 
   const playLuhaidanAlFurqan = (recordingId = "al-luhaidan-qa-select") => {
     const luhaidan = getAuthenticReciter("al-luhaidan");
     selectReciterAndLoad(luhaidan, 25, recordingId, true);
+    setDirectoryStep("country_detail");
+  };
+
+  const playLuhaidanTahaJibal = (recordingId = "al-luhaidan-qa-select") => {
+    const luhaidan = getAuthenticReciter("al-luhaidan");
+    selectReciterAndLoad(luhaidan, 20, recordingId, true);
+    setDirectoryStep("country_detail");
+  };
+
+  const playLuhaidanQaf = (recordingId = "al-luhaidan-qa-select") => {
+    const luhaidan = getAuthenticReciter("al-luhaidan");
+    selectReciterAndLoad(luhaidan, 50, recordingId, true);
     setDirectoryStep("country_detail");
   };
 
@@ -749,8 +767,8 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
               },
               {
                 id: "soundcloud",
-                labelAr: "SoundCloud · MP3 · M4A",
-                labelEn: "SoundCloud · MP3 · M4A",
+                labelAr: "المكتبة الصوتية · MP3 و M4A",
+                labelEn: "Audio Hub · MP3 & M4A",
                 icon: Headphones,
               },
               {
@@ -1850,18 +1868,18 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             {surahRecordings.length > 1 && (
-              <select
-                aria-label={isAr ? "اختر الرواية أو النسخة" : "Select edition"}
+              <ModernSelect
+                ariaLabel={isAr ? "اختر الرواية أو النسخة" : "Select edition"}
                 value={activeRecording.recordingId}
-                onChange={(e) => audioCtx.selectRecordingId(e.target.value)}
-                className="min-h-[42px] rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 px-3 py-1.5 text-xs font-semibold text-stone-800 dark:text-stone-200"
-              >
-                {surahRecordings.map((ed) => (
-                  <option key={ed.recordingId} value={ed.recordingId}>
-                    {isAr ? ed.collectionTitleAr : ed.collectionTitleEn}
-                  </option>
-                ))}
-              </select>
+                onValueChange={(val) => audioCtx.selectRecordingId(val)}
+                searchable={surahRecordings.length >= 4}
+                className="min-w-[200px]"
+                options={surahRecordings.map((ed) => ({
+                  value: ed.recordingId,
+                  label: isAr ? ed.collectionTitleAr : ed.collectionTitleEn,
+                  description: isAr ? ed.riwayahAr : ed.riwayahEn,
+                }))}
+              />
             )}
             <button
               type="button"
@@ -2019,31 +2037,42 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
       {/* Compact Quick-Play Bar for Featured Passages (Tucked calmly below primary workflow) */}
       <div
         data-testid="luhaidan-furqan-spotlight"
-        className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50/70 dark:bg-stone-900/60 px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-xs"
+        className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/40 dark:bg-stone-900/70 px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-xs"
       >
         <div className="min-w-0">
           <span className="font-bold text-stone-900 dark:text-stone-100">
             {isAr
-              ? "مقطع مختار: سورة الفرقان ﴿يُضَاعَفْ لَهُ الْعَذَابُ يَوْمَ الْقِيَامَةِ﴾ (٢٥:٦٨–٧٠)"
-              : "Quick Listen: Surah Al-Furqan (25:68–70) & Al-Baqarah — Sheikh Al-Luhaidan"}
+              ? "النبرة اللحيدانية الشهيرة: طه ﴿وَيَسْأَلُونَكَ عَنِ الْجِبَالِ﴾ · الفرقان ﴿يُضَاعَفْ لَهُ الْعَذَابُ يَوْمَ الْقِيَامَةِ ... وَكَانَ اللَّهُ غَفُورًا رَحِيمًا﴾ · ق ﴿وَجَاءَتْ سَكْرَةُ الْمَوْتِ بِالْحَقِّ ذَٰلِكَ مَا كُنتَ مِنْهُ تَحِيدُ﴾"
+              : "Al-Luhaidan Signature: Taha (20:105 Al-Jibal), Al-Furqan (25:68–70), & Surah Qaf (50:19 Sakratul-Mawt)"}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => playLuhaidanAlFurqan("al-luhaidan-qa-select")}
+            data-testid="quick-listen-taha-jibal"
+            onClick={() => playLuhaidanTahaJibal("al-luhaidan-qa-select")}
             className="min-h-[36px] inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white font-semibold text-xs"
           >
             <Play className="w-3 h-3 fill-current" />
-            <span>{isAr ? "الفرقان (المحراب ٢٠:٢٤)" : "Al-Furqan (20:24)"}</span>
+            <span>{isAr ? "طه: ويسألونك عن الجبال" : "Taha: Al-Jibal"}</span>
           </button>
           <button
             type="button"
-            onClick={() => playLuhaidanAlFurqan("al-luhaidan-mp3q-server8")}
-            className="min-h-[36px] inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 font-semibold text-xs text-stone-700 dark:text-stone-200"
+            data-testid="quick-listen-furqan-signature"
+            onClick={() => playLuhaidanAlFurqan("al-luhaidan-qa-select")}
+            className="min-h-[36px] inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-amber-700 hover:bg-amber-600 text-white font-semibold text-xs"
           >
             <Play className="w-3 h-3 fill-current" />
-            <span>{isAr ? "الفرقان (مرتل ١٦:٢٠)" : "Murattal (16:20)"}</span>
+            <span>{isAr ? "الفرقان: وكان الله غفوراً رحيماً" : "Al-Furqan"}</span>
+          </button>
+          <button
+            type="button"
+            data-testid="quick-listen-qaf-signature"
+            onClick={() => playLuhaidanQaf("al-luhaidan-qa-select")}
+            className="min-h-[36px] inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-teal-700 hover:bg-teal-600 text-white font-semibold text-xs"
+          >
+            <Play className="w-3 h-3 fill-current" />
+            <span>{isAr ? "ق: وجاءت سكرة الموت بالحق" : "Qaf: Sakratul-Mawt"}</span>
           </button>
           <button
             type="button"
@@ -2051,15 +2080,26 @@ const QuranAudioPlayerInner: React.FC<QuranAudioPlayerProps> = ({
             className="min-h-[36px] inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 font-semibold text-xs text-stone-700 dark:text-stone-200"
           >
             <Play className="w-3 h-3 fill-current" />
-            <span>{isAr ? "البقرة كاملة" : "Al-Baqarah"}</span>
+            <span>{isAr ? "البقرة (التلاوة المحبوبة)" : "Al-Baqarah (Beloved)"}</span>
+          </button>
+          <button
+            type="button"
+            data-testid="quick-listen-baqarah-extra"
+            onClick={playSpecialAlBaqarahExtra}
+            className="min-h-[36px] inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 font-semibold text-xs text-stone-700 dark:text-stone-200"
+          >
+            <Play className="w-3 h-3 fill-current" />
+            <span>{isAr ? "البقرة (تسجيل إضافي)" : "Al-Baqarah (Added)"}</span>
           </button>
           <button
             type="button"
             onClick={() => setViewTab("soundcloud")}
-            className="min-h-[36px] inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-orange-300 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 font-semibold text-xs text-orange-800 dark:text-orange-300 hover:bg-orange-100/70"
+            className="min-h-[36px] inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 font-semibold text-xs text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/70"
           >
             <Headphones className="w-3 h-3" />
-            <span>{isAr ? "SoundCloud و ١١٤ سورة · M4A" : "SoundCloud · 114 MP3 & M4A"}</span>
+            <span>
+              {isAr ? "المكتبة الصوتية المباشرة (MP3 / M4A)" : "Direct Audio Hub (MP3 & M4A)"}
+            </span>
           </button>
         </div>
       </div>

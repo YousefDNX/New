@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, Info, Mic, MicOff, Play, Square, Volume2, XCircle } from "lucide-react";
+import { SpeakingConfidenceGauge } from "@/components/ai/SpeakingConfidenceGauge";
 import { Button } from "@/components/ui/button";
+import { ModernSelect, type ModernSelectOption } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { PRONUNCIATION_MODULES, SPEAKING_SCENARIOS } from "@/data/english-academies";
 import type { EnglishWorldState } from "@/lib/english-world";
@@ -11,6 +13,10 @@ import {
   speakEnglishText,
 } from "@/lib/english-speech";
 import { getSupportedAudioMimeType, safeStopMediaRecorder } from "@/lib/safe-file";
+import {
+  createSpeakingConfidenceTracker,
+  type SpeakingConfidenceSnapshot,
+} from "@/lib/speaking-confidence";
 
 interface SpeechRecLike {
   lang: string;
@@ -42,6 +48,13 @@ export function SpeakingAcademyPanel({
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const [feedbackShown, setFeedbackShown] = useState(false);
 
+  const confidenceTrackerRef = useRef(createSpeakingConfidenceTracker());
+  const [confidenceSnapshot, setConfidenceSnapshot] = useState<SpeakingConfidenceSnapshot>(() =>
+    confidenceTrackerRef.current.getSnapshot(false),
+  );
+  const meterCtxRef = useRef<AudioContext | null>(null);
+  const meterTimerRef = useRef<number | null>(null);
+
   const recRef = useRef<SpeechRecLike | null>(null);
   const mediaRecRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -49,6 +62,54 @@ export function SpeakingAcademyPanel({
 
   const srSupported = isSpeechRecognitionAvailable();
   const mrSupported = isMediaRecorderAvailable();
+
+  const stopConfidenceMeter = useCallback(() => {
+    if (meterTimerRef.current !== null) {
+      window.clearInterval(meterTimerRef.current);
+      meterTimerRef.current = null;
+    }
+    if (meterCtxRef.current && meterCtxRef.current.state !== "closed") {
+      void meterCtxRef.current.close();
+      meterCtxRef.current = null;
+    }
+    setConfidenceSnapshot(confidenceTrackerRef.current.getSnapshot(false));
+  }, []);
+
+  const startConfidenceMeter = useCallback(
+    (stream: MediaStream) => {
+      stopConfidenceMeter();
+      confidenceTrackerRef.current.reset();
+      setConfidenceSnapshot(confidenceTrackerRef.current.getSnapshot(true));
+
+      if (typeof window === "undefined") return;
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+
+      try {
+        const ctx = new AudioCtx();
+        meterCtxRef.current = ctx;
+        const source = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 1024;
+        source.connect(analyser);
+        const timeBuf = new Float32Array(analyser.fftSize);
+
+        meterTimerRef.current = window.setInterval(() => {
+          const snap = confidenceTrackerRef.current.pushAnalyser(
+            analyser,
+            timeBuf,
+            ctx.sampleRate || 44100,
+          );
+          setConfidenceSnapshot(snap);
+        }, 120);
+      } catch {
+        /* ignore WebAudio analyser restrictions */
+      }
+    },
+    [stopConfidenceMeter],
+  );
 
   useEffect(() => {
     audioUrlRef.current = recordedAudioUrl;
@@ -61,6 +122,7 @@ export function SpeakingAcademyPanel({
       } catch {
         /* ignore */
       }
+      stopConfidenceMeter();
       safeStopMediaRecorder(mediaRecRef.current, mediaStreamRef.current);
       if (audioUrlRef.current) {
         try {
@@ -70,11 +132,27 @@ export function SpeakingAcademyPanel({
         }
       }
     };
-  }, []);
+  }, [stopConfidenceMeter]);
 
   const scenario = useMemo(
     () => SPEAKING_SCENARIOS.find((s) => s.id === selectedId) ?? SPEAKING_SCENARIOS[0]!,
     [selectedId],
+  );
+
+  const scenarioSelectOptions: ModernSelectOption[] = useMemo(
+    () =>
+      SPEAKING_SCENARIOS.map((sc) => {
+        const practiced = englishState.speakingPracticed.includes(sc.id);
+        return {
+          value: sc.id,
+          label: sc.title,
+          description: `${sc.modeLabel} · ${practiced ? "Practiced" : "Not yet completed"}`,
+          badge: sc.level,
+          group: `Level ${sc.level}`,
+          keywords: `${sc.title} ${sc.level} ${sc.modeLabel} ${sc.prompt}`,
+        };
+      }),
+    [englishState.speakingPracticed],
   );
 
   const selectScenario = (id: string) => {
@@ -115,6 +193,8 @@ export function SpeakingAcademyPanel({
       rec.onresult = (ev) => {
         const transcript = ev.results?.[0]?.[0]?.transcript ?? "";
         if (transcript) {
+          const words = transcript.trim().split(/\s+/).filter(Boolean).length;
+          setConfidenceSnapshot(confidenceTrackerRef.current.noteTranscriptWords(words));
           setResponseText((prev) => (prev ? `${prev} ${transcript}` : transcript));
         }
       };
@@ -137,6 +217,7 @@ export function SpeakingAcademyPanel({
   const handleToggleAudioRecording = async () => {
     if (!mrSupported) return;
     if (isRecordingAudio && mediaRecRef.current) {
+      stopConfidenceMeter();
       safeStopMediaRecorder(mediaRecRef.current, mediaStreamRef.current);
       setIsRecordingAudio(false);
       return;
@@ -144,6 +225,7 @@ export function SpeakingAcademyPanel({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
+      startConfidenceMeter(stream);
       const chunks: BlobPart[] = [];
       const mimeType = getSupportedAudioMimeType();
       const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
@@ -151,6 +233,7 @@ export function SpeakingAcademyPanel({
         if (e.data && e.data.size > 0) chunks.push(e.data);
       };
       mr.onstop = () => {
+        stopConfidenceMeter();
         safeStopMediaRecorder(null, stream);
         mediaStreamRef.current = null;
         setIsRecordingAudio(false);
@@ -171,6 +254,7 @@ export function SpeakingAcademyPanel({
       mr.start();
       setIsRecordingAudio(true);
     } catch {
+      stopConfidenceMeter();
       safeStopMediaRecorder(mediaRecRef.current, mediaStreamRef.current);
       mediaStreamRef.current = null;
       setIsRecordingAudio(false);
@@ -188,44 +272,65 @@ export function SpeakingAcademyPanel({
   return (
     <div className="grid gap-5 lg:grid-cols-12">
       {/* Scenario Menu */}
-      <div className="surface-card space-y-2 p-4 lg:col-span-4">
-        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Speaking Scenarios ({SPEAKING_SCENARIOS.length})
-        </div>
-        {SPEAKING_SCENARIOS.map((sc) => {
-          const active = sc.id === scenario.id;
-          const practiced = englishState.speakingPracticed.includes(sc.id);
-          return (
-            <button
-              key={sc.id}
-              type="button"
-              onClick={() => selectScenario(sc.id)}
-              className={`flex min-h-[44px] w-full items-start justify-between gap-2 rounded-lg border px-3 py-2.5 text-start transition-colors ${
-                active
-                  ? "border-primary bg-primary/10"
-                  : "border-border bg-surface-2 hover:border-primary/40"
-              }`}
-            >
-              <div>
-                <div className="text-[11px] font-medium text-muted-foreground">
-                  {sc.level} · {sc.modeLabel}
+      <div className="surface-card space-y-3 p-4 lg:col-span-4">
+        <ModernSelect
+          label={`Speaking Scenario (${SPEAKING_SCENARIOS.length})`}
+          value={scenario.id}
+          onValueChange={selectScenario}
+          options={scenarioSelectOptions}
+          searchable
+          searchPlaceholder="Search speaking scenarios..."
+          leadingIcon={<Mic className="size-4" />}
+          data-testid="speaking-scenario-select"
+        />
+
+        <div className="space-y-1.5 pt-1">
+          {SPEAKING_SCENARIOS.map((sc) => {
+            const active = sc.id === scenario.id;
+            const practiced = englishState.speakingPracticed.includes(sc.id);
+            return (
+              <button
+                key={sc.id}
+                type="button"
+                onClick={() => selectScenario(sc.id)}
+                className={`flex min-h-[44px] w-full items-start justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-start transition-colors cursor-pointer ${
+                  active
+                    ? "border-primary bg-primary/10"
+                    : "border-border bg-surface-2 hover:border-primary/40"
+                }`}
+              >
+                <div>
+                  <div className="text-[11px] font-medium text-muted-foreground">
+                    {sc.level} · {sc.modeLabel}
+                  </div>
+                  <div className="mt-0.5 text-xs font-semibold text-foreground">{sc.title}</div>
                 </div>
-                <div className="mt-0.5 text-xs font-semibold text-foreground">{sc.title}</div>
-              </div>
-              {practiced && <CheckCircle2 className="mt-1 size-4 shrink-0 text-success" />}
-            </button>
-          );
-        })}
+                {practiced && <CheckCircle2 className="mt-1 size-4 shrink-0 text-success" />}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Interactive Speaking Console */}
       <div className="surface-card space-y-4 p-5 lg:col-span-8">
-        <div className="border-b border-border pb-3">
-          <div className="text-xs font-medium text-primary">
-            {scenario.level} · {scenario.modeLabel}
+        <div className="flex flex-col gap-3 border-b border-border pb-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-medium text-primary">
+              {scenario.level} · {scenario.modeLabel}
+            </div>
+            <h4 className="mt-1 font-display text-lg font-bold text-foreground">
+              {scenario.title}
+            </h4>
+            <p className="mt-1 text-sm text-foreground">{scenario.prompt}</p>
           </div>
-          <h4 className="mt-1 font-display text-lg font-bold text-foreground">{scenario.title}</h4>
-          <p className="mt-1 text-sm text-foreground">{scenario.prompt}</p>
+
+          <SpeakingConfidenceGauge
+            snapshot={confidenceSnapshot}
+            isActive={isRecordingAudio || isListeningMic}
+            size="sm"
+            className="sm:w-64 shrink-0"
+          />
         </div>
 
         {/* Partner Cue */}
@@ -452,6 +557,22 @@ export function PronunciationAcademyPanel({
     [selectedId],
   );
 
+  const drillSelectOptions: ModernSelectOption[] = useMemo(
+    () =>
+      PRONUNCIATION_MODULES.map((m) => {
+        const done = englishState.pronunciationPracticed.includes(m.id);
+        return {
+          value: m.id,
+          label: m.title,
+          description: `${m.focusArea.replace("_", " ")} · ${done ? "Practiced" : "New drill"}`,
+          badge: m.cefr,
+          group: `Level ${m.cefr}`,
+          keywords: `${m.title} ${m.cefr} ${m.focusArea} ${m.explanation}`,
+        };
+      }),
+    [englishState.pronunciationPracticed],
+  );
+
   const selectMod = (id: string) => {
     setSelectedId(id);
     setDiscChoice(null);
@@ -491,34 +612,43 @@ export function PronunciationAcademyPanel({
 
   return (
     <div className="grid gap-5 lg:grid-cols-12">
-      <div className="surface-card space-y-2 p-4 lg:col-span-4">
-        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Pronunciation Drills ({PRONUNCIATION_MODULES.length})
-        </div>
-        {PRONUNCIATION_MODULES.map((m) => {
-          const active = m.id === mod.id;
-          const done = englishState.pronunciationPracticed.includes(m.id);
-          return (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => selectMod(m.id)}
-              className={`flex min-h-[44px] w-full items-start justify-between gap-2 rounded-lg border px-3 py-2.5 text-start transition-colors ${
-                active
-                  ? "border-primary bg-primary/10"
-                  : "border-border bg-surface-2 hover:border-primary/40"
-              }`}
-            >
-              <div>
-                <div className="text-[11px] font-medium text-muted-foreground">
-                  {m.cefr} · {m.focusArea.replace("_", " ")}
+      <div className="surface-card space-y-3 p-4 lg:col-span-4">
+        <ModernSelect
+          label={`Pronunciation Drill (${PRONUNCIATION_MODULES.length})`}
+          value={mod.id}
+          onValueChange={selectMod}
+          options={drillSelectOptions}
+          searchable
+          searchPlaceholder="Search pronunciation drills..."
+          leadingIcon={<Volume2 className="size-4" />}
+          data-testid="pronunciation-drill-select"
+        />
+        <div className="space-y-1.5 pt-1">
+          {PRONUNCIATION_MODULES.map((m) => {
+            const active = m.id === mod.id;
+            const done = englishState.pronunciationPracticed.includes(m.id);
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => selectMod(m.id)}
+                className={`flex min-h-[44px] w-full items-start justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-start transition-colors cursor-pointer ${
+                  active
+                    ? "border-primary bg-primary/10"
+                    : "border-border bg-surface-2 hover:border-primary/40"
+                }`}
+              >
+                <div>
+                  <div className="text-[11px] font-medium text-muted-foreground">
+                    {m.cefr} · {m.focusArea.replace("_", " ")}
+                  </div>
+                  <div className="mt-0.5 text-xs font-semibold text-foreground">{m.title}</div>
                 </div>
-                <div className="mt-0.5 text-xs font-semibold text-foreground">{m.title}</div>
-              </div>
-              {done && <CheckCircle2 className="mt-1 size-4 shrink-0 text-success" />}
-            </button>
-          );
-        })}
+                {done && <CheckCircle2 className="mt-1 size-4 shrink-0 text-success" />}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="surface-card space-y-5 p-5 lg:col-span-8">

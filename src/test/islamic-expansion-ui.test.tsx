@@ -57,8 +57,9 @@ describe("Islamic Center Expansion & Global Reciters Directory UI", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Knowledge Hub/i }));
     expect(screen.getByTestId("fiqh-scholar-referral")).toBeInTheDocument();
-    const madhhabSelect = screen.getByLabelText(/Select Madhhab/i);
-    fireEvent.change(madhhabSelect, { target: { value: "hanafi" } });
+    const madhhabSelect = screen.getByRole("combobox", { name: /Select Madhhab/i });
+    fireEvent.click(madhhabSelect);
+    fireEvent.click(screen.getByRole("option", { name: /Hanafi/i }));
     expect(screen.getByTestId("fiqh-card-fiqh-wudu-essentials")).toHaveTextContent(/Hanafi/i);
 
     fireEvent.click(screen.getByRole("button", { name: /Study Log, Registry & Helper/i }));
@@ -106,7 +107,7 @@ describe("Islamic Center Expansion & Global Reciters Directory UI", () => {
     expect(stylesExplorer).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("style-chip-al_luhaidan_signature"));
-    expect(screen.getByTestId("style-recording-card-al-luhaidan-mp3q-server8")).toBeInTheDocument();
+    expect(screen.getByTestId("style-recording-card-al-luhaidan-qa-select")).toBeInTheDocument();
 
     // 3. Return to reciter editions list & open Editorial Classification Modal on QuranicAudio edition
     fireEvent.click(screen.getByRole("button", { name: /^الدول \(/ }));

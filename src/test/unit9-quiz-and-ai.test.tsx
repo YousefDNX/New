@@ -126,9 +126,12 @@ describe("Important Vocabulary Interactive Quiz, Expanded Study Vocabulary & Gem
 
     renderWithUiProviders(<AiWorkspace />);
 
-    // Select Vocab Coach role and Deep Reasoning (Carbon) model
-    fireEvent.click(screen.getByRole("button", { name: /Vocab & Important Words Coach/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Deep Reason \(Carbon\)/i }));
+    // Select Vocab Coach role and Deep Research model via searchable ModernSelect comboboxes
+    fireEvent.click(screen.getByTestId("ai-role-select"));
+    fireEvent.click(screen.getByRole("option", { name: /Vocab & Important Words Coach/i }));
+
+    fireEvent.click(screen.getByTestId("ai-model-select"));
+    fireEvent.click(screen.getByRole("option", { name: /Research/i }));
 
     const input = screen.getByPlaceholderText(/Ask a study question/i);
     fireEvent.change(input, { target: { value: "Define algorithm" } });

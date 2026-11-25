@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/app/Page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { useOpportunities, useOpportunityActions } from "@/hooks/use-modules";
 import { useTaskActions, useUser } from "@/hooks/use-nexora";
 import { recordLastVisitedModule } from "@/lib/continue-tracker";
@@ -372,41 +373,33 @@ export function SimpleOpportunitiesWorkspace() {
                 className="mt-1"
               />
             </div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div>
-                <Label htmlFor="opp-cat" className="text-xs">
-                  {isAr ? "النوع" : "Category"}
-                </Label>
-                <select
-                  id="opp-cat"
-                  value={mCat}
-                  onChange={(e) => setMCat(e.target.value as OpportunityCategory)}
-                  className="mt-1 flex h-10 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground"
-                >
-                  {(Object.keys(CATEGORY_LABELS) as OpportunityCategory[]).map((catKey) => (
-                    <option key={catKey} value={catKey}>
-                      {isAr ? CATEGORY_LABELS[catKey].ar : CATEGORY_LABELS[catKey].en}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="opp-scope" className="text-xs">
-                  {isAr ? "النطاق" : "Scope"}
-                </Label>
-                <select
-                  id="opp-scope"
-                  value={mScope}
-                  onChange={(e) => setMScope(e.target.value as "kuwait" | "gcc" | "global")}
-                  className="mt-1 flex h-10 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground"
-                >
-                  {(Object.keys(SCOPE_LABELS) as ("kuwait" | "gcc" | "global")[]).map((sKey) => (
-                    <option key={sKey} value={sKey}>
-                      {isAr ? SCOPE_LABELS[sKey].ar : SCOPE_LABELS[sKey].en}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <ModernSelect
+                id="opp-cat"
+                label={isAr ? "النوع" : "Category"}
+                value={mCat}
+                onValueChange={(v) => setMCat(v as OpportunityCategory)}
+                searchPlaceholder={isAr ? "ابحث في الأنواع..." : "Search categories..."}
+                options={(Object.keys(CATEGORY_LABELS) as OpportunityCategory[]).map((catKey) => ({
+                  value: catKey,
+                  label: isAr ? CATEGORY_LABELS[catKey].ar : CATEGORY_LABELS[catKey].en,
+                  keywords: `${CATEGORY_LABELS[catKey].en} ${CATEGORY_LABELS[catKey].ar}`,
+                }))}
+              />
+              <ModernSelect
+                id="opp-scope"
+                label={isAr ? "النطاق" : "Scope"}
+                value={mScope}
+                onValueChange={(v) => setMScope(v as "kuwait" | "gcc" | "global")}
+                searchable={false}
+                options={(Object.keys(SCOPE_LABELS) as ("kuwait" | "gcc" | "global")[]).map(
+                  (sKey) => ({
+                    value: sKey,
+                    label: isAr ? SCOPE_LABELS[sKey].ar : SCOPE_LABELS[sKey].en,
+                    keywords: `${SCOPE_LABELS[sKey].en} ${SCOPE_LABELS[sKey].ar}`,
+                  }),
+                )}
+              />
             </div>
             <div>
               <Label htmlFor="opp-deadline" className="text-xs">

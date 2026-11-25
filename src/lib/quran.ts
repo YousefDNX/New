@@ -1039,3 +1039,58 @@ export async function fetchSurahAudio(
     sourceUrl: QURAN_TEXT_ATTRIBUTION.audioUrl,
   };
 }
+
+export const FAMOUS_AYAH_SURAH_MAP: Record<string, number[]> = {
+  "ويسألونك عن الجبال": [20], // Taha 20:105
+  الجبال: [20, 56, 78, 79, 81],
+  "وكان الله غفورا رحيما": [4, 25, 33, 48],
+  "غفور رحيم": [4, 25, 33],
+  "وجاءت سكرة الموت بالحق": [50], // Qaf 50:19
+  "سكرة الموت": [50],
+  "الحمد لله": [1, 6, 18, 34, 35],
+  "الرحمن الرحيم": [1],
+  "مالك يوم الدين": [1],
+  "اية الكرسي": [2],
+  "الله لا إله إلا هو": [2],
+  "قل هو الله أحد": [112],
+  "قل أعوذ برب الفلق": [113],
+  "قل أعوذ برب الناس": [114],
+  "تبارك الذي بيده الملك": [67],
+  الملك: [67],
+  يس: [36],
+  "والقرآن الحكيم": [36],
+  "فبأي آلاء ربكما تكذبان": [55],
+  الرحمن: [55],
+  "إنا فتحنا لك فتحا مبينا": [48],
+  الفتح: [48],
+  "الشمس وضحاها": [91],
+  والضحى: [93],
+  "ألم نشرح لك": [94],
+  "إنا أنزلناه في ليلة القدر": [97],
+  القدر: [97],
+  البقرة: [2],
+  الكهف: [18],
+  الواقعة: [56],
+};
+
+export function matchesSurahOrAyah(
+  surahId: number,
+  surahNameAr: string,
+  surahNameEn: string,
+  rawQuery: string,
+): boolean {
+  const q = rawQuery.trim().toLowerCase();
+  if (!q) return true;
+  if (String(surahId) === q) return true;
+  if (surahNameEn.toLowerCase().includes(q)) return true;
+  if (surahNameAr.includes(rawQuery.trim())) return true;
+
+  for (const [excerpt, surahIds] of Object.entries(FAMOUS_AYAH_SURAH_MAP)) {
+    if (excerpt.toLowerCase().includes(q) || q.includes(excerpt.toLowerCase())) {
+      if (surahIds.includes(surahId)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}

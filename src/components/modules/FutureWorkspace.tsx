@@ -26,6 +26,7 @@ const LazyLearningPlacesMap = lazy(() =>
 );
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { useFutureActions, useFuturePlans } from "@/hooks/use-modules";
 import { useTaskActions } from "@/hooks/use-nexora";
@@ -497,20 +498,23 @@ export function FutureWorkspace() {
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <select
+                          <ModernSelect
+                            ariaLabel={plan.title}
+                            size="sm"
+                            className="w-36"
                             value={plan.status}
-                            onChange={(e) =>
+                            onValueChange={(v) =>
                               updateFuturePlan(plan, {
-                                status: e.target.value as "exploring" | "active" | "achieved",
+                                status: v as "exploring" | "active" | "achieved",
                               })
                             }
-                            aria-label={plan.title}
-                            className="h-7 rounded border border-input bg-surface-2 px-2 text-xs text-foreground"
-                          >
-                            <option value="exploring">{t("future.status.exploring")}</option>
-                            <option value="active">{t("future.status.active")}</option>
-                            <option value="achieved">{t("future.status.achieved")}</option>
-                          </select>
+                            searchable={false}
+                            options={[
+                              { value: "exploring", label: t("future.status.exploring") },
+                              { value: "active", label: t("future.status.active") },
+                              { value: "achieved", label: t("future.status.achieved") },
+                            ]}
+                          />
                           <Button
                             type="button"
                             size="sm"

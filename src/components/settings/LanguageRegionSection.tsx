@@ -4,13 +4,7 @@ import { usePrefs } from "@/lib/preferences";
 import { REGIONS, TIMEZONE_OPTIONS, type LocalePrefs } from "@/lib/settings";
 import type { UserSettingsRow } from "@/lib/firestore-data";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { SegmentedChoice, SettingsRow, SettingsSectionCard } from "./SettingsPrimitives";
 
 type SettingsPatch = Partial<Omit<UserSettingsRow, "user_id" | "theme">> & { theme?: string };
@@ -90,21 +84,19 @@ export function LanguageRegionSection({
       </SettingsRow>
 
       <SettingsRow id="loc-tz" label={t("set.timezone")}>
-        <Select
-          value={locale.timezone}
-          onValueChange={(value) => updateLocale({ timezone: value }, { timezone: value })}
-        >
-          <SelectTrigger id="loc-tz" aria-label={t("set.timezone")} className="h-9 min-w-[14rem]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {TIMEZONE_OPTIONS.map((tz) => (
-              <SelectItem key={tz.value} value={tz.value}>
-                {tz.value === "auto" ? t("set.timezone.auto") : tz.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="w-full sm:w-64">
+          <ModernSelect
+            id="loc-tz"
+            ariaLabel={t("set.timezone")}
+            value={locale.timezone}
+            onValueChange={(value) => updateLocale({ timezone: value }, { timezone: value })}
+            searchable
+            options={TIMEZONE_OPTIONS.map((tz) => ({
+              value: tz.value,
+              label: tz.value === "auto" ? t("set.timezone.auto") : tz.label,
+            }))}
+          />
+        </div>
       </SettingsRow>
 
       <SettingsRow label={t("set.datefmt")}>

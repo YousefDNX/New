@@ -17,13 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import type { UniversalBenefitResource } from "@/data/humanity-first";
 import { useStudentEcosystem } from "@/lib/student-ecosystem";
 import { usePrefs } from "@/lib/preferences";
@@ -254,48 +248,40 @@ export function KnowledgeGiftWizard({
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="gift-subject" className="text-xs">
-                  {isAr ? "المادة الدراسية" : "Subject"}
-                </Label>
-                <Select value={subject} onValueChange={setSubject}>
-                  <SelectTrigger id="gift-subject" className="text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SUBJECT_OPTIONS.map((sub) => (
-                      <SelectItem key={sub} value={sub} className="text-xs">
-                        {sub}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <ModernSelect
+                id="gift-subject"
+                label={isAr ? "المادة الدراسية" : "Subject"}
+                value={subject}
+                onValueChange={setSubject}
+                searchable
+                searchPlaceholder={isAr ? "ابحث عن المادة..." : "Search subjects..."}
+                options={SUBJECT_OPTIONS.map((sub) => ({
+                  value: sub,
+                  label: sub,
+                }))}
+              />
 
-              <div className="space-y-1.5">
-                <Label htmlFor="gift-level" className="text-xs">
-                  {isAr ? "المستوى المستهدف" : "Target Difficulty"}
-                </Label>
-                <Select
-                  value={targetLevel}
-                  onValueChange={(v) => setTargetLevel(v as typeof targetLevel)}
-                >
-                  <SelectTrigger id="gift-level" className="text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="beginner" className="text-xs">
-                      {isAr ? "مبتدئ — تأسيس وتبسيط" : "Beginner — Foundational & Simple"}
-                    </SelectItem>
-                    <SelectItem value="intermediate" className="text-xs">
-                      {isAr ? "متوسط — منهج مدرسي" : "Intermediate — Standard Curriculum"}
-                    </SelectItem>
-                    <SelectItem value="advanced" className="text-xs">
-                      {isAr ? "متقدم — تعمق وتحليل" : "Advanced — Deep Conceptual Dive"}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <ModernSelect
+                id="gift-level"
+                label={isAr ? "المستوى المستهدف" : "Target Difficulty"}
+                value={targetLevel}
+                onValueChange={(v) => setTargetLevel(v as typeof targetLevel)}
+                searchable={false}
+                options={[
+                  {
+                    value: "beginner",
+                    label: isAr ? "مبتدئ — تأسيس وتبسيط" : "Beginner — Foundational & Simple",
+                  },
+                  {
+                    value: "intermediate",
+                    label: isAr ? "متوسط — منهج مدرسي" : "Intermediate — Standard Curriculum",
+                  },
+                  {
+                    value: "advanced",
+                    label: isAr ? "متقدم — تعمق وتحليل" : "Advanced — Deep Conceptual Dive",
+                  },
+                ]}
+              />
             </div>
 
             <div className="space-y-1.5">
@@ -576,53 +562,45 @@ export function KnowledgeGiftWizard({
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="gift-role" className="text-xs">
-                  {isAr ? "صفتك في المنظومة" : "Your Role"}
-                </Label>
-                <Select
-                  value={authorRole}
-                  onValueChange={(v) => setAuthorRole(v as UniversalBenefitResource["creatorRole"])}
-                >
-                  <SelectTrigger id="gift-role" className="text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="student" className="text-xs">
-                      {isAr ? "طالب متعلم" : "Student Learner"}
-                    </SelectItem>
-                    <SelectItem value="educator" className="text-xs">
-                      {isAr ? "معلم / تربوي" : "Educator / Teacher"}
-                    </SelectItem>
-                    <SelectItem value="community_volunteer" className="text-xs">
-                      {isAr ? "متطوع مجتمعي" : "Community Volunteer"}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <ModernSelect
+                id="gift-role"
+                label={isAr ? "صفتك في المنظومة" : "Your Role"}
+                value={authorRole}
+                onValueChange={(v) => setAuthorRole(v as UniversalBenefitResource["creatorRole"])}
+                searchable={false}
+                options={[
+                  { value: "student", label: isAr ? "طالب متعلم" : "Student Learner" },
+                  { value: "educator", label: isAr ? "معلم / تربوي" : "Educator / Teacher" },
+                  {
+                    value: "community_volunteer",
+                    label: isAr ? "متطوع مجتمعي" : "Community Volunteer",
+                  },
+                ]}
+              />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="gift-license" className="text-xs">
-                {isAr ? "الترخيص المفتوح المعتمد" : "Approved Open License"}
-              </Label>
-              <Select value={license} onValueChange={setLicense}>
-                <SelectTrigger id="gift-license" className="text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CC-BY-4.0" className="text-xs">
-                    Creative Commons Attribution (CC-BY 4.0) — Recommended
-                  </SelectItem>
-                  <SelectItem value="CC-BY-SA-4.0" className="text-xs">
-                    Creative Commons Attribution-ShareAlike (CC-BY-SA 4.0)
-                  </SelectItem>
-                  <SelectItem value="NEXORA-OER-FREE" className="text-xs">
-                    NEXORA Open Educational Free Resource License
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <ModernSelect
+              id="gift-license"
+              label={isAr ? "الترخيص المفتوح المعتمد" : "Approved Open License"}
+              value={license}
+              onValueChange={setLicense}
+              searchable={false}
+              options={[
+                {
+                  value: "CC-BY-4.0",
+                  label: "Creative Commons Attribution (CC-BY 4.0)",
+                  badge: "Recommended",
+                },
+                {
+                  value: "CC-BY-SA-4.0",
+                  label: "Creative Commons Attribution-ShareAlike (CC-BY-SA 4.0)",
+                },
+                {
+                  value: "NEXORA-OER-FREE",
+                  label: "NEXORA Open Educational Free Resource License",
+                },
+              ]}
+            />
 
             <label className="flex items-start gap-2.5 text-xs text-foreground cursor-pointer pt-2">
               <input

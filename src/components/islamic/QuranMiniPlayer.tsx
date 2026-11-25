@@ -4,7 +4,10 @@ import {
   BookOpen,
   ChevronDown,
   ChevronUp,
+  Headphones,
   ListMusic,
+  Maximize2,
+  Minimize2,
   Pause,
   Play,
   RotateCcw,
@@ -18,7 +21,8 @@ import {
 import { useOptionalQuranAudio } from "@/contexts/QuranAudioContext";
 import { AUTHENTIC_RECITERS, getAuthenticReciter } from "@/lib/quran-reciters";
 import { SURAHS_INDEX } from "@/lib/quran-mushaf";
-import { formatAudioTime } from "@/lib/quran";
+import { formatAudioTime, matchesSurahOrAyah } from "@/lib/quran";
+import { ModernSelect } from "@/components/ui/modern-select";
 
 interface QuranMiniPlayerProps {
   lang?: string;
@@ -26,8 +30,12 @@ interface QuranMiniPlayerProps {
   className?: string;
 }
 
+export type MiniPlayerSize = "sm" | "md" | "lg";
+
 const SURAH_LIST_OPEN_KEY = "btc_quran_player_surah_list_open_v1";
 const MINI_PLAYER_DISMISSED_KEY = "btc_quran_player_dismissed_v1";
+const MINI_PLAYER_SIZE_KEY = "btc_quran_player_size_v1";
+const MINI_PLAYER_DOCKED_TAB_KEY = "btc_quran_player_docked_tab_v1";
 
 export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
   lang = "en",
@@ -48,9 +56,24 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
     return true;
   });
 
-  const [isDismissed, setIsDismissed] = useState<boolean>(() => {
+  // Size control: "sm" (compact), "md" (standard/default), "lg" (spacious)
+  const [playerSize, setPlayerSize] = useState<MiniPlayerSize>(() => {
+    if (typeof window === "undefined") return "md";
+    try {
+      const saved = window.localStorage.getItem(MINI_PLAYER_SIZE_KEY);
+      if (saved === "sm" || saved === "md" || saved === "lg") return saved;
+    } catch {
+      // Ignore
+    }
+    return "md";
+  });
+
+  // Docked bottom tab mode ("مش إخفاء كامل — ظاهرة كأنها tab موجودة تحت ترجعلها تاني بضغطة")
+  const [isDockedAsTab, setIsDockedAsTab] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     try {
+      const saved = window.localStorage.getItem(MINI_PLAYER_DOCKED_TAB_KEY);
+      if (saved !== null) return saved === "true";
       return window.localStorage.getItem(MINI_PLAYER_DISMISSED_KEY) === "true";
     } catch {
       return false;
@@ -59,7 +82,7 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
 
   const [surahQuery, setSurahQuery] = useState("");
 
-  // Persist open/collapsed state of the surah list across reloads
+  // Persist open/collapsed state of the surah list
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -69,72 +92,44 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
     }
   }, [isSurahListOpen]);
 
-  // Automatically bring back the persistent player if a playback session starts anywhere
+  // Persist size preference
   useEffect(() => {
-    if (audio?.hasStartedSession && isDismissed) {
-      setIsDismissed(false);
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem(MINI_PLAYER_DISMISSED_KEY, "false");
-        } catch {
-          // Ignore storage errors
-        }
-      }
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(MINI_PLAYER_SIZE_KEY, playerSize);
+    } catch {
+      // Ignore storage errors
     }
-  }, [audio?.hasStartedSession, isDismissed]);
+  }, [playerSize]);
+
+  // Persist docked tab mode
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(MINI_PLAYER_DOCKED_TAB_KEY, String(isDockedAsTab));
+      window.localStorage.setItem(MINI_PLAYER_DISMISSED_KEY, String(isDockedAsTab));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [isDockedAsTab]);
 
   const filteredSurahs = useMemo(() => {
-    const q = surahQuery.trim().toLowerCase();
+    const q = surahQuery.trim();
     if (!q) return SURAHS_INDEX;
-    return SURAHS_INDEX.filter(
-      (s) =>
-        s.nameAr.includes(surahQuery.trim()) ||
-        s.nameEn.toLowerCase().includes(q) ||
-        String(s.id) === q,
-    );
+    return SURAHS_INDEX.filter((s) => matchesSurahOrAyah(s.id, s.nameAr, s.nameEn, q));
   }, [surahQuery]);
 
   if (!audio) {
     return null;
   }
 
-  const handleDismiss = () => {
-    audio.stopAndDismiss();
-    setIsDismissed(true);
-    if (typeof window !== "undefined") {
-      try {
-        window.localStorage.setItem(MINI_PLAYER_DISMISSED_KEY, "true");
-      } catch {
-        // Ignore storage errors
-      }
-    }
+  const handleDockToBottomTab = () => {
+    setIsDockedAsTab(true);
   };
 
-  const handleReopen = () => {
-    setIsDismissed(false);
-    if (typeof window !== "undefined") {
-      try {
-        window.localStorage.setItem(MINI_PLAYER_DISMISSED_KEY, "false");
-      } catch {
-        // Ignore storage errors
-      }
-    }
+  const handleRestoreFromTab = () => {
+    setIsDockedAsTab(false);
   };
-
-  if (isDismissed) {
-    return (
-      <button
-        type="button"
-        onClick={handleReopen}
-        data-testid="mini-player-reopen"
-        aria-label={isAr ? "فتح مشغل القرآن" : "Open Quran MP3 Player"}
-        className={`fixed bottom-[4.5rem] end-3 z-40 inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-stone-200 dark:border-stone-800 bg-white/95 dark:bg-stone-950/95 px-3.5 py-2 text-xs font-semibold text-stone-900 dark:text-stone-100 shadow-lg backdrop-blur-md hover:border-emerald-600 transition-colors md:bottom-4 md:end-4 ${className}`}
-      >
-        <ListMusic className="size-4 text-emerald-700 dark:text-emerald-400" />
-        <span className="whitespace-nowrap">{isAr ? "مشغل القرآن" : "Quran Player"}</span>
-      </button>
-    );
-  }
 
   const displayTitle = audio.activeCustomTrack
     ? isAr
@@ -154,43 +149,112 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
 
   const availableSet = new Set(audio.availableSurahs);
 
+  // Sizing styles mapping
+  const widthClass =
+    playerSize === "sm" ? "md:w-80" : playerSize === "lg" ? "md:w-[32rem]" : "md:w-[25rem]";
+
+  const surahListMaxHeight =
+    playerSize === "sm" ? "max-h-28" : playerSize === "lg" ? "max-h-64" : "max-h-44";
+
+  // DOCKED BOTTOM TAB: Sits cleanly at the bottom edge as a persistent interactive tab
+  if (isDockedAsTab) {
+    return (
+      <div
+        dir={isAr ? "rtl" : "ltr"}
+        data-testid="mini-player-collapsed-tab"
+        className={`fixed bottom-0 end-2 z-40 flex items-center gap-2 rounded-t-2xl border-t border-x border-emerald-500/30 dark:border-emerald-500/30 bg-white/95 dark:bg-stone-950/95 px-3.5 py-2 shadow-2xl backdrop-blur-md md:end-6 transition-all ${className}`}
+      >
+        <button
+          type="button"
+          onClick={handleRestoreFromTab}
+          data-testid="mini-player-reopen"
+          aria-label={isAr ? "استعادة مشغل القرآن" : "Expand Quran Audio Player"}
+          className="flex items-center gap-2 text-start focus:outline-none min-w-0"
+        >
+          <div className="w-7 h-7 rounded-lg bg-emerald-600/15 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <Headphones className="w-3.5 h-3.5" />
+          </div>
+          <div className="min-w-0 max-w-[12rem] sm:max-w-[16rem]">
+            <div className="text-xs font-bold text-stone-900 dark:text-stone-100 truncate">
+              {displayTitle}
+            </div>
+            <div className="text-[10px] text-stone-500 dark:text-stone-400 truncate">
+              {displayReciter} · 1.0x
+            </div>
+          </div>
+        </button>
+
+        <div className="flex items-center gap-1 shrink-0 ps-1 border-s border-stone-200 dark:border-stone-800">
+          <button
+            type="button"
+            onClick={audio.togglePlay}
+            aria-label={audio.isPlaying ? (isAr ? "إيقاف مؤقت" : "Pause") : isAr ? "تشغيل" : "Play"}
+            className="w-8 h-8 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white flex items-center justify-center transition-colors shadow-xs"
+          >
+            {audio.isPlaying ? (
+              <Pause className="w-3.5 h-3.5 fill-current" />
+            ) : (
+              <Play className="w-3.5 h-3.5 fill-current" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRestoreFromTab}
+            title={isAr ? "تكبير المشغل" : "Expand Player"}
+            aria-label={isAr ? "تكبير المشغل" : "Expand Player"}
+            className="w-8 h-8 rounded-lg text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 flex items-center justify-center transition-colors"
+          >
+            <ChevronUp className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <aside
       dir={isAr ? "rtl" : "ltr"}
       data-testid="quran-persistent-mini-player"
       aria-label={isAr ? "مشغل القرآن المستمر" : "Persistent Quran Audio Player"}
-      className={`fixed bottom-[4.5rem] inset-x-2 z-40 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white/95 dark:bg-stone-950/95 text-stone-900 dark:text-stone-100 shadow-xl backdrop-blur-md md:bottom-4 md:inset-x-auto md:end-4 md:w-[25rem] ${className}`}
+      className={`fixed bottom-[4.5rem] inset-x-2 z-40 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white/95 dark:bg-stone-950/95 text-stone-900 dark:text-stone-100 shadow-2xl backdrop-blur-md md:bottom-4 md:inset-x-auto md:end-4 ${widthClass} transition-all duration-200 ${className}`}
     >
-      {/* Persistent Collapsible Surah List (stays visible across page navigation) */}
+      {/* Persistent Collapsible Surah List with dynamic size height */}
       {isSurahListOpen && (
         <div
           data-testid="mini-player-surah-list"
           className="border-b border-stone-200 dark:border-stone-800 p-3 space-y-2.5"
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-stone-900 dark:text-stone-100">
-              {isAr ? "قائمة السور (١١٤)" : "Surahs (114)"}
-            </span>
-            <select
-              aria-label={isAr ? "اختر القارئ" : "Select reciter"}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-stone-900 dark:text-stone-100">
+                {isAr ? "قائمة السور (١١٤)" : "Surahs (114)"}
+              </span>
+              <span className="text-[10px] text-stone-400 font-mono">
+                {audio.activeReciter.nameAr}
+              </span>
+            </div>
+            <ModernSelect
+              ariaLabel={isAr ? "اختر القارئ" : "Select reciter"}
               data-testid="mini-player-reciter-select"
+              size="sm"
               value={audio.activeReciter.id}
-              onChange={(e) => {
-                const next = getAuthenticReciter(e.target.value);
+              onValueChange={(val) => {
+                const next = getAuthenticReciter(val);
                 audio.loadTrack({
                   reciterId: next.id,
                   surahId: audio.activeSurah.id,
                   autoPlay: audio.isPlaying || audio.hasStartedSession,
                 });
               }}
-              className="max-w-[13rem] min-h-[34px] rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 px-2 py-1 text-xs font-medium text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-1 focus:ring-emerald-600"
-            >
-              {AUTHENTIC_RECITERS.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {isAr ? r.nameAr : r.nameEn}
-                </option>
-              ))}
-            </select>
+              searchable
+              searchPlaceholder={isAr ? "ابحث عن قارئ..." : "Search reciter..."}
+              options={AUTHENTIC_RECITERS.map((r) => ({
+                value: r.id,
+                label: isAr ? r.nameAr : r.nameEn,
+                description: isAr ? r.nameEn : r.nameAr,
+              }))}
+            />
           </div>
 
           <div className="relative">
@@ -207,7 +271,9 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
             />
           </div>
 
-          <div className="max-h-44 overflow-y-auto space-y-0.5 pe-0.5">
+          <div
+            className={`${surahListMaxHeight} overflow-y-auto space-y-0.5 pe-0.5 transition-all`}
+          >
             {filteredSurahs.length === 0 ? (
               <p className="py-4 text-center text-xs text-stone-500">
                 {isAr ? "لا توجد سورة مطابقة" : "No matching Surah"}
@@ -264,9 +330,9 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
         </div>
       )}
 
-      {/* Main Compact Player Surface */}
+      {/* Main Player Surface */}
       <div className="p-3 space-y-2.5">
-        {/* Track Header + Surah Drawer Toggle & Close */}
+        {/* Header Controls: Track Info + Size Selectors + Surahs Toggle + Tab Dock */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1 space-y-0.5">
             <div className="truncate text-sm font-semibold text-stone-900 dark:text-stone-100">
@@ -280,13 +346,60 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
+            {/* Size Controls: S / M / L */}
+            <div
+              className="flex items-center p-0.5 rounded-lg bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700"
+              title={isAr ? "التحكم بحجم المشغل والقائمة" : "Adjust window & list size"}
+            >
+              <button
+                type="button"
+                data-testid="mini-player-size-sm"
+                onClick={() => setPlayerSize("sm")}
+                aria-label={isAr ? "حجم صغير" : "Small size"}
+                className={`min-h-[28px] px-1.5 rounded text-[10px] font-bold transition-colors ${
+                  playerSize === "sm"
+                    ? "bg-emerald-700 text-white shadow-xs"
+                    : "text-stone-600 dark:text-stone-400 hover:text-emerald-600"
+                }`}
+              >
+                {isAr ? "ص" : "S"}
+              </button>
+              <button
+                type="button"
+                data-testid="mini-player-size-md"
+                onClick={() => setPlayerSize("md")}
+                aria-label={isAr ? "حجم متوسط" : "Medium size"}
+                className={`min-h-[28px] px-1.5 rounded text-[10px] font-bold transition-colors ${
+                  playerSize === "md"
+                    ? "bg-emerald-700 text-white shadow-xs"
+                    : "text-stone-600 dark:text-stone-400 hover:text-emerald-600"
+                }`}
+              >
+                {isAr ? "م" : "M"}
+              </button>
+              <button
+                type="button"
+                data-testid="mini-player-size-lg"
+                onClick={() => setPlayerSize("lg")}
+                aria-label={isAr ? "حجم كبير" : "Large size"}
+                className={`min-h-[28px] px-1.5 rounded text-[10px] font-bold transition-colors ${
+                  playerSize === "lg"
+                    ? "bg-emerald-700 text-white shadow-xs"
+                    : "text-stone-600 dark:text-stone-400 hover:text-emerald-600"
+                }`}
+              >
+                {isAr ? "ك" : "L"}
+              </button>
+            </div>
+
+            {/* Surah List Expand/Collapse */}
             <button
               type="button"
               onClick={() => setIsSurahListOpen((prev) => !prev)}
               data-testid="mini-player-surahs-toggle"
               aria-expanded={isSurahListOpen}
               aria-label={isAr ? "إظهار أو إخفاء قائمة السور" : "Toggle Surah list"}
-              className={`inline-flex min-h-[36px] items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`inline-flex min-h-[32px] items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium whitespace-nowrap transition-colors ${
                 isSurahListOpen
                   ? "border-emerald-600 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
                   : "border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800"
@@ -307,21 +420,26 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
                 onClick={onOpenQuranPage}
                 aria-label={isAr ? "فتح صفحة التلاوات" : "Open Full Quran Page"}
                 title={isAr ? "فتح صفحة التلاوات" : "Open Full Quran Page"}
-                className="flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-emerald-600 transition-colors"
+                className="flex min-h-[32px] min-w-[32px] items-center justify-center rounded-lg border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-emerald-600 transition-colors"
               >
-                <BookOpen className="size-4" />
+                <BookOpen className="size-3.5" />
               </button>
             )}
 
+            {/* Dock into sleek bottom tab (مش إخفاء كامل — تظل كـ tab في الأسفل) */}
             <button
               type="button"
-              onClick={handleDismiss}
+              onClick={handleDockToBottomTab}
               data-testid="mini-player-dismiss"
-              aria-label={isAr ? "إغلاق المشغل" : "Close audio player"}
-              title={isAr ? "إغلاق المشغل" : "Close player"}
-              className="flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg text-stone-400 hover:bg-red-500/10 hover:text-red-600 transition-colors"
+              aria-label={isAr ? "تصغير إلى شريط أسفل الشاشة" : "Dock as Bottom Tab"}
+              title={
+                isAr
+                  ? "تصغير إلى شريط سفلي (ترجع له بضغطة)"
+                  : "Dock to bottom tab (restore in 1 click)"
+              }
+              className="flex min-h-[32px] min-w-[32px] items-center justify-center rounded-lg text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
             >
-              <X className="size-4" />
+              <ChevronDown className="size-4" />
             </button>
           </div>
         </div>
@@ -351,7 +469,7 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
             onClick={() => audio.setIsLooping(!audio.isLooping)}
             aria-label={isAr ? "تكرار السورة" : "Loop Surah"}
             title={isAr ? "تكرار السورة" : "Loop Surah"}
-            className={`flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg transition-colors ${
+            className={`flex min-h-[38px] min-w-[38px] items-center justify-center rounded-lg transition-colors ${
               audio.isLooping
                 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
                 : "text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800"
@@ -366,7 +484,7 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
               onClick={audio.skipPrevSurah}
               aria-label={isAr ? "السورة السابقة" : "Previous Surah"}
               title={isAr ? "السورة السابقة" : "Previous Surah"}
-              className="flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+              className="flex min-h-[38px] min-w-[38px] items-center justify-center rounded-lg text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             >
               <SkipBack className={`size-4 ${isAr ? "rotate-180" : ""}`} />
             </button>
@@ -385,7 +503,7 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
                     ? "تشغيل"
                     : "Play recitation"
               }
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-emerald-700 text-white hover:bg-emerald-600 shadow-sm transition-colors"
+              className="flex min-h-[42px] min-w-[42px] items-center justify-center rounded-xl bg-emerald-700 text-white hover:bg-emerald-600 shadow-sm transition-colors"
             >
               {audio.isLoading ? (
                 <div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -401,7 +519,7 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
               onClick={audio.skipNextSurah}
               aria-label={isAr ? "السورة التالية" : "Next Surah"}
               title={isAr ? "السورة التالية" : "Next Surah"}
-              className="flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+              className="flex min-h-[38px] min-w-[38px] items-center justify-center rounded-lg text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             >
               <SkipForward className={`size-4 ${isAr ? "rotate-180" : ""}`} />
             </button>
@@ -413,7 +531,7 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
             aria-label={
               audio.isMuted ? (isAr ? "إلغاء كتم الصوت" : "Unmute") : isAr ? "كتم الصوت" : "Mute"
             }
-            className="flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+            className="flex min-h-[38px] min-w-[38px] items-center justify-center rounded-lg text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
           >
             {audio.isMuted || audio.volume === 0 ? (
               <VolumeX className="size-4 text-red-500" />

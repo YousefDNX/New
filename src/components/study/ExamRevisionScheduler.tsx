@@ -20,13 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ModernSelect } from "@/components/ui/modern-select";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useQuizAttempts, useStudyItems } from "@/hooks/use-modules";
 import { useStats, useTaskActions, useTasks, useUser } from "@/hooks/use-nexora";
 import {
@@ -454,43 +447,35 @@ export function ExamRevisionScheduler() {
 
             {/* Planner settings */}
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Daily Study Cap (minutes)</Label>
-                <Select
-                  value={String(plannerConfig.dailyMinutes)}
-                  onValueChange={(v) => updatePlannerConfig({ dailyMinutes: Number(v) })}
-                >
-                  <SelectTrigger className="h-9 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="30">30 min/day (Gentle Cap)</SelectItem>
-                    <SelectItem value="60">60 min/day (Balanced Cap)</SelectItem>
-                    <SelectItem value="90">90 min/day (Two Focused Blocks)</SelectItem>
-                    <SelectItem value="120">120 min/day (Exam Sprint Cap)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Preferred Time Window</Label>
-                <Select
-                  value={plannerConfig.preferredTime}
-                  onValueChange={(v) =>
-                    updatePlannerConfig({
-                      preferredTime: v as typeof plannerConfig.preferredTime,
-                    })
-                  }
-                >
-                  <SelectTrigger className="h-9 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="morning">Morning (07:30 – 09:00 AM)</SelectItem>
-                    <SelectItem value="afternoon">Afternoon (04:00 – 06:00 PM)</SelectItem>
-                    <SelectItem value="evening">Evening (07:30 – 09:30 PM)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <ModernSelect
+                label="Daily Study Cap (minutes)"
+                value={String(plannerConfig.dailyMinutes)}
+                onValueChange={(v) => updatePlannerConfig({ dailyMinutes: Number(v) })}
+                searchable={false}
+                size="sm"
+                options={[
+                  { value: "30", label: "30 min/day (Gentle Cap)" },
+                  { value: "60", label: "60 min/day (Balanced Cap)" },
+                  { value: "90", label: "90 min/day (Two Focused Blocks)" },
+                  { value: "120", label: "120 min/day (Exam Sprint Cap)" },
+                ]}
+              />
+              <ModernSelect
+                label="Preferred Time Window"
+                value={plannerConfig.preferredTime}
+                onValueChange={(v) =>
+                  updatePlannerConfig({
+                    preferredTime: v as typeof plannerConfig.preferredTime,
+                  })
+                }
+                searchable={false}
+                size="sm"
+                options={[
+                  { value: "morning", label: "Morning (07:30 – 09:00 AM)" },
+                  { value: "afternoon", label: "Afternoon (04:00 – 06:00 PM)" },
+                  { value: "evening", label: "Evening (07:30 – 09:30 PM)" },
+                ]}
+              />
               <div className="space-y-1">
                 <Label className="text-xs font-semibold">Personal Commitments / Rest Days</Label>
                 <div className="flex flex-wrap gap-1 pt-1">
@@ -822,29 +807,18 @@ export function ExamRevisionScheduler() {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="rev-subject" className="text-xs font-semibold">
-                  Subject
-                </Label>
-                <Select
-                  value={subject}
-                  onValueChange={(v) => {
-                    setSubject(v);
-                    setSavedFlag(false);
-                  }}
-                >
-                  <SelectTrigger id="rev-subject" className="text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allSubjects.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <ModernSelect
+                id="rev-subject"
+                label="Subject"
+                value={subject}
+                onValueChange={(v) => {
+                  setSubject(v);
+                  setSavedFlag(false);
+                }}
+                searchable
+                searchPlaceholder="Search subjects..."
+                options={allSubjects.map((s) => ({ value: s, label: s }))}
+              />
 
               <div className="space-y-1.5">
                 <Label htmlFor="rev-date" className="text-xs font-semibold">
@@ -861,28 +835,22 @@ export function ExamRevisionScheduler() {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="rev-mins" className="text-xs font-semibold">
-                  Daily Budget (minutes)
-                </Label>
-                <Select
-                  value={String(dailyMinutes)}
-                  onValueChange={(v) => {
-                    setDailyMinutes(Number(v));
-                    setSavedFlag(false);
-                  }}
-                >
-                  <SelectTrigger id="rev-mins" className="text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="20">20 min/day (Light)</SelectItem>
-                    <SelectItem value="30">30 min/day (Balanced)</SelectItem>
-                    <SelectItem value="45">45 min/day (Thorough)</SelectItem>
-                    <SelectItem value="60">60 min/day (Intensive)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <ModernSelect
+                id="rev-mins"
+                label="Daily Budget (minutes)"
+                value={String(dailyMinutes)}
+                onValueChange={(v) => {
+                  setDailyMinutes(Number(v));
+                  setSavedFlag(false);
+                }}
+                searchable={false}
+                options={[
+                  { value: "20", label: "20 min/day (Light)" },
+                  { value: "30", label: "30 min/day (Balanced)" },
+                  { value: "45", label: "45 min/day (Thorough)" },
+                  { value: "60", label: "60 min/day (Intensive)" },
+                ]}
+              />
             </div>
 
             <div

@@ -16,6 +16,7 @@ import { PageHeader } from "@/components/app/Page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   useCareActions,
@@ -380,24 +381,21 @@ export function WellbeingWorkspace() {
               />
             </div>
 
-            <div>
-              <Label htmlFor="j-mood" className="text-xs">
-                {isAr ? "الشعور العام" : "Reflection tone"}
-              </Label>
-              <select
-                id="j-mood"
-                value={jMood}
-                onChange={(e) => setJMood(e.target.value as JournalMood)}
-                className="mt-1 flex h-10 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground"
-              >
-                <option value="reflective">{isAr ? "متأمّل" : "Reflective"}</option>
-                <option value="focused">{isAr ? "مركّز" : "Focused"}</option>
-                <option value="confident">{isAr ? "واثق" : "Confident"}</option>
-                <option value="curious">{isAr ? "متطلّع" : "Curious"}</option>
-                <option value="challenged">{isAr ? "متحدٍ" : "Challenged"}</option>
-                <option value="energized">{isAr ? "نشيط" : "Energized"}</option>
-              </select>
-            </div>
+            <ModernSelect
+              id="j-mood"
+              label={isAr ? "الشعور العام" : "Reflection tone"}
+              value={jMood}
+              onValueChange={(v) => setJMood(v as JournalMood)}
+              searchPlaceholder={isAr ? "ابحث في المشاعر..." : "Search reflection tone..."}
+              options={[
+                { value: "reflective", label: isAr ? "متأمّل" : "Reflective" },
+                { value: "focused", label: isAr ? "مركّز" : "Focused" },
+                { value: "confident", label: isAr ? "واثق" : "Confident" },
+                { value: "curious", label: isAr ? "متطلّع" : "Curious" },
+                { value: "challenged", label: isAr ? "متحدٍ" : "Challenged" },
+                { value: "energized", label: isAr ? "نشيط" : "Energized" },
+              ]}
+            />
 
             <div>
               <Label htmlFor="j-body" className="text-xs">

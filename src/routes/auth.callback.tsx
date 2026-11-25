@@ -10,6 +10,7 @@ import {
 import { usePrefs } from "@/lib/preferences";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/app/Logo";
+import { AppFooter } from "@/components/app/AppFooter";
 import { BRAND } from "@/config/brand";
 
 export const Route = createFileRoute("/auth/callback")({
@@ -135,6 +136,7 @@ function AuthCallbackPage() {
           )}
         </div>
       </div>
+      <AppFooter />
     </div>
   );
 }

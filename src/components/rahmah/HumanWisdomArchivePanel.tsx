@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -214,7 +215,7 @@ export function HumanWisdomArchivePanel() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-xs">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
               <div className="space-y-1.5">
                 <Label className="text-xs">{isAr ? "عنوان التجربة" : "Experience Title"}</Label>
                 <Input
@@ -225,24 +226,22 @@ export function HumanWisdomArchivePanel() {
                   }
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="text-xs"
+                  className="min-h-[44px] text-xs"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs">{isAr ? "التصنيف" : "Category"}</Label>
-                <select
-                  className="w-full text-xs rounded-md border border-input bg-background p-2"
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value as WisdomCategoryKind)}
-                >
-                  {Object.entries(CATEGORY_META).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {isAr ? v.labelAr : v.labelEn}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <ModernSelect
+                id="wisdom-new-category"
+                label={isAr ? "التصنيف" : "Category"}
+                value={newCategory}
+                onValueChange={(v) => setNewCategory(v as WisdomCategoryKind)}
+                searchPlaceholder={isAr ? "ابحث في التصنيفات..." : "Search categories..."}
+                options={Object.entries(CATEGORY_META).map(([k, v]) => ({
+                  value: k,
+                  label: isAr ? v.labelAr : v.labelEn,
+                  keywords: `${v.labelEn} ${v.labelAr}`,
+                }))}
+              />
             </div>
 
             <div className="space-y-1.5">
@@ -349,7 +348,7 @@ export function HumanWisdomArchivePanel() {
       )}
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-end gap-3">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -362,19 +361,26 @@ export function HumanWisdomArchivePanel() {
           />
         </div>
 
-        <select
-          aria-label={isAr ? "تصفية مجال الحكمة" : "Filter wisdom domain"}
-          className="min-h-[44px] text-xs rounded-md border border-input bg-background px-3 py-2"
+        <ModernSelect
+          id="wisdom-domain-filter"
+          label={isAr ? "مجال الحكمة" : "Wisdom Domain"}
+          ariaLabel={isAr ? "تصفية مجال الحكمة" : "Filter wisdom domain"}
           value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value as WisdomCategoryKind | "all")}
-        >
-          <option value="all">{isAr ? "جميع مجالات الحكمة (6)" : "All Wisdom Domains (6)"}</option>
-          {Object.entries(CATEGORY_META).map(([k, v]) => (
-            <option key={k} value={k}>
-              {isAr ? v.labelAr : v.labelEn}
-            </option>
-          ))}
-        </select>
+          onValueChange={(v) => setCategoryFilter(v as WisdomCategoryKind | "all")}
+          searchPlaceholder={isAr ? "ابحث في المجالات..." : "Search domains..."}
+          className="sm:w-72 shrink-0"
+          options={[
+            {
+              value: "all",
+              label: isAr ? "جميع مجالات الحكمة (6)" : "All Wisdom Domains (6)",
+            },
+            ...Object.entries(CATEGORY_META).map(([k, v]) => ({
+              value: k,
+              label: isAr ? v.labelAr : v.labelEn,
+              keywords: `${v.labelEn} ${v.labelAr}`,
+            })),
+          ]}
+        />
       </div>
 
       {/* Main Layout: List & Reading View */}

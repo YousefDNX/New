@@ -122,6 +122,7 @@ export interface AiLiveTurnRequest {
   textPrompt?: string;
   language?: string;
   contextSummary?: string;
+  voiceName?: string;
 }
 
 export interface AiTtsRequest {
@@ -129,6 +130,21 @@ export interface AiTtsRequest {
   lang?: "auto" | "ar" | "en";
   accent?: string;
   voiceName?: string;
+  voicePersona?: string;
+}
+
+function resolveSafeGeminiVoice(
+  rawVoice?: string,
+): "Puck" | "Charon" | "Kore" | "Fenrir" | "Zephyr" {
+  const normalized = String(rawVoice ?? "")
+    .trim()
+    .toLowerCase();
+  if (normalized === "puck") return "Puck";
+  if (normalized === "charon" || normalized === "ahmed") return "Charon";
+  if (normalized === "fenrir") return "Fenrir";
+  if (normalized === "kore" || normalized === "classic") return "Kore";
+  if (normalized === "zephyr") return "Zephyr";
+  return "Zephyr";
 }
 
 export type AiStructuredMode =
@@ -2108,7 +2124,7 @@ export async function runLiveVoiceTurn(
             responseModalities: [Modality.AUDIO],
             speechConfig: {
               voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: "Zephyr" },
+                prebuiltVoiceConfig: { voiceName: resolveSafeGeminiVoice(req.voiceName) },
               },
             },
             inputAudioTranscription: {},
@@ -2230,9 +2246,10 @@ export async function synthesizeSpeechWithGemini(
   const requestedLang = req.lang && req.lang !== "auto" ? req.lang : detectTextLanguage(text);
   const isMixed = hasArabicText(text) && hasLatinText(text);
   const accent = (req.accent ?? "").trim();
-  const voiceName = req.voiceName || "Kore";
+  const voicePersona = (req.voicePersona ?? req.voiceName ?? "Kore").trim();
+  const voiceName = resolveSafeGeminiVoice(req.voiceName || req.voicePersona || "Kore");
 
-  const cacheKey = `${requestedLang}|${accent}|${voiceName}|${isMixed ? "mix" : "mono"}|${text}`;
+  const cacheKey = `${requestedLang}|${accent}|${voicePersona}|${voiceName}|${isMixed ? "mix" : "mono"}|${text}`;
   const cached = serverTtsCache.get(cacheKey);
   if (cached) {
     return {
@@ -2255,13 +2272,24 @@ export async function synthesizeSpeechWithGemini(
     };
   }
 
-  const stylePrompt = isMixed
+  const personaHint =
+    voicePersona.toLowerCase() === "ahmed"
+      ? "Speak as Ahmed, a warm, articulate bilingual educator with balanced Modern Standard Arabic and crisp English diction."
+      : voicePersona.toLowerCase() === "classic"
+        ? "Speak in a classic, steady, crystal-clear textbook narrator cadence."
+        : voicePersona.toLowerCase() === "zephyr"
+          ? "Speak in a bright, engaging, conversational tone."
+          : "";
+
+  const baseStylePrompt = isMixed
     ? "Fluent bilingual educator switching naturally between crisp Modern Standard Arabic pronunciation and accurate native English pronunciation with zero cross-language accent distortion."
     : requestedLang === "ar"
       ? "Clear, natural Modern Standard Arabic (Fusha) pronunciation with native Arabic phonology, faithfully honoring every Arabic diacritic (tashkeel) and vowel ending."
       : accent.toLowerCase().includes("gb")
         ? "Clear, standard British English (RP) pronunciation with natural syllable stress and crisp articulation."
         : "Clear, natural English pronunciation with accurate word stress, smooth diction, and authentic articulation for academic and everyday vocabulary.";
+
+  const stylePrompt = personaHint ? `${baseStylePrompt} ${personaHint}` : baseStylePrompt;
 
   try {
     const ai = createGenAiClient(apiKey);

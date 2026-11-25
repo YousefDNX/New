@@ -232,11 +232,126 @@ export interface PrivacyPrefs {
 }
 
 export type EcosystemModelTier = "balanced" | "fast" | "stem" | "deep" | "deep_research";
+export type TtsEngineMode = "auto" | "gemini" | "browser";
+export type TtsVoicePresetId =
+  "Ahmed" | "Zephyr" | "Classic" | "Kore" | "Puck" | "Charon" | "Fenrir";
+
+export interface TtsVoicePresetSpec {
+  id: TtsVoicePresetId;
+  labelEn: string;
+  labelAr: string;
+  descEn: string;
+  descAr: string;
+  geminiVoice: "Puck" | "Charon" | "Kore" | "Fenrir" | "Zephyr";
+  group: "featured" | "neural";
+}
+
+export const TTS_ENGINE_MODES: ReadonlyArray<{
+  id: TtsEngineMode;
+  labelEn: string;
+  labelAr: string;
+  descEn: string;
+  descAr: string;
+}> = [
+  {
+    id: "auto",
+    labelEn: "Smart Hybrid (Neural + Browser)",
+    labelAr: "هجين ذكي (صوت عصبي + المتصفح)",
+    descEn: "Uses studio neural audio when online with instant browser speech fallback.",
+    descAr: "يستخدم الصوت العصبي الواضح عند الاتصال مع بديل فوري من المتصفح.",
+  },
+  {
+    id: "gemini",
+    labelEn: "Neural Studio Engine",
+    labelAr: "محرك الصوت العصبي المتقدم",
+    descEn: "Prioritizes crisp bilingual neural synthesis for English and Arabic learning.",
+    descAr: "يُعطي الأولوية للنطق العصبي ثنائي اللغة بدقة عالية للإنجليزية والعربية.",
+  },
+  {
+    id: "browser",
+    labelEn: "Classic Device Speech",
+    labelAr: "محرك المتصفح الكلاسيكي",
+    descEn: "Zero-latency offline Web Speech API using your system's installed voices.",
+    descAr: "نطق فوري بدون إنترنت عبر أصوات الجهاز المثبتة.",
+  },
+];
+
+export const TTS_VOICE_CATALOG: readonly TtsVoicePresetSpec[] = [
+  {
+    id: "Ahmed",
+    labelEn: "Ahmed",
+    labelAr: "أحمد (Ahmed)",
+    descEn: "Warm bilingual tutor voice balanced for Arabic and clear English study",
+    descAr: "صوت تعليمي دافئ وواضح متوازن للعربية والإنجليزية",
+    geminiVoice: "Charon",
+    group: "featured",
+  },
+  {
+    id: "Zephyr",
+    labelEn: "Zephyr",
+    labelAr: "زفير (Zephyr)",
+    descEn: "Bright, expressive conversational voice for dialogue & listening drills",
+    descAr: "صوت حيوي ومعبّر للمحادثات وتدريبات الاستماع",
+    geminiVoice: "Zephyr",
+    group: "featured",
+  },
+  {
+    id: "Classic",
+    labelEn: "Classic",
+    labelAr: "كلاسيكي (Classic)",
+    descEn: "Crisp textbook narrator voice with steady syllable articulation",
+    descAr: "نبرة قراءة كلاسيكية متزنة وواضحة للمفردات والقواعد",
+    geminiVoice: "Kore",
+    group: "featured",
+  },
+  {
+    id: "Kore",
+    labelEn: "Kore",
+    labelAr: "كوري (Kore)",
+    descEn: "Clear studio voice suited for vocabulary definitions and examples",
+    descAr: "صوت استوديو نقي لتعريفات المفردات والأمثلة",
+    geminiVoice: "Kore",
+    group: "neural",
+  },
+  {
+    id: "Puck",
+    labelEn: "Puck",
+    labelAr: "باك (Puck)",
+    descEn: "Upbeat, energetic voice ideal for quick revision and active prompts",
+    descAr: "صوت نشيط ومشجع للمراجعة السريعة والأسئلة",
+    geminiVoice: "Puck",
+    group: "neural",
+  },
+  {
+    id: "Charon",
+    labelEn: "Charon",
+    labelAr: "كارون (Charon)",
+    descEn: "Deep, grounded narrator voice for focused academic reading",
+    descAr: "صوت عميق وهادئ للقراءة الأكاديمية المركّزة",
+    geminiVoice: "Charon",
+    group: "neural",
+  },
+  {
+    id: "Fenrir",
+    labelEn: "Fenrir",
+    labelAr: "فنرير (Fenrir)",
+    descEn: "Bold, assertive voice for clear pronunciation stress drills",
+    descAr: "صوت حازم وواضح لتدريبات النبر ومخارج الحروف",
+    geminiVoice: "Fenrir",
+    group: "neural",
+  },
+] as const;
+
+export const TTS_SPEED_MIN = 0.65;
+export const TTS_SPEED_MAX = 1.5;
 
 export interface EcosystemPrefs {
   aiModelTier: EcosystemModelTier;
   searchGroundingDefault: boolean;
   voiceSpeed: number;
+  ttsEngine: TtsEngineMode;
+  ttsVoice: TtsVoicePresetId;
+  ttsSpeed: number;
   mapsLocationConsent: boolean;
   scene3dReducedMotion: boolean;
   lowBandwidth: boolean;
@@ -708,6 +823,9 @@ export const defaultEcosystemPrefs: EcosystemPrefs = {
   aiModelTier: "balanced",
   searchGroundingDefault: false,
   voiceSpeed: 1,
+  ttsEngine: "auto",
+  ttsVoice: "Zephyr",
+  ttsSpeed: 1,
   mapsLocationConsent: false,
   scene3dReducedMotion: false,
   lowBandwidth: false,
@@ -737,6 +855,43 @@ export function clampLetterSpacing(n: number): number {
 export function clampSpeechRate(n: number): number {
   if (!Number.isFinite(n)) return 1;
   return Math.round(Math.min(1.5, Math.max(0.75, n)) * 100) / 100;
+}
+
+export function clampVoiceSpeed(n: number): number {
+  if (!Number.isFinite(n)) return 1;
+  return Math.round(Math.min(1.25, Math.max(0.85, n)) * 100) / 100;
+}
+
+export function clampTtsSpeed(n: number): number {
+  if (!Number.isFinite(n)) return 1;
+  return Math.round(Math.min(TTS_SPEED_MAX, Math.max(TTS_SPEED_MIN, n)) * 100) / 100;
+}
+
+export function normalizeTtsEngine(value: unknown): TtsEngineMode {
+  if (value === "auto" || value === "gemini" || value === "browser") return value;
+  return "auto";
+}
+
+export function normalizeTtsVoice(value: unknown): TtsVoicePresetId {
+  const match = TTS_VOICE_CATALOG.find(
+    (v) =>
+      v.id.toLowerCase() ===
+      String(value ?? "")
+        .trim()
+        .toLowerCase(),
+  );
+  return match ? match.id : "Zephyr";
+}
+
+export function resolveGeminiVoiceName(
+  presetOrVoice: unknown,
+): "Puck" | "Charon" | "Kore" | "Fenrir" | "Zephyr" {
+  const normalized = String(presetOrVoice ?? "")
+    .trim()
+    .toLowerCase();
+  const match = TTS_VOICE_CATALOG.find((v) => v.id.toLowerCase() === normalized);
+  if (match) return match.geminiVoice;
+  return "Zephyr";
 }
 
 export function clampMinutes(n: number, min: number, max: number, fallback: number): number {

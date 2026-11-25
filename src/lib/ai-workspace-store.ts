@@ -236,11 +236,19 @@ export function saveLocalAiFlashcard(payload: {
   return card;
 }
 
+function getConversationsServerSnapshot(): AiConversationRecord[] {
+  return EMPTY_CONVERSATIONS;
+}
+
+function getLibraryServerSnapshot(): AiSavedLibrary {
+  return EMPTY_LIBRARY;
+}
+
 export function useLocalAiConversations() {
   const conversations = useSyncExternalStore(
     subscribeStore,
     readConversationsSnapshot,
-    () => EMPTY_CONVERSATIONS,
+    getConversationsServerSnapshot,
   );
 
   useEffect(() => {
@@ -314,7 +322,11 @@ export function useLocalAiConversations() {
 }
 
 export function useLocalAiLibrary() {
-  const library = useSyncExternalStore(subscribeStore, readLibrarySnapshot, () => EMPTY_LIBRARY);
+  const library = useSyncExternalStore(
+    subscribeStore,
+    readLibrarySnapshot,
+    getLibraryServerSnapshot,
+  );
 
   const removeTask = useCallback((id: string) => {
     const lib = readLibrarySnapshot();

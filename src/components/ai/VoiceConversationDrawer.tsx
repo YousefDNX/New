@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Mic, MicOff, PhoneOff, Send, Volume2, Waves } from "lucide-react";
+import { SpeakingConfidenceGauge } from "@/components/ai/SpeakingConfidenceGauge";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { usePrefs } from "@/lib/preferences";
+import {
+  createSpeakingConfidenceTracker,
+  type SpeakingConfidenceSnapshot,
+} from "@/lib/speaking-confidence";
 
 interface VoiceTurnEntry {
   id: string;
@@ -76,6 +81,12 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
   const [liveOutputDraft, setLiveOutputDraft] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const confidenceTrackerRef = useRef(createSpeakingConfidenceTracker());
+  const lastMeterUpdateRef = useRef<number>(0);
+  const [confidenceSnapshot, setConfidenceSnapshot] = useState<SpeakingConfidenceSnapshot>(() =>
+    confidenceTrackerRef.current.getSnapshot(false),
+  );
+
   const wsRef = useRef<WebSocket | null>(null);
   const captureCtxRef = useRef<AudioContext | null>(null);
   const playbackCtxRef = useRef<AudioContext | null>(null);
@@ -84,6 +95,9 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
   const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const nextStartTimeRef = useRef<number>(0);
   const liveOutputAccRef = useRef<string>("");
+
+  const activePlaybackSpeed = ecosystem.ttsSpeed || ecosystem.voiceSpeed || 1;
+  const activeVoicePreset = ecosystem.ttsVoice || "Zephyr";
 
   const stopAudioPlayback = useCallback(() => {
     for (const src of activeSourcesRef.current) {
@@ -126,12 +140,12 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
 
       const src = ctx.createBufferSource();
       src.buffer = buffer;
-      src.playbackRate.value = ecosystem.voiceSpeed || 1;
+      src.playbackRate.value = activePlaybackSpeed;
       src.connect(ctx.destination);
 
       const startAt = Math.max(ctx.currentTime + 0.01, nextStartTimeRef.current);
       src.start(startAt);
-      nextStartTimeRef.current = startAt + buffer.duration / (ecosystem.voiceSpeed || 1);
+      nextStartTimeRef.current = startAt + buffer.duration / activePlaybackSpeed;
 
       activeSourcesRef.current.add(src);
       setStatus("speaking");
@@ -142,7 +156,7 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
         }
       };
     },
-    [ecosystem.voiceSpeed],
+    [activePlaybackSpeed],
   );
 
   const stopMicCapture = useCallback(() => {
@@ -181,6 +195,7 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
     }
     liveOutputAccRef.current = "";
     setLiveOutputDraft("");
+    setConfidenceSnapshot(confidenceTrackerRef.current.getSnapshot(false));
     setStatus("idle");
   }, [stopAudioPlayback, stopMicCapture]);
 
@@ -192,11 +207,15 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
 
   const startLiveMicSession = async () => {
     setErrorMsg(null);
+    confidenceTrackerRef.current.reset();
+    lastMeterUpdateRef.current = 0;
+    setConfidenceSnapshot(confidenceTrackerRef.current.getSnapshot(true));
     setStatus("connecting");
 
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
       setErrorMsg("Microphone access unavailable in this browser. Use the text turn input below.");
       setTransport("http");
+      setConfidenceSnapshot(confidenceTrackerRef.current.getSnapshot(false));
       setStatus("idle");
       return;
     }
@@ -214,6 +233,7 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
     } catch {
       setErrorMsg("Microphone permission was denied. Allow mic access or type below to talk.");
       setTransport("http");
+      setConfidenceSnapshot(confidenceTrackerRef.current.getSnapshot(false));
       setStatus("idle");
       return;
     }
@@ -221,7 +241,7 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
     const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${proto}//${window.location.host}/api/ai/live-ws?lang=${encodeURIComponent(
       lang,
-    )}&context=${encodeURIComponent(contextSummary ?? "")}`;
+    )}&voice=${encodeURIComponent(activeVoicePreset)}&context=${encodeURIComponent(contextSummary ?? "")}`;
 
     let wsOpened = false;
     try {
@@ -240,6 +260,7 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
             "Real-time WebSocket stream unavailable on this host. Type below to use HTTP Voice Turn mode.",
           );
           stopMicCapture();
+          setConfidenceSnapshot(confidenceTrackerRef.current.getSnapshot(false));
           setStatus("idle");
         }
       }, 4500);
@@ -266,6 +287,9 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
           } else if (msg.type === "input_transcript" && msg.text) {
             const cleaned = msg.text.trim();
             if (cleaned) {
+              const wordCount = cleaned.split(/\s+/).filter(Boolean).length;
+              const updatedSnap = confidenceTrackerRef.current.noteTranscriptWords(wordCount);
+              setConfidenceSnapshot(updatedSnap);
               setTurns((prev) => [
                 ...prev.slice(-14),
                 { id: `vu_${Date.now().toString(36)}`, role: "user", text: cleaned },
@@ -302,6 +326,7 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
           setTransport("http");
           setErrorMsg("Live voice WebSocket unavailable; switched to HTTP text-to-voice fallback.");
           stopMicCapture();
+          setConfidenceSnapshot(confidenceTrackerRef.current.getSnapshot(false));
           setStatus("idle");
         }
       };
@@ -315,6 +340,7 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
     } catch {
       setTransport("http");
       stopMicCapture();
+      setConfidenceSnapshot(confidenceTrackerRef.current.getSnapshot(false));
       setStatus("idle");
     }
   };
@@ -358,8 +384,15 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
     mutedGain.gain.setValueAtTime(0, ctx.currentTime);
 
     processor.onaudioprocess = (ev) => {
-      if (ws.readyState !== WebSocket.OPEN) return;
       const input = ev.inputBuffer.getChannelData(0);
+      const snap = confidenceTrackerRef.current.pushPcmFrame(input, ctx.sampleRate);
+      const now = Date.now();
+      if (now - lastMeterUpdateRef.current >= 120) {
+        lastMeterUpdateRef.current = now;
+        setConfidenceSnapshot(snap);
+      }
+
+      if (ws.readyState !== WebSocket.OPEN) return;
       const pcm16 = downsampleTo16kInt16(input, ctx.sampleRate);
       const base64 = int16ToBase64(pcm16);
       ws.send(JSON.stringify({ type: "audio", data: base64 }));
@@ -407,6 +440,7 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
         body: JSON.stringify({
           textPrompt: clean,
           language: lang,
+          voiceName: activeVoicePreset,
           contextSummary,
         }),
       });
@@ -462,8 +496,8 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
             <h3 className="font-display text-sm font-bold text-foreground">
               {t("p5.voice.title")}
             </h3>
-            <p className="text-[0.68rem] text-muted-foreground">
-              {statusText} · {ecosystem.voiceSpeed.toFixed(2)}×
+            <p className="text-[0.68rem] text-muted-foreground tabular-nums">
+              {statusText} · {activeVoicePreset} · {activePlaybackSpeed.toFixed(2)}×
             </p>
           </div>
         </div>
@@ -476,7 +510,7 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
               size="sm"
               variant="glow"
               onClick={startLiveMicSession}
-              className="h-8 text-xs"
+              className="min-h-[40px] text-xs"
             >
               <Mic className="size-3.5" />
               <span>{t("p5.voice.start")}</span>
@@ -489,7 +523,7 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
                   size="sm"
                   variant="outline"
                   onClick={handleInterrupt}
-                  className="h-8 text-xs"
+                  className="min-h-[40px] text-xs"
                 >
                   <Volume2 className="size-3.5" />
                   <span>{t("p5.voice.interrupt")}</span>
@@ -500,7 +534,7 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
                 size="sm"
                 variant="destructive"
                 onClick={endVoiceSession}
-                className="h-8 text-xs"
+                className="min-h-[40px] text-xs"
               >
                 <PhoneOff className="size-3.5" />
                 <span>{t("p5.voice.stop")}</span>
@@ -509,6 +543,13 @@ export function VoiceConversationDrawer({ contextSummary }: { contextSummary?: s
           )}
         </div>
       </div>
+
+      {/* Real-time Speaking Confidence Gauge alongside current conversation */}
+      <SpeakingConfidenceGauge
+        snapshot={confidenceSnapshot}
+        isActive={status === "listening" || status === "speaking"}
+        size="sm"
+      />
 
       {errorMsg && (
         <div

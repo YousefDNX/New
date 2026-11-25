@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
 import { SUPPORTED_LANGS, LANG_META } from "@/lib/i18n-dict";
 import { Logo } from "@/components/app/Logo";
+import { AppFooter } from "@/components/app/AppFooter";
 import { useOptionalAuth } from "@/lib/auth.tsx";
 import {
   clearCachedBootstrappedProfile,
@@ -501,6 +502,7 @@ function GuestOnboardingPage() {
           </div>
         </form>
       </main>
+      <AppFooter />
     </div>
   );
 }

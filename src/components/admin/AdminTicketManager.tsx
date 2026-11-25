@@ -17,13 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   fetchAllSupportTickets,
   addTicketReply,
@@ -182,41 +176,41 @@ export function AdminTicketManager() {
           />
         </div>
 
-        <Select
+        <ModernSelect
+          ariaLabel="Filter by ticket status"
+          placeholder="All Statuses"
           value={statusFilter}
           onValueChange={(v) => setStatusFilter(v as SupportTicketStatus | "all")}
-        >
-          <SelectTrigger className="text-xs">
-            <SelectValue placeholder="All Statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="waiting_user">Awaiting Student Reply</SelectItem>
-            <SelectItem value="resolved">Resolved</SelectItem>
-            <SelectItem value="closed">Closed</SelectItem>
-          </SelectContent>
-        </Select>
+          searchable
+          size="sm"
+          options={[
+            { value: "all", label: "All Statuses" },
+            { value: "open", label: "Open" },
+            { value: "in_progress", label: "In Progress" },
+            { value: "waiting_user", label: "Awaiting Student Reply" },
+            { value: "resolved", label: "Resolved" },
+            { value: "closed", label: "Closed" },
+          ]}
+        />
 
-        <Select
+        <ModernSelect
+          ariaLabel="Filter by ticket category"
+          placeholder="All Categories"
           value={categoryFilter}
           onValueChange={(v) => setCategoryFilter(v as SupportTicketCategory | "all")}
-        >
-          <SelectTrigger className="text-xs">
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="account">Account & Profile</SelectItem>
-            <SelectItem value="login_verification">Verification</SelectItem>
-            <SelectItem value="technical">Technical Issues</SelectItem>
-            <SelectItem value="study_learning">Study & Flashcards</SelectItem>
-            <SelectItem value="growth_map">Growth Map & XP</SelectItem>
-            <SelectItem value="privacy_security">Privacy & Security</SelectItem>
-            <SelectItem value="general">General Inquiries</SelectItem>
-          </SelectContent>
-        </Select>
+          searchable
+          size="sm"
+          options={[
+            { value: "all", label: "All Categories" },
+            { value: "account", label: "Account & Profile" },
+            { value: "login_verification", label: "Verification" },
+            { value: "technical", label: "Technical Issues" },
+            { value: "study_learning", label: "Study & Flashcards" },
+            { value: "growth_map", label: "Growth Map & XP" },
+            { value: "privacy_security", label: "Privacy & Security" },
+            { value: "general", label: "General Inquiries" },
+          ]}
+        />
       </div>
 
       {/* Main Split Layout: Ticket List & Conversation Inspector */}
@@ -345,21 +339,20 @@ export function AdminTicketManager() {
                   </Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Select
+                  <ModernSelect
+                    ariaLabel="Update ticket status"
                     value={newStatus}
                     onValueChange={(v) => setNewStatus(v as SupportTicketStatus)}
-                  >
-                    <SelectTrigger className="text-xs h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="waiting_user">Awaiting Student Reply</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    searchable={false}
+                    size="sm"
+                    options={[
+                      { value: "open", label: "Open" },
+                      { value: "in_progress", label: "In Progress" },
+                      { value: "waiting_user", label: "Awaiting Student Reply" },
+                      { value: "resolved", label: "Resolved" },
+                      { value: "closed", label: "Closed" },
+                    ]}
+                  />
 
                   <Input
                     placeholder="Optional resolution notes..."

@@ -18,6 +18,7 @@ import { GroundedSourcesPanel } from "@/components/ai/GroundedSourcesPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { useOpportunities, useOpportunityActions } from "@/hooks/use-modules";
 import { useProfile, useStats, useTaskActions } from "@/hooks/use-nexora";
@@ -334,42 +335,52 @@ export function OpportunitiesWorkspace() {
         </div>
 
         {tab === "discover" ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative min-w-44">
-              <Search className="pointer-events-none absolute start-2.5 top-2.5 size-3.5 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("study.searchPh")}
-                className="h-8 ps-8 text-xs"
-              />
+          <div className="grid gap-3 sm:grid-cols-3 items-end flex-1 lg:max-w-2xl">
+            <div className="space-y-1.5">
+              <Label htmlFor="opp-search-input" className="text-xs font-semibold">
+                {lang === "ar" ? "بحث" : "Search"}
+              </Label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  id="opp-search-input"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t("study.searchPh")}
+                  className="min-h-[44px] ps-9 text-sm"
+                />
+              </div>
             </div>
 
-            <select
+            <ModernSelect
+              label={t("set.oppscope")}
+              ariaLabel={t("set.oppscope")}
               value={scope}
-              onChange={(e) => setScope(e.target.value as typeof scope)}
-              aria-label={t("set.oppscope")}
-              className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-            >
-              <option value="all">{t("common.all")}</option>
-              <option value="kuwait">{t("set.oppscope.local")}</option>
-              <option value="gcc">{t("set.oppscope.gcc")}</option>
-              <option value="global">{t("set.oppscope.global")}</option>
-            </select>
+              onValueChange={(v) => setScope(v as typeof scope)}
+              searchable={false}
+              options={[
+                { value: "all", label: t("common.all") },
+                { value: "kuwait", label: t("set.oppscope.local") },
+                { value: "gcc", label: t("set.oppscope.gcc") },
+                { value: "global", label: t("set.oppscope.global") },
+              ]}
+            />
 
-            <select
+            <ModernSelect
+              label={lang === "ar" ? "التصنيف" : "Category"}
+              ariaLabel={t("opp.tab.discover")}
               value={category}
-              onChange={(e) => setCategory(e.target.value as typeof category)}
-              aria-label={t("opp.tab.discover")}
-              className="h-8 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-            >
-              <option value="all">{t("common.all")}</option>
-              <option value="scholarship">{t("opp.cat.scholarship")}</option>
-              <option value="competition">{t("opp.cat.competition")}</option>
-              <option value="program">{t("opp.cat.program")}</option>
-              <option value="course">{t("opp.cat.course")}</option>
-              <option value="initiative">{t("opp.cat.initiative")}</option>
-            </select>
+              onValueChange={(v) => setCategory(v as typeof category)}
+              searchable
+              options={[
+                { value: "all", label: t("common.all") },
+                { value: "scholarship", label: t("opp.cat.scholarship") },
+                { value: "competition", label: t("opp.cat.competition") },
+                { value: "program", label: t("opp.cat.program") },
+                { value: "course", label: t("opp.cat.course") },
+                { value: "initiative", label: t("opp.cat.initiative") },
+              ]}
+            />
           </div>
         ) : (
           <div className="flex flex-wrap gap-1.5">
@@ -531,30 +542,34 @@ export function OpportunitiesWorkspace() {
               </Label>
               <Input id="op-org" required value={mOrg} onChange={(e) => setMOrg(e.target.value)} />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <select
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <ModernSelect
+                label="Category"
+                ariaLabel="Category"
                 value={mCat}
-                onChange={(e) => setMCat(e.target.value as OpportunityCategory)}
-                aria-label="Category"
-                className="h-9 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-              >
-                <option value="scholarship">{t("opp.cat.scholarship")}</option>
-                <option value="competition">{t("opp.cat.competition")}</option>
-                <option value="program">{t("opp.cat.program")}</option>
-                <option value="course">{t("opp.cat.course")}</option>
-                <option value="initiative">{t("opp.cat.initiative")}</option>
-                <option value="internship">{t("opp.cat.internship")}</option>
-              </select>
-              <select
+                onValueChange={(v) => setMCat(v as OpportunityCategory)}
+                searchable
+                options={[
+                  { value: "scholarship", label: t("opp.cat.scholarship") },
+                  { value: "competition", label: t("opp.cat.competition") },
+                  { value: "program", label: t("opp.cat.program") },
+                  { value: "course", label: t("opp.cat.course") },
+                  { value: "initiative", label: t("opp.cat.initiative") },
+                  { value: "internship", label: t("opp.cat.internship") },
+                ]}
+              />
+              <ModernSelect
+                label={t("set.oppscope")}
+                ariaLabel="Scope"
                 value={mScope}
-                onChange={(e) => setMScope(e.target.value as "kuwait" | "gcc" | "global")}
-                aria-label="Scope"
-                className="h-9 rounded-md border border-input bg-surface-2 px-2 text-xs text-foreground"
-              >
-                <option value="kuwait">{t("set.oppscope.local")}</option>
-                <option value="gcc">{t("set.oppscope.gcc")}</option>
-                <option value="global">{t("set.oppscope.global")}</option>
-              </select>
+                onValueChange={(v) => setMScope(v as "kuwait" | "gcc" | "global")}
+                searchable={false}
+                options={[
+                  { value: "kuwait", label: t("set.oppscope.local") },
+                  { value: "gcc", label: t("set.oppscope.gcc") },
+                  { value: "global", label: t("set.oppscope.global") },
+                ]}
+              />
             </div>
             <Input
               type="date"
@@ -584,21 +599,21 @@ export function OpportunitiesWorkspace() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h3 className="font-display text-sm font-bold text-foreground">{opp.title}</h3>
                     <div className="flex items-center gap-1.5">
-                      <select
+                      <ModernSelect
+                        ariaLabel={opp.title}
+                        size="sm"
+                        className="w-36"
                         value={opp.status}
-                        onChange={(e) =>
-                          updateOpportunityStatus(
-                            opp,
-                            e.target.value as "saved" | "applied" | "archived",
-                          )
+                        onValueChange={(v) =>
+                          updateOpportunityStatus(opp, v as "saved" | "applied" | "archived")
                         }
-                        aria-label={opp.title}
-                        className="h-7 rounded border border-input bg-surface-2 px-2 text-xs text-foreground"
-                      >
-                        <option value="saved">{t("opp.status.saved")}</option>
-                        <option value="applied">{t("opp.status.applied")}</option>
-                        <option value="archived">{t("opp.status.archived")}</option>
-                      </select>
+                        searchable={false}
+                        options={[
+                          { value: "saved", label: t("opp.status.saved") },
+                          { value: "applied", label: t("opp.status.applied") },
+                          { value: "archived", label: t("opp.status.archived") },
+                        ]}
+                      />
                       <Button
                         type="button"
                         size="sm"

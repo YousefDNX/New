@@ -24,13 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { type PedagogicalModelKind, type TeachingGuideRecord } from "@/data/open-learning-library";
 import { useUser } from "@/hooks/use-nexora";
@@ -384,29 +378,23 @@ export function TeachingForAllPanel({
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <Label>Pedagogical Model *</Label>
-                      <Select
-                        value={newModel}
-                        onValueChange={(v) => setNewModel(v as PedagogicalModelKind)}
-                      >
-                        <SelectTrigger className="text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="5e_inquiry">
-                            5E Inquiry (Engage, Explore, Explain, Elaborate, Evaluate)
-                          </SelectItem>
-                          <SelectItem value="direct_instruction">
-                            Explicit Direct Instruction
-                          </SelectItem>
-                          <SelectItem value="socratic_seminar">Socratic Seminar</SelectItem>
-                          <SelectItem value="differentiated_stations">
-                            Differentiated Stations
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <ModernSelect
+                      label="Pedagogical Model *"
+                      value={newModel}
+                      onValueChange={(v) => setNewModel(v as PedagogicalModelKind)}
+                      searchable
+                      searchPlaceholder="Search model..."
+                      options={[
+                        {
+                          value: "5e_inquiry",
+                          label: "5E Inquiry",
+                          description: "Engage, Explore, Explain, Elaborate, Evaluate",
+                        },
+                        { value: "direct_instruction", label: "Explicit Direct Instruction" },
+                        { value: "socratic_seminar", label: "Socratic Seminar" },
+                        { value: "differentiated_stations", label: "Differentiated Stations" },
+                      ]}
+                    />
 
                     <div className="space-y-1">
                       <Label htmlFor="guide-grade">Target Grade Band *</Label>
@@ -605,23 +593,25 @@ export function TeachingForAllPanel({
       {/* Main Grid: Guide Directory + Active Detail Inspector */}
       <div className="grid gap-5 lg:grid-cols-12">
         <div className="space-y-3 lg:col-span-5">
-          <div className="flex items-center justify-between">
+          <div className="space-y-2.5">
             <h3 className="font-semibold text-xs text-foreground flex items-center gap-1.5">
               <Layers className="size-3.5 text-primary" />
               <span>Approved Teaching Units ({filteredGuides.length})</span>
             </h3>
-            <Select value={selectedModelFilter} onValueChange={setSelectedModelFilter}>
-              <SelectTrigger className="h-7 w-[140px] text-[11px]">
-                <SelectValue placeholder="Model" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Models</SelectItem>
-                <SelectItem value="5e_inquiry">5E Inquiry</SelectItem>
-                <SelectItem value="direct_instruction">Direct Instruction</SelectItem>
-                <SelectItem value="socratic_seminar">Socratic</SelectItem>
-                <SelectItem value="differentiated_stations">Stations</SelectItem>
-              </SelectContent>
-            </Select>
+            <ModernSelect
+              label="Filter by Pedagogical Model"
+              value={selectedModelFilter}
+              onValueChange={setSelectedModelFilter}
+              searchable
+              searchPlaceholder="Search models..."
+              options={[
+                { value: "all", label: "All Models" },
+                { value: "5e_inquiry", label: "5E Inquiry" },
+                { value: "direct_instruction", label: "Direct Instruction" },
+                { value: "socratic_seminar", label: "Socratic Seminar" },
+                { value: "differentiated_stations", label: "Differentiated Stations" },
+              ]}
+            />
           </div>
 
           <div className="space-y-2">

@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -136,27 +137,29 @@ export function VerifiedHelpNetworkPanel() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <select
-            className="text-xs rounded-md border border-input bg-background p-2"
+        <div className="flex flex-wrap items-end gap-2.5">
+          <ModernSelect
+            id="verified-help-focus-filter"
+            label={isAr ? "مجال الخدمة" : "Focus Area"}
             value={focusFilter}
-            onChange={(e) =>
-              setFocusFilter(e.target.value as VerifiedHelpOpportunity["focusArea"] | "all")
-            }
-          >
-            <option value="all">{isAr ? "جميع مجالات الخدمة" : "All Focus Areas"}</option>
-            {Object.entries(FOCUS_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {isAr ? v.ar : v.en}
-              </option>
-            ))}
-          </select>
+            onValueChange={(v) => setFocusFilter(v as VerifiedHelpOpportunity["focusArea"] | "all")}
+            searchPlaceholder={isAr ? "ابحث في مجالات الخدمة..." : "Search focus areas..."}
+            className="w-full sm:w-64"
+            options={[
+              { value: "all", label: isAr ? "جميع مجالات الخدمة" : "All Focus Areas" },
+              ...Object.entries(FOCUS_LABELS).map(([k, v]) => ({
+                value: k,
+                label: isAr ? v.ar : v.en,
+                keywords: `${v.en} ${v.ar}`,
+              })),
+            ]}
+          />
 
           <Button
             size="sm"
             variant={remoteOnly ? "default" : "outline"}
             onClick={() => setRemoteOnly(!remoteOnly)}
-            className="text-xs gap-1.5"
+            className="min-h-[44px] text-xs gap-1.5"
           >
             <Laptop className="h-3.5 w-3.5" />
             {isAr ? "عن بُعد فقط" : "Remote Only"}

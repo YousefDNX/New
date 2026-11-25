@@ -94,15 +94,6 @@ export const GLOBAL_SHORTCUTS: readonly ShortcutDefinition[] = [
     modulePath: "/app/quran",
   },
   {
-    id: "nav-circle",
-    keyLabel: "C",
-    keys: ["C"],
-    actionEn: "Open Knowledge Circle & Teams",
-    actionAr: "فتح دائرة المعرفة والفرق الطلابية",
-    category: "navigation",
-    modulePath: "/app/circle",
-  },
-  {
     id: "nav-levelup",
     keyLabel: "L",
     keys: ["L"],

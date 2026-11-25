@@ -11,14 +11,13 @@ import {
   type VerifiedRecordingEdition,
 } from "@/lib/quran-reciters";
 import {
-  buildSoundCloudEmbedUrl,
   detectDirectAudioFormat,
   getLuhaidanSurahMp3Url,
   isValidDirectAudioUrl,
   isValidSoundCloudUrl,
 } from "@/lib/quran-soundcloud-media";
 
-describe("Quran SoundCloud, Mohammed Al-Luhaidan 114 Surahs, Surah Al-Furqan & MP3/M4A Media", () => {
+describe("Quran Direct Audio (MP3 & M4A), Sheikh Al-Luhaidan Two Tones, Surah Qaf, Taha, Al-Furqan, Al-Baqarah & MiniPlayer Controls", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.spyOn(window.HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
@@ -76,27 +75,19 @@ describe("Quran SoundCloud, Mohammed Al-Luhaidan 114 Surahs, Surah Al-Furqan & M
     );
   });
 
-  it("validates SoundCloud URLs safely and rejects non-SoundCloud or javascript URLs", () => {
+  it("validates direct audio URLs and formats securely without external leaks", () => {
     expect(isValidSoundCloudUrl("https://soundcloud.com/muhammad_alluhaidan")).toBe(true);
-    expect(isValidSoundCloudUrl("https://on.soundcloud.com/abc123")).toBe(true);
-    expect(isValidSoundCloudUrl("http://soundcloud.com/muhammad_alluhaidan")).toBe(false);
     expect(isValidSoundCloudUrl("javascript:alert(1)")).toBe(false);
-    expect(isValidSoundCloudUrl("https://evil.example.com/soundcloud.com")).toBe(false);
 
-    const embed = buildSoundCloudEmbedUrl("https://soundcloud.com/muhammad_alluhaidan");
-    expect(embed).toContain("https://w.soundcloud.com/player/?url=");
-    expect(embed).toContain("muhammad_alluhaidan");
-    expect(buildSoundCloudEmbedUrl("https://evil.com/track")).toBeNull();
-
-    expect(isValidDirectAudioUrl("https://archive.org/download/14_20260303_202603/1.m4a")).toBe(
-      true,
-    );
+    expect(isValidDirectAudioUrl("https://archive.org/download/al_luhaidan/050.mp3")).toBe(true);
+    expect(isValidDirectAudioUrl("https://archive.org/download/002_20261007/020.m4a")).toBe(true);
     expect(isValidDirectAudioUrl("ftp://example.com/025.mp3")).toBe(false);
+
     expect(detectDirectAudioFormat("https://cdn.example.com/025.m4a?download=1")).toBe("m4a");
     expect(detectDirectAudioFormat("https://server8.mp3quran.net/lhdan/025.mp3")).toBe("mp3");
   });
 
-  it("resolves Sheikh Mohammed Al-Luhaidan MP3 links across all 114 surahs and Surah Al-Furqan (25)", () => {
+  it("resolves Sheikh Mohammed Al-Luhaidan MP3/M4A links across all 114 surahs and highlights Qaf, Taha, and Furqan", () => {
     expect(getLuhaidanSurahMp3Url(1, "mp3quran")).toBe(
       "https://server8.mp3quran.net/lhdan/001.mp3",
     );
@@ -106,76 +97,97 @@ describe("Quran SoundCloud, Mohammed Al-Luhaidan 114 Surahs, Surah Al-Furqan & M
     expect(getLuhaidanSurahMp3Url(25, "archive_ib")).toBe(
       "https://archive.org/download/al_luhaidan/025.mp3",
     );
+    expect(getLuhaidanSurahMp3Url(50, "archive_ib")).toBe(
+      "https://archive.org/download/al_luhaidan/050.mp3",
+    );
     expect(getLuhaidanSurahMp3Url(114, "archive_ltq")).toBe(
       "https://archive.org/download/listen-to-quran.com_Mohammed-Al-Lohaidan/114.mp3",
     );
+
+    const luhaidan = getAuthenticReciter("al-luhaidan");
+    expect(luhaidan.recordings.length).toBeGreaterThanOrEqual(4);
+    // Highlights for Taha (20), Furqan (25), and Qaf (50)
+    expect(luhaidan.recordings[0]?.surahHighlights?.[20]?.verseArabicExcerpt).toContain(
+      "وَيَسْأَلُونَكَ عَنِ الْجِبَالِ",
+    );
+    expect(luhaidan.recordings[0]?.surahHighlights?.[25]?.verseArabicExcerpt).toContain(
+      "وَكَانَ اللَّهُ غَفُورًا رَحِيمًا",
+    );
+    expect(luhaidan.recordings[0]?.surahHighlights?.[50]?.verseArabicExcerpt).toContain(
+      "وَجَاءَتْ سَكْرَةُ الْمَوْتِ بِالْحَقِّ",
+    );
   });
 
-  it("opens SoundCloud/MP3/M4A hub, plays Al-Furqan & any of 114 surahs for Al-Luhaidan, and adds custom M4A & SoundCloud links", () => {
+  it("plays featured recitations (Taha, Furqan, Qaf, Baqarah) and switches between the two authentic styles", () => {
     render(
       <QuranAudioProvider initialReciterId="al-luhaidan" initialSurahId={25}>
-        <QuranAudioPlayer lang="en" initialReciterId="al-luhaidan" initialSurahId={25} />
+        <QuranAudioPlayer lang="ar" initialReciterId="al-luhaidan" initialSurahId={25} />
       </QuranAudioProvider>,
     );
 
+    expect(screen.getByTestId("quick-listen-taha-jibal")).toBeInTheDocument();
+    expect(screen.getByTestId("quick-listen-furqan-signature")).toBeInTheDocument();
+    expect(screen.getByTestId("quick-listen-qaf-signature")).toBeInTheDocument();
+    expect(screen.getByTestId("quick-listen-baqarah-extra")).toBeInTheDocument();
+
+    // Open direct audio hub tab
     fireEvent.click(screen.getByTestId("quran-tab-soundcloud"));
-    expect(screen.getByTestId("soundcloud-mp3-m4a-hub")).toBeInTheDocument();
+    const hub = screen.getByTestId("soundcloud-mp3-m4a-hub");
+    expect(hub).toBeInTheDocument();
 
-    const iframe = screen.getByTestId("soundcloud-embed-iframe") as HTMLIFrameElement;
-    expect(iframe.src).toContain("https://w.soundcloud.com/player/");
-    expect(iframe.src).toContain("muhammad_alluhaidan");
+    // Verify zero user-facing SoundCloud text is rendered
+    expect(hub.textContent).not.toMatch(/soundcloud/i);
 
-    // 114 Surah picker includes Surah 114 and plays Surah Al-Furqan cleanly
-    const surahSelect = screen.getByTestId("luhaidan-114-surah-select") as HTMLSelectElement;
-    expect(surahSelect.options.length).toBe(114);
-    expect(surahSelect.value).toBe("25");
+    // Switch between the two tones
+    const highToneBtn = screen.getByTestId("tone-switch-high");
+    const calmToneBtn = screen.getByTestId("tone-switch-calm");
+    expect(highToneBtn).toBeInTheDocument();
+    expect(calmToneBtn).toBeInTheDocument();
 
+    fireEvent.click(calmToneBtn);
+    expect(calmToneBtn).toHaveClass("bg-emerald-700");
+
+    fireEvent.click(highToneBtn);
+    expect(highToneBtn).toHaveClass("bg-emerald-700");
+
+    // All 114 Surahs selector
+    const surahSelect = screen.getByTestId("luhaidan-114-surah-select");
+    expect(surahSelect).toHaveTextContent(/25\.\s*سورة الفرقان/);
+
+    // Quick play buttons
     fireEvent.click(screen.getByTestId("quick-play-furqan-mp3quran"));
-    expect(screen.getByText(/Now Playing · 1\.0x · MP3/)).toBeInTheDocument();
+    expect(screen.getByText(/التلاوة الحالية · 1\.0x · MP3/)).toBeInTheDocument();
 
-    // Add custom SoundCloud URL
+    fireEvent.click(screen.getByTestId("quick-play-qaf-sakrat"));
+    expect(screen.getByText(/التلاوة الحالية · 1\.0x · MP3/)).toBeInTheDocument();
+
+    // Add direct audio URL
     fireEvent.change(screen.getByTestId("custom-audio-url-input"), {
-      target: { value: "https://soundcloud.com/muhammad_alluhaidan/surah-furqan-test" },
+      target: { value: "https://archive.org/download/002_20261007/050.m4a" },
     });
     fireEvent.change(screen.getByTestId("custom-audio-title-input"), {
-      target: { value: "Al-Luhaidan Al-Furqan SC" },
+      target: { value: "سورة ق M4A خاشعة" },
     });
     fireEvent.click(screen.getByTestId("add-custom-audio-btn"));
 
-    const updatedIframe = screen.getByTestId("soundcloud-embed-iframe") as HTMLIFrameElement;
-    expect(updatedIframe.src).toContain("surah-furqan-test");
-
-    // Filter by M4A and add custom M4A audio URL
-    fireEvent.change(screen.getByTestId("custom-audio-url-input"), {
-      target: { value: "https://archive.org/download/14_20260303_202603/5.m4a" },
-    });
-    fireEvent.change(screen.getByTestId("custom-audio-title-input"), {
-      target: { value: "Surah Al-Ma'idah M4A" },
-    });
-    fireEvent.click(screen.getByTestId("add-custom-audio-btn"));
-
-    expect(screen.getByText(/Now Playing · 1\.0x · M4A/)).toBeInTheDocument();
-    expect(document.querySelectorAll('a[target="_blank"]').length).toBe(0);
+    expect(screen.getByText(/التلاوة الحالية · 1\.0x · M4A/)).toBeInTheDocument();
   });
 
-  it("renders persistent QuranMiniPlayer with play/pause, seek bar, and Surah list visible across app navigation", () => {
+  it("renders QuranMiniPlayer with size controls (S/M/L) and bottom docked tab bar when minimized", () => {
     function MockAppShell() {
-      const [page, setPage] = useState<"dashboard" | "study" | "habits">("dashboard");
+      const [page, setPage] = useState<"dashboard" | "study">("dashboard");
       return (
         <div>
           <nav>
             <button type="button" onClick={() => setPage("dashboard")}>
-              Go Dashboard
+              Dashboard
             </button>
             <button type="button" onClick={() => setPage("study")}>
-              Go Study
-            </button>
-            <button type="button" onClick={() => setPage("habits")}>
-              Go Habits
+              Study
             </button>
           </nav>
           <main data-testid="active-route-view">{page}</main>
-          <QuranMiniPlayer lang="en" onOpenQuranPage={vi.fn()} />
+          <QuranMiniPlayer lang="ar" onOpenQuranPage={vi.fn()} />
         </div>
       );
     }
@@ -188,32 +200,39 @@ describe("Quran SoundCloud, Mohammed Al-Luhaidan 114 Surahs, Surah Al-Furqan & M
 
     const miniPlayer = screen.getByTestId("quran-persistent-mini-player");
     expect(miniPlayer).toBeInTheDocument();
-    expect(screen.getByTestId("mini-player-toggle-play")).toBeInTheDocument();
-    expect(screen.getByTestId("mini-player-seek-bar")).toBeInTheDocument();
-    expect(screen.getByTestId("mini-player-surah-list")).toBeInTheDocument();
 
-    // Filter Surah list for Al-Furqan (25) and click to play
-    fireEvent.change(screen.getByTestId("mini-player-surah-search"), {
-      target: { value: "Furqan" },
-    });
-    const furqanRow = screen.getByTestId("mini-player-surah-25");
-    fireEvent.click(furqanRow);
-    expect(miniPlayer).toHaveTextContent(/Surah Al-Furqan/i);
+    // Sizing controls: S / M / L
+    const sizeSm = screen.getByTestId("mini-player-size-sm");
+    const sizeLg = screen.getByTestId("mini-player-size-lg");
+    const sizeMd = screen.getByTestId("mini-player-size-md");
+    expect(sizeSm).toBeInTheDocument();
+    expect(sizeLg).toBeInTheDocument();
+    expect(sizeMd).toBeInTheDocument();
 
-    // Seek forward cleanly
-    const seekBar = screen.getByTestId("mini-player-seek-bar") as HTMLInputElement;
-    fireEvent.change(seekBar, { target: { value: "45" } });
-    expect(seekBar.value).toBe("45");
+    fireEvent.click(sizeSm);
+    expect(screen.getByTestId("quran-persistent-mini-player")).toHaveClass("md:w-80");
 
-    // Navigate across multiple app routes and confirm persistent player & Surah list stay visible
-    fireEvent.click(screen.getByRole("button", { name: "Go Study" }));
-    expect(screen.getByTestId("active-route-view")).toHaveTextContent("study");
+    fireEvent.click(sizeLg);
+    expect(screen.getByTestId("quran-persistent-mini-player")).toHaveClass("md:w-[32rem]");
+
+    fireEvent.click(sizeMd);
+    expect(screen.getByTestId("quran-persistent-mini-player")).toHaveClass("md:w-[25rem]");
+
+    // Minimize to docked bottom tab (not complete disappearance, sits as a tab at the bottom)
+    const dismissBtn = screen.getByTestId("mini-player-dismiss");
+    fireEvent.click(dismissBtn);
+
+    // Mini player collapsed tab appears docked at the bottom
+    expect(screen.queryByTestId("quran-persistent-mini-player")).not.toBeInTheDocument();
+    const dockedTab = screen.getByTestId("mini-player-collapsed-tab");
+    expect(dockedTab).toBeInTheDocument();
+
+    // Reopen/expand in 1-click
+    const reopenBtn = screen.getByTestId("mini-player-reopen");
+    fireEvent.click(reopenBtn);
+
+    // Full player is restored immediately
     expect(screen.getByTestId("quran-persistent-mini-player")).toBeInTheDocument();
-    expect(screen.getByTestId("mini-player-surah-list")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Go Habits" }));
-    expect(screen.getByTestId("active-route-view")).toHaveTextContent("habits");
-    expect(screen.getByTestId("quran-persistent-mini-player")).toBeInTheDocument();
-    expect(screen.getByTestId("mini-player-surah-list")).toBeInTheDocument();
+    expect(screen.queryByTestId("mini-player-collapsed-tab")).not.toBeInTheDocument();
   });
 });

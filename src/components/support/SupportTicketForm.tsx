@@ -14,13 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   createSupportTicket,
   type SupportTicket,
@@ -184,50 +178,41 @@ export function SupportTicketForm({ onSuccess, defaultCategory }: SupportTicketF
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="ticket-category" className="text-xs font-semibold">
-            Category <span className="text-destructive">*</span>
-          </Label>
-          <Select
-            value={category}
-            onValueChange={(val) => setCategory(val as SupportTicketCategory)}
-          >
-            <SelectTrigger id="ticket-category" className="w-full">
-              <SelectValue placeholder="Select Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="account">Account & Profile Problems</SelectItem>
-              <SelectItem value="login_verification">Login, Email & Phone Verification</SelectItem>
-              <SelectItem value="technical">Technical Issues & Bug Reports</SelectItem>
-              <SelectItem value="study_learning">Study Module & Flashcards</SelectItem>
-              <SelectItem value="growth_map">Growth Map & XP Progression</SelectItem>
-              <SelectItem value="billing">Payments & Billing Inquiries</SelectItem>
-              <SelectItem value="privacy_security">Privacy, Data & Security</SelectItem>
-              <SelectItem value="general">General Questions</SelectItem>
-              <SelectItem value="other">Other Inquiries</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <ModernSelect
+          id="ticket-category"
+          label="Category *"
+          placeholder="Select Category"
+          value={category}
+          onValueChange={(val) => setCategory(val as SupportTicketCategory)}
+          searchable
+          searchPlaceholder="Search support categories..."
+          options={[
+            { value: "account", label: "Account & Profile Problems" },
+            { value: "login_verification", label: "Login, Email & Phone Verification" },
+            { value: "technical", label: "Technical Issues & Bug Reports" },
+            { value: "study_learning", label: "Study Module & Flashcards" },
+            { value: "growth_map", label: "Growth Map & XP Progression" },
+            { value: "billing", label: "Payments & Billing Inquiries" },
+            { value: "privacy_security", label: "Privacy, Data & Security" },
+            { value: "general", label: "General Questions" },
+            { value: "other", label: "Other Inquiries" },
+          ]}
+        />
 
-        <div className="space-y-1.5">
-          <Label htmlFor="ticket-priority" className="text-xs font-semibold">
-            Priority Level
-          </Label>
-          <Select
-            value={priority}
-            onValueChange={(val) => setPriority(val as SupportTicketPriority)}
-          >
-            <SelectTrigger id="ticket-priority" className="w-full">
-              <SelectValue placeholder="Select Priority" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="low">Low — General question or minor note</SelectItem>
-              <SelectItem value="medium">Medium — Normal inquiry or feature feedback</SelectItem>
-              <SelectItem value="high">High — Impeding active study or streak</SelectItem>
-              <SelectItem value="urgent">Urgent — Account locked or critical error</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <ModernSelect
+          id="ticket-priority"
+          label="Priority Level"
+          placeholder="Select Priority"
+          value={priority}
+          onValueChange={(val) => setPriority(val as SupportTicketPriority)}
+          searchable={false}
+          options={[
+            { value: "low", label: "Low — General question or minor note" },
+            { value: "medium", label: "Medium — Normal inquiry or feature feedback" },
+            { value: "high", label: "High — Impeding active study or streak" },
+            { value: "urgent", label: "Urgent — Account locked or critical error" },
+          ]}
+        />
       </div>
 
       <div className="space-y-1.5">
@@ -324,31 +309,24 @@ export function SupportTicketForm({ onSuccess, defaultCategory }: SupportTicketF
           </p>
         </div>
 
-        <div className="space-y-1.5">
-          <Label
-            htmlFor="ticket-contact-pref"
-            className="text-xs font-semibold flex items-center gap-1.5"
-          >
-            <Mail className="size-3.5 text-muted-foreground" />
-            Contact Preference
-          </Label>
-          <Select
-            value={contactPreference}
-            onValueChange={(val) => setContactPreference(val as "in_app" | "email")}
-          >
-            <SelectTrigger id="ticket-contact-pref" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="in_app">
-                In-App Notification & Ticket Thread (Recommended)
-              </SelectItem>
-              <SelectItem value="email">
-                Email Response to {user?.email || "registered address"}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <ModernSelect
+          id="ticket-contact-pref"
+          label="Contact Preference"
+          leadingIcon={<Mail className="size-3.5" />}
+          value={contactPreference}
+          onValueChange={(val) => setContactPreference(val as "in_app" | "email")}
+          searchable={false}
+          options={[
+            {
+              value: "in_app",
+              label: "In-App Notification & Ticket Thread (Recommended)",
+            },
+            {
+              value: "email",
+              label: `Email Response to ${user?.email || "registered address"}`,
+            },
+          ]}
+        />
       </div>
 
       {submitError && (

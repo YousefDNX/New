@@ -10,6 +10,7 @@ import type { UserSettingsRow } from "@/lib/firestore-data";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { SettingsRow, SettingsSectionCard } from "./SettingsPrimitives";
 import { AccessibilityAssistantDialog } from "./AccessibilityAssistantDialog";
+import { TtsEngineSettingsPanel } from "./TtsEngineSettingsPanel";
 
 type SettingsPatch = Partial<Omit<UserSettingsRow, "user_id" | "theme">> & { theme?: string };
 
@@ -194,6 +195,15 @@ export function AccessibilitySection({
         {!speechSupported && (
           <p className="text-xs text-muted-foreground">{t("set.readAloud.unsupported")}</p>
         )}
+
+        <TtsEngineSettingsPanel
+          onSpeedCommit={(rate) =>
+            changeA11y(
+              { readAloudRate: clampSpeechRate(rate) },
+              { read_aloud_rate: clampSpeechRate(rate) },
+            )
+          }
+        />
       </div>
 
       <SettingsRow

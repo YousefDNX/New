@@ -4,13 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   Dialog,
   DialogContent,
@@ -143,31 +137,23 @@ export function ReportProblemModal({ trigger, open, onOpenChange }: ReportProble
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-            <div className="space-y-1.5">
-              <Label htmlFor="tech-category" className="text-xs font-semibold">
-                Problem Category
-              </Label>
-              <Select value={category} onValueChange={(v) => setCategory(v as TechReportCategory)}>
-                <SelectTrigger id="tech-category" className="w-full text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="broken_button">Button or click does not respond</SelectItem>
-                  <SelectItem value="page_not_loading">Page not loading or blank screen</SelectItem>
-                  <SelectItem value="incorrect_result">
-                    Incorrect calculation or XP discrepancy
-                  </SelectItem>
-                  <SelectItem value="auth_problem">Session or verification issue</SelectItem>
-                  <SelectItem value="settings_not_saving">
-                    Settings or theme not persisting
-                  </SelectItem>
-                  <SelectItem value="unexpected_error">
-                    Unexpected crash or red error banner
-                  </SelectItem>
-                  <SelectItem value="other">Other technical glitch</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <ModernSelect
+              id="tech-category"
+              label="Problem Category"
+              value={category}
+              onValueChange={(v) => setCategory(v as TechReportCategory)}
+              searchable
+              searchPlaceholder="Search problem types..."
+              options={[
+                { value: "broken_button", label: "Button or click does not respond" },
+                { value: "page_not_loading", label: "Page not loading or blank screen" },
+                { value: "incorrect_result", label: "Incorrect calculation or XP discrepancy" },
+                { value: "auth_problem", label: "Session or verification issue" },
+                { value: "settings_not_saving", label: "Settings or theme not persisting" },
+                { value: "unexpected_error", label: "Unexpected crash or red error banner" },
+                { value: "other", label: "Other technical glitch" },
+              ]}
+            />
 
             <div className="space-y-1.5">
               <Label htmlFor="tech-title" className="text-xs font-semibold">

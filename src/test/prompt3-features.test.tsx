@@ -266,6 +266,9 @@ describe("Prompt 3 Core Systems: Theme Switcher, Recharts GrowthMap, Settings Se
       expect(screen.getByTestId("rtl-wrapper")).toHaveAttribute("dir", "rtl");
       expect(screen.getByText("بيئة التعلّم")).toBeInTheDocument();
       expect(screen.getByText("الإبلاغ عن مشكلة")).toBeInTheDocument();
+      expect(screen.getByTestId("footer-creator-credit")).toHaveTextContent(
+        "Designed & Developed by Yousef Wael © 2026",
+      );
     });
   });
 

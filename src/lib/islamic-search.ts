@@ -25,6 +25,7 @@ import {
   TAJWEED_LESSONS,
 } from "@/data/islamic-knowledge-catalog";
 import { SURAHS_INDEX } from "@/lib/quran-mushaf";
+import { matchesSurahOrAyah } from "@/lib/quran";
 import { OFFLINE_SURAH_STUDY_GUIDES } from "@/lib/quran-tafsir";
 import {
   GLOBAL_COUNTRIES_META,
@@ -158,7 +159,10 @@ export function searchUnifiedIslamicCenter(
 
   if (want("surah")) {
     for (const s of SURAHS_INDEX) {
-      if (matchesAllSearchTokens(`سورة ${s.nameAr} ${s.nameEn} ${s.id}`, q)) {
+      if (
+        matchesAllSearchTokens(`سورة ${s.nameAr} ${s.nameEn} ${s.id}`, q) ||
+        matchesSurahOrAyah(s.id, s.nameAr, s.nameEn, query)
+      ) {
         results.push({
           id: `surah-${s.id}`,
           category: "surah",

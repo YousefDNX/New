@@ -10,8 +10,12 @@ import {
 import { ensureFontsForSelection, ensurePresetFonts } from "./font-loader";
 import { dict, LANG_META, normalizeLang, type DictKey, type Lang } from "./i18n-dict";
 import {
+  clearPersistedTtsConfig,
+  loadPersistedTtsConfig,
   pauseEnhancedSpeech,
   resumeEnhancedSpeech,
+  savePersistedTtsConfig,
+  setActiveTtsConfig,
   speakEnhancedText,
   stopEnhancedSpeech,
 } from "./speech-service";
@@ -25,6 +29,8 @@ import {
   clampLetterSpacing,
   clampLineHeight,
   clampSpeechRate,
+  clampTtsSpeed,
+  clampVoiceSpeed,
   defaultA11yFull,
   defaultAiPrefs,
   defaultAppearancePrefs,
@@ -46,6 +52,8 @@ import {
   normalizeQuizColorPalette,
   normalizeQuizFeedbackStyle,
   normalizeReadabilityPreset,
+  normalizeTtsEngine,
+  normalizeTtsVoice,
   normalizeUiTheme,
   normalizeWidgetOrder,
   type A11y,
@@ -280,8 +288,32 @@ export function PreferencesProvider({
 
   const hydrateFromStorageKey = useCallback((storageKey: string) => {
     try {
+      const uid = storageKey.startsWith(`${PREFS_STORAGE_KEY}.`)
+        ? storageKey.slice(PREFS_STORAGE_KEY.length + 1)
+        : null;
+      const persistedTts = loadPersistedTtsConfig(uid);
       const raw = localStorage.getItem(storageKey);
-      if (!raw) return false;
+      if (!raw) {
+        if (persistedTts) {
+          setEcosystemState({
+            ...defaultEcosystemPrefs,
+            ttsEngine: persistedTts.engine,
+            ttsVoice: persistedTts.voicePreset,
+            ttsSpeed: persistedTts.rate,
+            voiceSpeed: clampVoiceSpeed(persistedTts.rate),
+          });
+          setActiveTtsConfig(
+            {
+              engine: persistedTts.engine,
+              voicePreset: persistedTts.voicePreset,
+              rate: persistedTts.rate,
+            },
+            { persist: false },
+          );
+          return true;
+        }
+        return false;
+      }
       const s = JSON.parse(raw);
       if (s.lang) setLangState(normalizeLang(s.lang));
       if (s.theme === "light" || s.theme === "dark" || s.theme === "system") {
@@ -331,14 +363,54 @@ export function PreferencesProvider({
         setNotificationsState({ ...defaultNotificationPrefs, ...s.notifications });
       }
       if (s.privacy) setPrivacyState({ ...defaultPrivacyPrefs, ...s.privacy });
-      if (s.ecosystem) {
+      if (s.ecosystem || persistedTts) {
+        const sEco = s.ecosystem ?? {};
+        const hasTtsInPrefs =
+          sEco.ttsEngine !== undefined ||
+          sEco.ttsVoice !== undefined ||
+          sEco.ttsSpeed !== undefined;
+        const prefsUpdatedMs =
+          typeof s.updatedAt === "string" ? Date.parse(s.updatedAt) : Number.NaN;
+        const ttsUpdatedMs = persistedTts?.updatedAt
+          ? Date.parse(persistedTts.updatedAt)
+          : Number.NaN;
+        const preferDedicatedTts =
+          Boolean(persistedTts) &&
+          (!hasTtsInPrefs ||
+            (Number.isFinite(ttsUpdatedMs) &&
+              (!Number.isFinite(prefsUpdatedMs) || ttsUpdatedMs >= prefsUpdatedMs)));
+
+        const resolvedTtsEngine =
+          preferDedicatedTts && persistedTts
+            ? persistedTts.engine
+            : normalizeTtsEngine(sEco.ttsEngine);
+        const resolvedTtsVoice =
+          preferDedicatedTts && persistedTts
+            ? persistedTts.voicePreset
+            : normalizeTtsVoice(sEco.ttsVoice);
+        const resolvedTtsSpeed =
+          preferDedicatedTts && persistedTts
+            ? persistedTts.rate
+            : clampTtsSpeed(Number(sEco.ttsSpeed ?? sEco.voiceSpeed ?? 1) || 1);
+
         setEcosystemState({
           ...defaultEcosystemPrefs,
-          ...s.ecosystem,
-          voiceSpeed: Math.min(1.25, Math.max(0.85, Number(s.ecosystem.voiceSpeed ?? 1) || 1)),
-          lowBandwidth: Boolean(s.ecosystem.lowBandwidth),
-          distractionFree: Boolean(s.ecosystem.distractionFree),
+          ...sEco,
+          voiceSpeed: clampVoiceSpeed(Number(sEco.voiceSpeed ?? resolvedTtsSpeed) || 1),
+          ttsEngine: resolvedTtsEngine,
+          ttsVoice: resolvedTtsVoice,
+          ttsSpeed: resolvedTtsSpeed,
+          lowBandwidth: Boolean(sEco.lowBandwidth),
+          distractionFree: Boolean(sEco.distractionFree),
         });
+        setActiveTtsConfig(
+          {
+            engine: resolvedTtsEngine,
+            voicePreset: resolvedTtsVoice,
+            rate: resolvedTtsSpeed,
+          },
+          { persist: false },
+        );
       }
       if (s.soundAndQuiz) {
         const nextSoundEnabled =
@@ -839,15 +911,48 @@ export function PreferencesProvider({
   const setPrivacy = useCallback((p: Partial<PrivacyPrefs>) => {
     setPrivacyState((prev) => ({ ...prev, ...p }));
   }, []);
-  const setEcosystem = useCallback((e: Partial<EcosystemPrefs>) => {
-    setEcosystemState((prev) => ({
-      ...prev,
-      ...e,
-      ...(e.voiceSpeed !== undefined
-        ? { voiceSpeed: Math.min(1.25, Math.max(0.85, Number(e.voiceSpeed) || 1)) }
-        : {}),
-    }));
-  }, []);
+  const setEcosystem = useCallback(
+    (e: Partial<EcosystemPrefs>) => {
+      setEcosystemState((prev) => {
+        const nextVoiceSpeed =
+          e.voiceSpeed !== undefined
+            ? clampVoiceSpeed(Number(e.voiceSpeed) || 1)
+            : e.ttsSpeed !== undefined
+              ? clampVoiceSpeed(Number(e.ttsSpeed) || 1)
+              : prev.voiceSpeed;
+        const nextTtsSpeed =
+          e.ttsSpeed !== undefined
+            ? clampTtsSpeed(Number(e.ttsSpeed) || 1)
+            : e.voiceSpeed !== undefined
+              ? clampTtsSpeed(Number(e.voiceSpeed) || 1)
+              : prev.ttsSpeed;
+        const nextTtsEngine =
+          e.ttsEngine !== undefined ? normalizeTtsEngine(e.ttsEngine) : prev.ttsEngine;
+        const nextTtsVoice =
+          e.ttsVoice !== undefined ? normalizeTtsVoice(e.ttsVoice) : prev.ttsVoice;
+        const nextEcosystem = {
+          ...prev,
+          ...e,
+          voiceSpeed: nextVoiceSpeed,
+          ttsSpeed: nextTtsSpeed,
+          ttsEngine: nextTtsEngine,
+          ttsVoice: nextTtsVoice,
+        };
+        if (e.ttsEngine !== undefined || e.ttsVoice !== undefined || e.ttsSpeed !== undefined) {
+          savePersistedTtsConfig(
+            {
+              engine: nextTtsEngine,
+              voicePreset: nextTtsVoice,
+              rate: nextTtsSpeed,
+            },
+            activeUid,
+          );
+        }
+        return nextEcosystem;
+      });
+    },
+    [activeUid],
+  );
   const setSoundAndQuiz = useCallback((s: Partial<SoundAndQuizPrefs>) => {
     setSoundAndQuizState((prev) => {
       let nextSound =
@@ -1025,9 +1130,18 @@ export function PreferencesProvider({
     setNotificationsState(defaultNotificationPrefs);
     setPrivacyState(defaultPrivacyPrefs);
     setEcosystemState(defaultEcosystemPrefs);
+    clearPersistedTtsConfig(activeUid);
+    setActiveTtsConfig(
+      {
+        engine: defaultEcosystemPrefs.ttsEngine,
+        voicePreset: defaultEcosystemPrefs.ttsVoice,
+        rate: defaultEcosystemPrefs.ttsSpeed,
+      },
+      { persist: false },
+    );
     setSoundAndQuizState(defaultSoundAndQuizPrefs);
     setSoundEffectsEnabled(defaultSoundAndQuizPrefs.soundEffectsEnabled);
-  }, []);
+  }, [activeUid]);
 
   const syncPrefsForUser = useCallback(
     (uid: string | null) => {
@@ -1041,6 +1155,7 @@ export function PreferencesProvider({
         }
       } else {
         resetAllPreferences();
+        clearPersistedTtsConfig(null);
         try {
           localStorage.removeItem(PREFS_STORAGE_KEY);
           localStorage.removeItem("nexora-ui-theme");
@@ -1070,10 +1185,31 @@ export function PreferencesProvider({
     setSpeechState("playing");
   }, []);
 
+  useEffect(() => {
+    if (!hydrated) return;
+    setActiveTtsConfig(
+      {
+        engine: ecosystem.ttsEngine,
+        voicePreset: ecosystem.ttsVoice,
+        rate: ecosystem.ttsSpeed || a11y.readAloudRate || 1,
+      },
+      { persist: true, uid: activeUid },
+    );
+  }, [
+    hydrated,
+    activeUid,
+    ecosystem.ttsEngine,
+    ecosystem.ttsVoice,
+    ecosystem.ttsSpeed,
+    a11y.readAloudRate,
+  ]);
+
   const speakText = useCallback(
     (text: string): boolean => {
       const ok = speakEnhancedText(text, {
-        rate: clampSpeechRate(a11y.readAloudRate),
+        rate: clampTtsSpeed(ecosystem.ttsSpeed || a11y.readAloudRate || 1),
+        engine: ecosystem.ttsEngine,
+        voicePreset: ecosystem.ttsVoice,
         onStart: () => setSpeechState("playing"),
         onEnd: () => setSpeechState("idle"),
         onError: () => setSpeechState("idle"),
@@ -1085,7 +1221,7 @@ export function PreferencesProvider({
       }
       return ok;
     },
-    [a11y.readAloudRate],
+    [a11y.readAloudRate, ecosystem.ttsEngine, ecosystem.ttsVoice, ecosystem.ttsSpeed],
   );
 
   const announce = useCallback((message: string) => {

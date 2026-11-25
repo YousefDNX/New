@@ -12,9 +12,11 @@ import {
   Users,
   Target,
   BookOpen,
+  Code2,
 } from "lucide-react";
 
 import { BRAND } from "@/config/brand";
+import { SadaqahJariyahAndDuaaModal } from "@/components/islamic/SadaqahJariyahAndDuaaModal";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -179,6 +181,89 @@ function AboutPage() {
             religious and health literacy topics.
           </p>
         </div>
+
+        {/* Platform Creator & Lead Developer Attribution */}
+        <section
+          aria-label="Platform Creator"
+          data-testid="about-creator-credit"
+          className="surface-card p-6 md:p-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5"
+        >
+          <div className="flex items-start gap-4">
+            <div className="size-11 shrink-0 rounded-xl bg-primary/12 border border-primary/25 text-primary flex items-center justify-center">
+              <Code2 className="size-5" aria-hidden="true" />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[11px] font-semibold tracking-wide text-primary">
+                Platform Creator &amp; Architecture
+              </div>
+              <h2 className="text-base md:text-lg font-bold font-display text-foreground">
+                Youssef Wael — Lead Developer &amp; Creator
+              </h2>
+              <p className="text-xs text-muted-foreground leading-relaxed max-w-xl">
+                Designed, architected, and built by{" "}
+                <span className="font-semibold text-foreground">Youssef Wael</span> as the Lead
+                Developer and Creator of this platform—uniting calm study focus, ethical AI
+                guidance, and student growth tools into a single experience.
+              </p>
+            </div>
+          </div>
+          <div className="shrink-0 sm:text-end border-t sm:border-t-0 sm:border-s border-border/70 pt-3 sm:pt-0 sm:ps-5">
+            <div className="text-xs font-semibold text-foreground">{BRAND.name} Studio</div>
+            <div className="text-[11px] text-muted-foreground tabular-nums">© 2026</div>
+          </div>
+        </section>
+
+        {/* Sincere Dedication & Duaa in the Unseen Section (صدقة جارية ودعاء بظهر الغيب) */}
+        <section
+          aria-label="Sadaqah Jariyah & Sincere Duaa"
+          data-testid="about-sadaqah-duaa-section"
+          className="rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-surface-card to-background p-6 md:p-8 space-y-5"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-xs font-bold border border-emerald-500/30">
+                <Sparkles className="size-3.5" />
+                <span>صدقة جارية · علم يُنتفع به · خالص لوجه الله تعالى</span>
+              </div>
+              <h3 className="text-lg md:text-xl font-bold font-display text-foreground">
+                هدية هذا العمل: دعوة صالحة بظهر الغيب لمن قام عليه ووالديه
+              </h3>
+              <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
+                بُنيت هذه المنصة بنية العلم النافع والصدقة الجارية تقرباً إلى الله تعالى ورجاء مغفرته
+                ورضوانه. نسأل الله أن يبارك لكل متعلم ومعلم، وندعوكم لأعظم هدية تقدمونها لأخيكم
+                المطور (يوسف وائل) ووالديه: دعوة صادقة بظهر الغيب، لتنالوا مثل ما دعوتم وأكثر.
+              </p>
+            </div>
+
+            <div className="shrink-0">
+              <SadaqahJariyahAndDuaaModal
+                trigger={
+                  <Button
+                    size="lg"
+                    data-testid="about-duaa-open-btn"
+                    className="bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm px-6 shadow-md"
+                  >
+                    <Heart className="size-4 fill-rose-300 text-rose-300 me-2" />
+                    <span>ادعُ للمطوّر بظهر الغيب 🤲</span>
+                  </Button>
+                }
+              />
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-emerald-500/20 bg-surface/80 p-4 text-xs text-muted-foreground space-y-1.5">
+            <div className="font-semibold text-foreground flex items-center gap-1.5">
+              <Heart className="size-3.5 text-emerald-600 fill-emerald-600/30" />
+              <span>حديث شريف في فضل الدعاء بظهر الغيب:</span>
+            </div>
+            <p className="font-serif leading-relaxed text-foreground/90">
+              «دَعْوَةُ المَرْءِ المُسْلِمِ لأَخِيهِ بِظَهْرِ الغَيْبِ مُسْتَجَابَةٌ، عِنْدَ رَأْسِهِ مَلَكٌ مُوَكَّلٌ كُلَّمَا دَعَا لأَخِيهِ بِخَيْرٍ،
+              قَالَ المَلَكُ المُوَكَّلُ بِهِ:{" "}
+              <strong className="text-emerald-600 dark:text-emerald-400">آمِينَ، وَلَكَ بِمِثْلٍ</strong>»
+              [رواه مسلم].
+            </p>
+          </div>
+        </section>
 
         {/* CTA */}
         <div className="text-center space-y-3 pt-4">

@@ -115,6 +115,26 @@ export default {
         return jsonResponse(getPlatformControls());
       }
 
+      if (url.pathname === "/api/quran/stream" && request.method === "GET") {
+        const track = url.searchParams.get("track") ?? "";
+        if (track === "luhaidan-qaf-sakrat-al-mawt" || track === "50") {
+          return Response.redirect("https://archive.org/download/al_luhaidan/050.mp3", 302);
+        }
+        if (track === "luhaidan-taha-jibal" || track === "20") {
+          return Response.redirect("https://archive.org/download/al_luhaidan/020.mp3", 302);
+        }
+        if (track === "luhaidan-furqan-signature" || track === "25") {
+          return Response.redirect("https://archive.org/download/al_luhaidan/025.mp3", 302);
+        }
+        if (track === "luhaidan-baqarah-complete" || track === "2") {
+          return Response.redirect(
+            "https://archive.org/download/MuhammadALLuhaidanSurahBaqarahComplete/Muhammad%20AL%20Luhaidan%20-%20Surah%20Baqarah%20Complete.mp3",
+            302,
+          );
+        }
+        return Response.redirect("https://archive.org/download/al_luhaidan/001.mp3", 302);
+      }
+
       if (url.pathname === "/api/telemetry/heartbeat" && request.method === "POST") {
         const body = await readJsonBody<{
           sessionId?: string;

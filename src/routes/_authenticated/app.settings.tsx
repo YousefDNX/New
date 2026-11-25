@@ -23,8 +23,10 @@ import {
   SettingsRow,
   SettingsSectionCard,
 } from "@/components/settings/SettingsPrimitives";
+import { TtsEngineSettingsPanel } from "@/components/settings/TtsEngineSettingsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModernSelect } from "@/components/ui/modern-select";
 import { Switch } from "@/components/ui/switch";
 import { BRAND } from "@/config/brand";
 import { useProfile, useUser } from "@/hooks/use-nexora";
@@ -54,7 +56,6 @@ import {
   type QuizFeedbackStyle,
 } from "@/lib/settings";
 import { playCompleteSound, playCorrectSound } from "@/lib/sound-effects";
-import { speakEnhancedText } from "@/lib/speech-service";
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
   head: () => ({
@@ -216,6 +217,39 @@ function SettingsPage() {
         desc={t("set.langregion.d")}
         badge={<Globe className="size-4 text-primary" />}
       >
+        <div className="mb-3">
+          <ModernSelect
+            id="settings-language-select"
+            data-testid="settings-language-select"
+            label={isAr ? "اختر لغة الواجهة (قابلة للبحث)" : "Interface Language (Searchable)"}
+            value={lang}
+            onValueChange={(next) => handleLangChange(next as Lang)}
+            searchable
+            searchPlaceholder={
+              isAr ? "ابحث بالاسم أو الرمز..." : "Search language by name or code..."
+            }
+            leadingIcon={<Globe className="size-4" />}
+            options={SUPPORTED_LANGS.map((code) => {
+              const meta = LANG_META[code];
+              return {
+                value: code,
+                label: meta.nativeName,
+                description: `${meta.englishName} · ${meta.dir.toUpperCase()}`,
+                badge: code.toUpperCase(),
+                keywords: `${code} ${meta.nativeName} ${meta.englishName}`,
+                group:
+                  meta.dir === "rtl"
+                    ? isAr
+                      ? "لغات من اليمين إلى اليسار"
+                      : "Right-to-Left (RTL)"
+                    : isAr
+                      ? "لغات من اليسار إلى اليمين"
+                      : "Left-to-Right (LTR)",
+              };
+            })}
+          />
+        </div>
+
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
           {SUPPORTED_LANGS.map((code) => {
             const meta = LANG_META[code];
@@ -574,38 +608,12 @@ function SettingsPage() {
           />
         </SettingsRow>
 
-        {/* Pronunciation & Voice Clarity Check */}
-        <SettingsRow
-          label={
-            isAr ? "اختبار نطق الذكاء الاصطناعي الواضح" : "AI Voice Pronunciation Clarity Check"
-          }
-          desc={
-            isAr
-              ? "استمع لنموذج صوتي واضح بالإنجليزية البريطانية الطبيعية بدون تشويش أو روبوتية."
-              : "Verify clear natural British English audio pronunciation without distortion or robotic artifacts."
-          }
-        >
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              speakEnhancedText(
-                isAr
-                  ? "البناء الضوئي Photosynthesis هو عملية تحويل طاقة الضوء إلى غذاء."
-                  : "Photosynthesis is the essential process where green plants convert sunlight into food.",
-                {
-                  preferredLocale: isAr ? "ar-SA" : "en-GB",
-                  rate: 0.92,
-                },
-              );
-            }}
-            className="min-h-[44px] gap-1.5"
-          >
-            <Volume2 className="size-3.5 text-primary" />
-            <span>{isAr ? "تجربة النطق الصوتي" : "Play Sample Audio"}</span>
-          </Button>
-        </SettingsRow>
+        {/* Text-to-Speech (TTS) Engine, Voice & Language-Learning Playback Speed */}
+        <TtsEngineSettingsPanel
+          onSpeedCommit={(rate) => {
+            void saveSettings({ read_aloud_rate: clampSpeechRate(rate) }).catch(() => undefined);
+          }}
+        />
 
         {/* Interactive Sample Quiz Button Preview */}
         <div className="rounded-xl border border-border/80 bg-surface-2/40 p-4 space-y-2.5">

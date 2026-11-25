@@ -4,13 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   Dialog,
   DialogContent,
@@ -128,35 +122,26 @@ export function ReportAbuseModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-            <div className="space-y-1.5">
-              <Label htmlFor="mod-category" className="text-xs font-semibold">
-                Violation Type <span className="text-destructive">*</span>
-              </Label>
-              <Select value={category} onValueChange={(v) => setCategory(v as ModerationCategory)}>
-                <SelectTrigger id="mod-category" className="w-full text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="harassment">
-                    Bullying, harassment, or offensive language
-                  </SelectItem>
-                  <SelectItem value="inappropriate_content">
-                    Explicit, violent, or inappropriate content
-                  </SelectItem>
-                  <SelectItem value="spam">
-                    Spam, advertising, or academic cheating links
-                  </SelectItem>
-                  <SelectItem value="pii_exposed">
-                    Personal information (phone, address) exposed
-                  </SelectItem>
-                  <SelectItem value="impersonation">
-                    Impersonating a student, teacher, or staff
-                  </SelectItem>
-                  <SelectItem value="unsafe_behavior">Self-harm or safety concern</SelectItem>
-                  <SelectItem value="other">Other policy violation</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <ModernSelect
+              id="mod-category"
+              label="Violation Type *"
+              value={category}
+              onValueChange={(v) => setCategory(v as ModerationCategory)}
+              searchable
+              searchPlaceholder="Filter violation types..."
+              options={[
+                { value: "harassment", label: "Bullying, harassment, or offensive language" },
+                {
+                  value: "inappropriate_content",
+                  label: "Explicit, violent, or inappropriate content",
+                },
+                { value: "spam", label: "Spam, advertising, or academic cheating links" },
+                { value: "pii_exposed", label: "Personal information (phone, address) exposed" },
+                { value: "impersonation", label: "Impersonating a student, teacher, or staff" },
+                { value: "unsafe_behavior", label: "Self-harm or safety concern" },
+                { value: "other", label: "Other policy violation" },
+              ]}
+            />
 
             <div className="space-y-1.5">
               <Label htmlFor="mod-details" className="text-xs font-semibold">

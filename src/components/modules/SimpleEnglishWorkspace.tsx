@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/app/Page";
 import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
 import { Grade9StudyCenter } from "@/components/english/Grade9StudyCenter";
+import { ModernSelect, type ModernSelectOption } from "@/components/ui/modern-select";
 import {
   ListeningAcademyPanel,
   ReadingAcademyPanel,
@@ -223,6 +224,16 @@ export function SimpleEnglishWorkspace() {
     { id: "writing", en: "Writing", ar: "الكتابة", icon: PenTool },
   ];
 
+  const navOptions: ModernSelectOption[] = navItems.map((item) => {
+    const Icon = item.icon;
+    return {
+      value: item.id,
+      label: isAr ? item.ar : item.en,
+      icon: <Icon className="size-4" />,
+      keywords: `${item.en} ${item.ar} ${item.id}`,
+    };
+  });
+
   return (
     <div className="space-y-6 pb-12">
       <PageHeader
@@ -235,30 +246,41 @@ export function SimpleEnglishWorkspace() {
       />
 
       <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
-        {/* Clean Vertical Navigation */}
+        {/* Clean Searchable & Vertical Navigation */}
         <nav
           aria-label={isAr ? "أقسام عالم الإنجليزية" : "English World sections"}
-          className="surface-card flex flex-col gap-1.5 rounded-2xl border border-border p-2.5 lg:col-span-3"
+          className="surface-card flex flex-col gap-2 rounded-2xl border border-border p-3 lg:col-span-3"
         >
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = tab === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setTab(item.id)}
-                className={`flex min-h-[44px] w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-start text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                    : "text-foreground hover:bg-surface-2"
-                }`}
-              >
-                <Icon className="size-4 shrink-0" />
-                <span className="leading-snug">{isAr ? item.ar : item.en}</span>
-              </button>
-            );
-          })}
+          <ModernSelect
+            label={isAr ? "القسم الدراسي" : "English Section"}
+            value={tab}
+            onValueChange={(v) => setTab(v as EnglishTab)}
+            options={navOptions}
+            searchable
+            searchPlaceholder={isAr ? "ابحث في أقسام الإنجليزية..." : "Search English sections..."}
+            data-testid="english-world-section-select"
+          />
+          <div className="flex flex-col gap-1.5 pt-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = tab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setTab(item.id)}
+                  className={`flex min-h-[44px] w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-start text-sm font-medium transition-colors cursor-pointer ${
+                    active
+                      ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                      : "text-foreground hover:bg-surface-2"
+                  }`}
+                >
+                  <Icon className="size-4 shrink-0" />
+                  <span className="leading-snug">{isAr ? item.ar : item.en}</span>
+                </button>
+              );
+            })}
+          </div>
         </nav>
 
         {/* Main Content Panel */}

@@ -17,13 +17,16 @@ import {
   Zap,
   Brain,
   RefreshCw,
+  Mic,
 } from "lucide-react";
 import { toast } from "sonner";
 import { usePrefs } from "@/lib/preferences";
 import { Button } from "@/components/ui/button";
+import { ModernSelect, type ModernSelectOption } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
 import { VoiceDictationButton } from "@/components/common/VoiceDictationButton";
 import { SafeMarkdownRenderer } from "@/components/ai/SafeMarkdownRenderer";
+import { VoiceConversationDrawer } from "@/components/ai/VoiceConversationDrawer";
 import { speakEnhancedText, stopEnhancedSpeech } from "@/lib/speech-service";
 import type { ChatbotRoleId } from "@/lib/ai-fallback";
 
@@ -161,7 +164,7 @@ function extractReplyText(data: unknown): string | null {
 }
 
 export function AiWorkspace() {
-  const { lang } = usePrefs();
+  const { lang, ecosystem } = usePrefs();
   const isAr = lang === "ar";
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
@@ -201,10 +204,11 @@ export function AiWorkspace() {
   const [streamingContent, setStreamingContent] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Accessibility toggles for chatbot
+  // Accessibility & live voice toggles for chatbot
   const [largeText, setLargeText] = useState(false);
   const [highContrast, setHighContrast] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const [showVoiceTutor, setShowVoiceTutor] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -468,7 +472,9 @@ export function AiWorkspace() {
     const ok = speakEnhancedText(text, {
       forcedLang: isAr ? "ar" : "en",
       preferredLocale: isAr ? "ar-SA" : "en-GB",
-      rate: 0.92,
+      rate: ecosystem.ttsSpeed || 0.95,
+      voicePreset: ecosystem.ttsVoice,
+      engine: ecosystem.ttsEngine,
       onStart: () => setSpeakingId(id),
       onEnd: () => setSpeakingId(null),
       onError: () => setSpeakingId(null),
@@ -501,12 +507,41 @@ export function AiWorkspace() {
   const activeTierMeta = MODEL_TIERS.find((t) => t.id === modelTier) ?? MODEL_TIERS[0]!;
   const activeRoleMeta = CHATBOT_ROLES.find((r) => r.id === chatbotRole) ?? CHATBOT_ROLES[0]!;
 
+  const roleSelectOptions: ModernSelectOption[] = CHATBOT_ROLES.map((r) => {
+    const Icon = r.icon;
+    return {
+      value: r.id,
+      label: isAr ? r.labelAr : r.labelEn,
+      description: isAr ? r.descAr : r.descEn,
+      icon: <Icon className="size-4" />,
+      keywords: `${r.labelEn} ${r.labelAr} ${r.descEn} ${r.descAr} ${r.id}`,
+    };
+  });
+
+  const tierSelectOptions: ModernSelectOption[] = MODEL_TIERS.map((m) => {
+    const Icon = m.icon;
+    return {
+      value: m.id,
+      label: isAr ? m.labelAr : m.labelEn,
+      description: isAr ? m.taskAr : m.taskEn,
+      badge: m.modelName.includes("flash")
+        ? "Lite"
+        : m.modelName.includes("carbon")
+          ? "Deep"
+          : m.modelName.includes("neon")
+            ? "Pro"
+            : "Core",
+      icon: <Icon className="size-4" />,
+      keywords: `${m.labelEn} ${m.labelAr} ${m.taskEn} ${m.taskAr} ${m.modelName} Deep Reason Carbon`,
+    };
+  });
+
   return (
     <div
-      className={`mx-auto flex h-[calc(100vh-8rem)] max-w-4xl flex-col pb-4 ${highContrast ? "contrast-125 bg-stone-950 text-white" : ""}`}
+      className={`mx-auto flex h-[calc(100vh-8rem)] max-w-6xl flex-col pb-4 ${highContrast ? "contrast-125 bg-stone-950 text-white" : ""}`}
     >
       {/* Top Header & Accessibility Toolbar */}
-      <div className="space-y-3 border-b border-border/70 pb-3">
+      <div className="space-y-3 border-b border-border/70 pb-3.5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="flex size-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
@@ -518,20 +553,32 @@ export function AiWorkspace() {
               </h1>
               <p className="text-xs text-muted-foreground">
                 {isAr
-                  ? `الدور: ${activeRoleMeta.labelAr} · الوضع: ${activeTierMeta.labelAr}`
-                  : `Role: ${activeRoleMeta.labelEn} · Mode: ${activeTierMeta.labelEn}`}
+                  ? `الدور: ${activeRoleMeta.labelAr} · الوضع: ${activeTierMeta.labelAr} · الصوت: ${ecosystem.ttsVoice}`
+                  : `Role: ${activeRoleMeta.labelEn} · Mode: ${activeTierMeta.labelEn} · Voice: ${ecosystem.ttsVoice}`}
               </p>
             </div>
           </div>
 
-          {/* Accessibility & Chat Reset Toolbar */}
-          <div className="flex items-center gap-2">
+          {/* Accessibility & Live Voice Toolbar */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant={showVoiceTutor ? "glow" : "outline"}
+              size="sm"
+              onClick={() => setShowVoiceTutor((v) => !v)}
+              className="text-xs gap-1.5 min-h-[40px] cursor-pointer"
+              data-testid="ai-toggle-voice-tutor"
+            >
+              <Mic className="size-3.5" />
+              <span>{isAr ? "المحادثة الصوتية والثقة" : "Voice & Confidence"}</span>
+            </Button>
+
             <Button
               type="button"
               variant={largeText ? "default" : "outline"}
               size="sm"
               onClick={() => setLargeText((v) => !v)}
-              className="text-xs gap-1 h-8 cursor-pointer"
+              className="text-xs gap-1 min-h-[40px] cursor-pointer"
               title={isAr ? "تكبير الخط" : "Toggle Large Text"}
             >
               <Accessibility className="size-3.5" />
@@ -551,7 +598,7 @@ export function AiWorkspace() {
               variant={highContrast ? "default" : "outline"}
               size="sm"
               onClick={() => setHighContrast((v) => !v)}
-              className="text-xs gap-1 h-8 cursor-pointer"
+              className="text-xs gap-1 min-h-[40px] cursor-pointer"
               title={isAr ? "التباين العالي" : "High Contrast"}
             >
               <Eye className="size-3.5" />
@@ -565,7 +612,7 @@ export function AiWorkspace() {
               variant="outline"
               size="sm"
               onClick={handleNewChat}
-              className="gap-1.5 text-xs font-semibold cursor-pointer shrink-0 h-8"
+              className="gap-1.5 text-xs font-semibold cursor-pointer shrink-0 min-h-[40px]"
             >
               <RotateCcw className="size-3.5" />
               <span>{isAr ? "محادثة جديدة" : "New Chat"}</span>
@@ -573,312 +620,307 @@ export function AiWorkspace() {
           </div>
         </div>
 
-        {/* Role & Gemini Model Mode Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div
-            className="flex flex-wrap items-center gap-1.5"
-            role="group"
-            aria-label="Chatbot Role"
-          >
-            {CHATBOT_ROLES.map((roleItem) => {
-              const Icon = roleItem.icon;
-              const selected = chatbotRole === roleItem.id;
-              return (
-                <button
-                  key={roleItem.id}
-                  type="button"
-                  onClick={() => setChatbotRole(roleItem.id)}
-                  title={isAr ? roleItem.descAr : roleItem.descEn}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
-                    selected
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-surface-2/80 text-muted-foreground hover:text-foreground hover:bg-surface-2"
-                  }`}
-                >
-                  <Icon className="size-3.5" />
-                  <span>{isAr ? roleItem.labelAr : roleItem.labelEn}</span>
-                </button>
-              );
-            })}
-          </div>
+        {/* Unified Spacious Searchable Role & Model Selection Controls */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ModernSelect
+            label={isAr ? "دور المساعد الذكي" : "Assistant Role"}
+            ariaLabel="Chatbot Role"
+            data-testid="ai-role-select"
+            value={chatbotRole}
+            onValueChange={(v) => setChatbotRole(v as ChatbotRoleId)}
+            options={roleSelectOptions}
+            searchable
+            searchPlaceholder={isAr ? "ابحث في أدوار المساعد..." : "Search tutor roles..."}
+            leadingIcon={<GraduationCap className="size-4" />}
+          />
 
-          <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Model Mode">
-            {MODEL_TIERS.map((tierItem) => {
-              const Icon = tierItem.icon;
-              const selected = modelTier === tierItem.id;
-              return (
-                <button
-                  key={tierItem.id}
-                  type="button"
-                  onClick={() => setModelTier(tierItem.id)}
-                  title={`${isAr ? tierItem.labelAr : tierItem.labelEn} — ${isAr ? tierItem.taskAr : tierItem.taskEn}`}
-                  className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-semibold transition-all cursor-pointer ${
-                    selected
-                      ? "border-primary/60 bg-primary/15 text-primary"
-                      : "border-border/70 bg-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="size-3" />
-                  <span>{isAr ? tierItem.labelAr : tierItem.labelEn}</span>
-                </button>
-              );
-            })}
-          </div>
+          <ModernSelect
+            label={isAr ? "وضع الذكاء والسرعة" : "Model Mode"}
+            ariaLabel="Model Mode"
+            data-testid="ai-model-select"
+            value={modelTier}
+            onValueChange={(v) => setModelTier(v as ChatModelTier)}
+            options={tierSelectOptions}
+            searchable
+            searchPlaceholder={isAr ? "ابحث في أوضاع النموذج..." : "Search model modes..."}
+            leadingIcon={<Brain className="size-4" />}
+          />
         </div>
       </div>
 
-      {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1" data-testid="ai-chat-thread">
-        {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center text-center p-6 space-y-5">
-            <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Bot className="size-8" />
-            </div>
-
-            <div className="space-y-1.5 max-w-md">
-              <h2
-                className={`font-display font-bold text-foreground ${largeText ? "text-2xl" : "text-lg"}`}
-              >
-                {isAr
-                  ? "مرحباً! أنا BTC AI — اسألني في أي موضوع، برمجة، كتابة، أو دراسة"
-                  : "Hello! Ask BTC AI anything — conversation, coding, writing, or study"}
-              </h2>
-              <p
-                className={`text-muted-foreground leading-relaxed ${largeText ? "text-base" : "text-xs"}`}
-              >
-                {isAr
-                  ? "يتحدث معك بلغتك ولهجتك بطبيعية، ويدعم الشرح والملخصات والأكواد البرمجية والأسئلة الدراسية."
-                  : "Replies naturally in your language and dialect across multi-turn conversations, code blocks, summaries, and academics."}
-              </p>
-            </div>
-
-            {/* Quick Suggestions */}
-            <div className="w-full max-w-lg space-y-2 pt-2 text-start">
-              <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {isAr ? "اقتراحات للبدء:" : "Try asking:"}
-              </div>
-              <div className="space-y-1.5">
-                {samplePrompts.map((p, idx) => {
-                  const text = isAr ? p.textAr : p.textEn;
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => void sendMessage(text)}
-                      className="w-full rounded-xl border border-border/80 bg-surface-2/50 hover:bg-surface-2 hover:border-primary/40 p-3 text-xs text-start text-foreground transition-all cursor-pointer font-medium"
-                    >
-                      &ldquo;{text}&rdquo;
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        ) : (
-          messages.map((m) => {
-            const isUser = m.role === "user";
-            return (
-              <div
-                key={m.id}
-                data-testid={`chat-msg-${m.role}`}
-                className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}
-              >
-                {!isUser && (
-                  <div
-                    className={`flex size-8 shrink-0 items-center justify-center rounded-lg mt-1 ${
-                      m.isError
-                        ? "bg-destructive/15 text-destructive"
-                        : "bg-primary/15 text-primary"
-                    }`}
-                  >
-                    {m.isError ? <AlertTriangle className="size-4" /> : <Bot className="size-4" />}
-                  </div>
-                )}
-
-                <div
-                  className={`group relative max-w-[88%] sm:max-w-[80%] rounded-2xl p-4 leading-relaxed ${
-                    largeText ? "text-lg" : "text-sm"
-                  } ${
-                    isUser
-                      ? "bg-primary text-primary-foreground font-medium rounded-tr-xs"
-                      : m.isError
-                        ? "border border-destructive/40 bg-destructive/10 text-foreground rounded-tl-xs space-y-2.5"
-                        : "surface-card border border-border/80 text-foreground rounded-tl-xs space-y-2"
-                  }`}
-                >
-                  {isUser ? (
-                    <div dir="auto" className="whitespace-pre-wrap break-words">
-                      {m.content}
-                    </div>
-                  ) : m.isError ? (
-                    <div className="space-y-2.5">
-                      <p dir="auto" className="text-sm font-medium text-foreground">
-                        {m.content}
-                      </p>
-                      {m.retryPrompt && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => void sendMessage(m.retryPrompt!, { retryErrorId: m.id })}
-                          className="min-h-[36px] gap-1.5 cursor-pointer"
-                        >
-                          <RefreshCw className="size-3.5" />
-                          <span>{isAr ? "إعادة المحاولة" : "Retry"}</span>
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <SafeMarkdownRenderer content={m.content} />
-                  )}
-
-                  {!isUser && !m.isError && (
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/40 mt-2">
-                      <div className="flex items-center gap-2">
-                        {/* TTS read aloud button for accessibility */}
-                        <button
-                          type="button"
-                          onClick={() => handleSpeakText(m.id, m.content)}
-                          className={`text-xs flex items-center gap-1.5 font-semibold px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                            speakingId === m.id
-                              ? "bg-primary text-primary-foreground"
-                              : "text-primary hover:bg-primary/10"
-                          }`}
-                        >
-                          <Volume2 className="size-3.5" />
-                          <span>
-                            {speakingId === m.id
-                              ? isAr
-                                ? "إيقاف القراءة"
-                                : "Stop Reading"
-                              : isAr
-                                ? "قراءة صوتية"
-                                : "Read Aloud"}
-                          </span>
-                        </button>
-
-                        {m.modelUsed && (
-                          <span className="font-mono text-[10px] text-muted-foreground/80">
-                            {formatFriendlyModelTier(m.modelUsed, isAr)}
-                          </span>
-                        )}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(m.id, m.content)}
-                        className="text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 opacity-80 cursor-pointer"
-                      >
-                        {copiedId === m.id ? (
-                          <span className="text-emerald-500 font-semibold">
-                            {isAr ? "تم النسخ" : "Copied"}
-                          </span>
-                        ) : (
-                          <>
-                            <Copy className="size-3" />
-                            <span>{isAr ? "نسخ" : "Copy"}</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  )}
+      {/* Main Split Workspace: Chat Thread + Optional Side-by-Side Live Voice & Speaking Confidence */}
+      <div
+        className={`flex-1 min-h-0 ${showVoiceTutor ? "grid gap-4 lg:grid-cols-12 pt-3" : "flex flex-col"}`}
+      >
+        <div className={`flex flex-col min-h-0 ${showVoiceTutor ? "lg:col-span-7" : "flex-1"}`}>
+          {/* Messages Scroll Area */}
+          <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1" data-testid="ai-chat-thread">
+            {messages.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center text-center p-6 space-y-5">
+                <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Bot className="size-8" />
                 </div>
 
-                {isUser && (
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-muted-foreground mt-1">
-                    <User className="size-4" />
-                  </div>
-                )}
-              </div>
-            );
-          })
-        )}
+                <div className="space-y-1.5 max-w-md">
+                  <h2
+                    className={`font-display font-bold text-foreground ${largeText ? "text-2xl" : "text-lg"}`}
+                  >
+                    {isAr
+                      ? "مرحباً! أنا BTC AI — اسألني في أي موضوع، برمجة، كتابة، أو دراسة"
+                      : "Hello! Ask BTC AI anything — conversation, coding, writing, or study"}
+                  </h2>
+                  <p
+                    className={`text-muted-foreground leading-relaxed ${largeText ? "text-base" : "text-xs"}`}
+                  >
+                    {isAr
+                      ? "يتحدث معك بلغتك ولهجتك بطبيعية، ويدعم الشرح والملخصات والأكواد البرمجية والأسئلة الدراسية."
+                      : "Replies naturally in your language and dialect across multi-turn conversations, code blocks, summaries, and academics."}
+                  </p>
+                </div>
 
-        {loading && (
-          <div className="flex gap-3 justify-start items-start">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary mt-1">
-              <Bot className="size-4" />
-            </div>
-            {streamingContent ? (
-              <div
-                className={`max-w-[88%] sm:max-w-[80%] surface-card border border-border/80 rounded-2xl rounded-tl-xs p-4 leading-relaxed ${
-                  largeText ? "text-lg" : "text-sm"
-                }`}
-              >
-                <SafeMarkdownRenderer content={streamingContent} />
-                <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <Loader2 className="size-3 animate-spin text-primary" />
-                  <span>{isAr ? "يكتب الرد..." : "Streaming..."}</span>
+                {/* Quick Suggestions */}
+                <div className="w-full max-w-lg space-y-2 pt-2 text-start">
+                  <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    {isAr ? "اقتراحات للبدء:" : "Try asking:"}
+                  </div>
+                  <div className="space-y-1.5">
+                    {samplePrompts.map((p, idx) => {
+                      const text = isAr ? p.textAr : p.textEn;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => void sendMessage(text)}
+                          className="w-full rounded-xl border border-border/80 bg-surface-2/50 hover:bg-surface-2 hover:border-primary/40 p-3 text-xs text-start text-foreground transition-all cursor-pointer font-medium"
+                        >
+                          &ldquo;{text}&rdquo;
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="surface-card border border-border/80 rounded-2xl rounded-tl-xs p-3.5 flex items-center gap-2 text-xs text-muted-foreground">
-                <Loader2 className="size-4 animate-spin text-primary" />
-                <span>
-                  {isAr ? "BTC AI يفكر ويكتب الرد..." : "BTC AI is generating response..."}
-                </span>
+              messages.map((m) => {
+                const isUser = m.role === "user";
+                return (
+                  <div
+                    key={m.id}
+                    data-testid={`chat-msg-${m.role}`}
+                    className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}
+                  >
+                    {!isUser && (
+                      <div
+                        className={`flex size-8 shrink-0 items-center justify-center rounded-lg mt-1 ${
+                          m.isError
+                            ? "bg-destructive/15 text-destructive"
+                            : "bg-primary/15 text-primary"
+                        }`}
+                      >
+                        {m.isError ? (
+                          <AlertTriangle className="size-4" />
+                        ) : (
+                          <Bot className="size-4" />
+                        )}
+                      </div>
+                    )}
+
+                    <div
+                      className={`group relative max-w-[88%] sm:max-w-[80%] rounded-2xl p-4 leading-relaxed ${
+                        largeText ? "text-lg" : "text-sm"
+                      } ${
+                        isUser
+                          ? "bg-primary text-primary-foreground font-medium rounded-tr-xs"
+                          : m.isError
+                            ? "border border-destructive/40 bg-destructive/10 text-foreground rounded-tl-xs space-y-2.5"
+                            : "surface-card border border-border/80 text-foreground rounded-tl-xs space-y-2"
+                      }`}
+                    >
+                      {isUser ? (
+                        <div dir="auto" className="whitespace-pre-wrap break-words">
+                          {m.content}
+                        </div>
+                      ) : m.isError ? (
+                        <div className="space-y-2.5">
+                          <p dir="auto" className="text-sm font-medium text-foreground">
+                            {m.content}
+                          </p>
+                          {m.retryPrompt && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                void sendMessage(m.retryPrompt!, { retryErrorId: m.id })
+                              }
+                              className="min-h-[36px] gap-1.5 cursor-pointer"
+                            >
+                              <RefreshCw className="size-3.5" />
+                              <span>{isAr ? "إعادة المحاولة" : "Retry"}</span>
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <SafeMarkdownRenderer content={m.content} />
+                      )}
+
+                      {!isUser && !m.isError && (
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/40 mt-2">
+                          <div className="flex items-center gap-2">
+                            {/* TTS read aloud button for accessibility */}
+                            <button
+                              type="button"
+                              onClick={() => handleSpeakText(m.id, m.content)}
+                              className={`text-xs flex items-center gap-1.5 font-semibold px-2 py-1 rounded-md transition-colors cursor-pointer ${
+                                speakingId === m.id
+                                  ? "bg-primary text-primary-foreground"
+                                  : "text-primary hover:bg-primary/10"
+                              }`}
+                            >
+                              <Volume2 className="size-3.5" />
+                              <span>
+                                {speakingId === m.id
+                                  ? isAr
+                                    ? "إيقاف القراءة"
+                                    : "Stop Reading"
+                                  : isAr
+                                    ? "قراءة صوتية"
+                                    : "Read Aloud"}
+                              </span>
+                            </button>
+
+                            {m.modelUsed && (
+                              <span className="font-mono text-[10px] text-muted-foreground/80">
+                                {formatFriendlyModelTier(m.modelUsed, isAr)}
+                              </span>
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(m.id, m.content)}
+                            className="text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 opacity-80 cursor-pointer"
+                          >
+                            {copiedId === m.id ? (
+                              <span className="text-emerald-500 font-semibold">
+                                {isAr ? "تم النسخ" : "Copied"}
+                              </span>
+                            ) : (
+                              <>
+                                <Copy className="size-3" />
+                                <span>{isAr ? "نسخ" : "Copy"}</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {isUser && (
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-muted-foreground mt-1">
+                        <User className="size-4" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+
+            {loading && (
+              <div className="flex gap-3 justify-start items-start">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary mt-1">
+                  <Bot className="size-4" />
+                </div>
+                {streamingContent ? (
+                  <div
+                    className={`max-w-[88%] sm:max-w-[80%] surface-card border border-border/80 rounded-2xl rounded-tl-xs p-4 leading-relaxed ${
+                      largeText ? "text-lg" : "text-sm"
+                    }`}
+                  >
+                    <SafeMarkdownRenderer content={streamingContent} />
+                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <Loader2 className="size-3 animate-spin text-primary" />
+                      <span>{isAr ? "يكتب الرد..." : "Streaming..."}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="surface-card border border-border/80 rounded-2xl rounded-tl-xs p-3.5 flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="size-4 animate-spin text-primary" />
+                    <span>
+                      {isAr ? "BTC AI يفكر ويكتب الرد..." : "BTC AI is generating response..."}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
+
+            <div ref={messagesEndRef} />
           </div>
-        )}
 
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input Box with Voice Dictation */}
-      <form onSubmit={handleSend} className="relative mt-2 border-t border-border/70 pt-3">
-        <div className="relative rounded-2xl border border-border bg-surface-2/60 focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-          <Textarea
-            ref={textareaRef}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void handleSend();
-              }
-            }}
-            placeholder={
-              isAr
-                ? "اكتب سؤالك هنا (أو اضغط Enter للإرسال)..."
-                : "Ask a study question, Important Vocabulary, or follow-up..."
-            }
-            rows={2}
-            className={`w-full resize-none border-0 bg-transparent p-3 focus-visible:ring-0 placeholder:text-muted-foreground ${
-              largeText ? "text-base" : "text-sm"
-            }`}
-            disabled={loading}
-          />
-
-          <div className="flex items-center justify-between px-3 pb-2.5 pt-1">
-            <div className="flex items-center gap-2">
-              <VoiceDictationButton
-                size="sm"
-                onInsert={(txt) => setPrompt((prev) => (prev ? `${prev} ${txt}` : txt))}
+          {/* Input Box with Voice Dictation */}
+          <form onSubmit={handleSend} className="relative mt-2 border-t border-border/70 pt-3">
+            <div className="relative rounded-2xl border border-border bg-surface-2/60 focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+              <Textarea
+                ref={textareaRef}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void handleSend();
+                  }
+                }}
+                placeholder={
+                  isAr
+                    ? "اكتب سؤالك هنا (أو اضغط Enter للإرسال)..."
+                    : "Ask a study question, Important Vocabulary, or follow-up..."
+                }
+                rows={2}
+                className={`w-full resize-none border-0 bg-transparent p-3 focus-visible:ring-0 placeholder:text-muted-foreground ${
+                  largeText ? "text-base" : "text-sm"
+                }`}
+                disabled={loading}
               />
-              <span className="text-[11px] text-muted-foreground hidden sm:inline">
-                {isAr ? "الإملاء الصوتي مدعوم" : "Voice dictation enabled"}
-              </span>
-            </div>
 
-            <Button
-              type="submit"
-              size="sm"
-              disabled={!prompt.trim() || loading}
-              className="gap-1.5 font-bold cursor-pointer"
-            >
-              {loading ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <>
-                  <span>{isAr ? "إرسال" : "Send"}</span>
-                  <Send className="size-3.5 rtl-flip" />
-                </>
-              )}
-            </Button>
-          </div>
+              <div className="flex items-center justify-between px-3 pb-2.5 pt-1">
+                <div className="flex items-center gap-2">
+                  <VoiceDictationButton
+                    size="sm"
+                    onInsert={(txt) => setPrompt((prev) => (prev ? `${prev} ${txt}` : txt))}
+                  />
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                    {isAr ? "الإملاء الصوتي مدعوم" : "Voice dictation enabled"}
+                  </span>
+                </div>
+
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={!prompt.trim() || loading}
+                  className="gap-1.5 font-bold cursor-pointer min-h-[40px]"
+                >
+                  {loading ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <>
+                      <span>{isAr ? "إرسال" : "Send"}</span>
+                      <Send className="size-3.5 rtl-flip" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </form>
         </div>
-      </form>
+
+        {showVoiceTutor && (
+          <aside className="lg:col-span-5 flex flex-col justify-start overflow-y-auto">
+            <VoiceConversationDrawer
+              contextSummary={`${activeRoleMeta.labelEn} (${activeTierMeta.labelEn})`}
+            />
+          </aside>
+        )}
+      </div>
     </div>
   );
 }

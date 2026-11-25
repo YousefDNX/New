@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { ShieldCheck, Bug, Lock } from "lucide-react";
+import { ShieldCheck, Bug, Lock, Heart } from "lucide-react";
 import { Logo } from "./Logo";
 import { ReportProblemModal } from "@/components/support/ReportProblemModal";
+import { SadaqahJariyahAndDuaaModal } from "@/components/islamic/SadaqahJariyahAndDuaaModal";
 import { useRbac } from "@/hooks/use-rbac";
 import { usePrefs } from "@/lib/preferences";
 import { getBrand } from "@/config/brand";
@@ -152,19 +153,53 @@ export function AppFooter() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl mt-10 pt-6 border-t border-border flex flex-wrap items-center justify-between gap-4 text-[11px] text-muted-foreground">
-        <div>{isAr ? brand.copyrightAr : brand.copyright}</div>
-        <div className="flex items-center gap-4">
-          <Link to="/about" className="hover:underline">
+      <div className="mx-auto max-w-6xl mt-10 pt-6 border-t border-border/80 flex flex-col sm:flex-row flex-wrap items-center justify-between gap-4 text-[11px] text-muted-foreground">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2.5 text-center sm:text-start">
+          <span>{isAr ? brand.copyrightAr : brand.copyright}</span>
+          <span className="hidden sm:inline text-border" aria-hidden="true">
+            ·
+          </span>
+          <span
+            data-testid="footer-creator-credit"
+            className="font-medium text-foreground/80 tracking-wide"
+          >
+            Designed &amp; Developed by Yousef Wael © 2026
+          </span>
+          <span className="hidden sm:inline text-border" aria-hidden="true">
+            ·
+          </span>
+          <SadaqahJariyahAndDuaaModal
+            lang={lang}
+            trigger={
+              <button
+                type="button"
+                data-testid="footer-duaa-in-absentia-btn"
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold text-[11px] transition-colors border border-emerald-500/30"
+                title={
+                  isAr
+                    ? "دعوة صالحة بظهر الغيب لمن قام على المنصة ووالديه (ولك بمثل)"
+                    : "Pray for the creator in absentia (Ameen, and unto you the same)"
+                }
+              >
+                <Heart className="size-3 text-emerald-600 fill-emerald-600/30" />
+                <span>
+                  {isAr ? "ادعُ للمطوّر ووالديه بظهر الغيب 🤲" : "Pray for Yousef in absentia 🤲"}
+                </span>
+              </button>
+            }
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <Link to="/about" className="hover:text-foreground hover:underline transition-colors">
             {t("landing.nav.about")}
           </Link>
-          <Link to="/help" className="hover:underline">
+          <Link to="/help" className="hover:text-foreground hover:underline transition-colors">
             {t("landing.nav.helpCenter")}
           </Link>
-          <Link to="/terms" className="hover:underline">
+          <Link to="/terms" className="hover:text-foreground hover:underline transition-colors">
             {t("footer.terms")}
           </Link>
-          <Link to="/privacy" className="hover:underline">
+          <Link to="/privacy" className="hover:text-foreground hover:underline transition-colors">
             {t("footer.privacy")}
           </Link>
         </div>

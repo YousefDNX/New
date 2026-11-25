@@ -17,13 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModernSelect } from "@/components/ui/modern-select";
 import {
   Dialog,
   DialogContent,
@@ -253,25 +247,26 @@ export function AdminHelpEditor() {
             className="ps-8 text-xs"
           />
         </div>
-        <Select
+        <ModernSelect
+          ariaLabel="Filter articles by category"
+          placeholder="All Categories"
           value={categoryFilter}
           onValueChange={(v) => setCategoryFilter(v as HelpArticleCategory | "all")}
-        >
-          <SelectTrigger className="text-xs">
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="getting_started">Getting Started</SelectItem>
-            <SelectItem value="account">Account & Verification</SelectItem>
-            <SelectItem value="growth_map">Growth Map & XP</SelectItem>
-            <SelectItem value="study">Study Module</SelectItem>
-            <SelectItem value="productivity">Productivity & Tasks</SelectItem>
-            <SelectItem value="ai">{BRAND.name} AI</SelectItem>
-            <SelectItem value="settings">Settings & Themes</SelectItem>
-            <SelectItem value="troubleshooting">Troubleshooting</SelectItem>
-          </SelectContent>
-        </Select>
+          searchable
+          searchPlaceholder="Search categories..."
+          size="sm"
+          options={[
+            { value: "all", label: "All Categories" },
+            { value: "getting_started", label: "Getting Started" },
+            { value: "account", label: "Account & Verification" },
+            { value: "growth_map", label: "Growth Map & XP" },
+            { value: "study", label: "Study Module" },
+            { value: "productivity", label: "Productivity & Tasks" },
+            { value: "ai", label: `${BRAND.name} AI` },
+            { value: "settings", label: "Settings & Themes" },
+            { value: "troubleshooting", label: "Troubleshooting" },
+          ]}
+        />
       </div>
 
       {/* Articles Table */}
@@ -395,29 +390,24 @@ export function AdminHelpEditor() {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="art-cat" className="text-xs font-semibold">
-                  Category
-                </Label>
-                <Select
-                  value={category}
-                  onValueChange={(v) => setCategory(v as HelpArticleCategory)}
-                >
-                  <SelectTrigger id="art-cat" className="w-full text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="getting_started">Getting Started</SelectItem>
-                    <SelectItem value="account">Account & Verification</SelectItem>
-                    <SelectItem value="growth_map">Growth Map & XP</SelectItem>
-                    <SelectItem value="study">Study Module</SelectItem>
-                    <SelectItem value="productivity">Productivity & Tasks</SelectItem>
-                    <SelectItem value="ai">{BRAND.name} AI</SelectItem>
-                    <SelectItem value="settings">Settings & Themes</SelectItem>
-                    <SelectItem value="troubleshooting">Troubleshooting</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <ModernSelect
+                id="art-cat"
+                label="Category"
+                value={category}
+                onValueChange={(v) => setCategory(v as HelpArticleCategory)}
+                searchable
+                searchPlaceholder="Select category..."
+                options={[
+                  { value: "getting_started", label: "Getting Started" },
+                  { value: "account", label: "Account & Verification" },
+                  { value: "growth_map", label: "Growth Map & XP" },
+                  { value: "study", label: "Study Module" },
+                  { value: "productivity", label: "Productivity & Tasks" },
+                  { value: "ai", label: `${BRAND.name} AI` },
+                  { value: "settings", label: "Settings & Themes" },
+                  { value: "troubleshooting", label: "Troubleshooting" },
+                ]}
+              />
             </div>
 
             <div className="space-y-1.5">

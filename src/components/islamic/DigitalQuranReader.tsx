@@ -14,6 +14,7 @@ import {
   getVerifiedTranslation,
   shouldShowBismillahHeader,
   toArabicIndicDigits,
+  matchesSurahOrAyah,
   type QuranAudioResult,
   type QuranBookmark,
   type QuranBookmarkCategory,
@@ -193,14 +194,9 @@ export const DigitalQuranReader: React.FC = () => {
   );
 
   const filteredSurahs = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = searchQuery.trim();
     if (!q) return surahs;
-    return surahs.filter(
-      (s) =>
-        s.nameSimple.toLowerCase().includes(q) ||
-        s.nameArabic.includes(searchQuery.trim()) ||
-        String(s.id) === q,
-    );
+    return surahs.filter((s) => matchesSurahOrAyah(s.id, s.nameArabic, s.nameSimple, q));
   }, [surahs, searchQuery]);
 
   const jumpToLocation = (surahId: number, ayahNumber = 1) => {

@@ -655,8 +655,9 @@ export function createInitialStudentEcosystemState(): StudentEcosystemState {
 
 const STORAGE_PREFIX = "btc.student_ecosystem.v1";
 
+const INITIAL_ECOSYSTEM_SNAPSHOT: StudentEcosystemState = createInitialStudentEcosystemState();
 let currentUid: string | null = null;
-let cachedState: StudentEcosystemState = createInitialStudentEcosystemState();
+let cachedState: StudentEcosystemState = INITIAL_ECOSYSTEM_SNAPSHOT;
 const listeners = new Set<() => void>();
 
 export function storageKeyForEcosystem(uid: string | null): string {
@@ -1009,6 +1010,10 @@ export function getStudentEcosystemSnapshot(): StudentEcosystemState {
   return cachedState;
 }
 
+export function getStudentEcosystemServerSnapshot(): StudentEcosystemState {
+  return INITIAL_ECOSYSTEM_SNAPSHOT;
+}
+
 export function subscribeStudentEcosystem(cb: () => void): () => void {
   listeners.add(cb);
   return () => listeners.delete(cb);
@@ -1022,7 +1027,7 @@ export function useStudentEcosystem(): {
   const state = useSyncExternalStore(
     subscribeStudentEcosystem,
     getStudentEcosystemSnapshot,
-    createInitialStudentEcosystemState,
+    getStudentEcosystemServerSnapshot,
   );
   return {
     state,

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Heart,
   BookOpen,
@@ -9,12 +9,74 @@ import {
   Copy,
   Check,
   Share2,
+  ShieldCheck,
+  Award,
 } from "lucide-react";
 import { useStudentEcosystem } from "@/lib/student-ecosystem";
+import { SadaqahJariyahAndDuaaModal } from "./SadaqahJariyahAndDuaaModal";
 
 interface GoodDeedsPanelProps {
   lang?: string;
 }
+
+interface StudentIntention {
+  id: string;
+  titleAr: string;
+  titleEn: string;
+  descAr: string;
+  descEn: string;
+}
+
+const SINCERE_STUDENT_INTENTIONS: StudentIntention[] = [
+  {
+    id: "intent_ignorance",
+    titleAr: "رفع الجهل عن النفس وعبادة الله على بصيرة",
+    titleEn: "Overcoming Ignorance & Worshipping Allah with Insight",
+    descAr: "أن أتعلم لأفهم ديني وأبني عقلي وأعبد الله عن علم وفهم وبصيرة.",
+    descEn:
+      "To learn so I understand my faith, cultivate my mind, and worship Allah with clear insight.",
+  },
+  {
+    id: "intent_benefit_ummah",
+    titleAr: "نفع المسلمين والإحسان إلى الناس وتعمير الأرض",
+    titleEn: "Benefiting Humanity & Serving the Community",
+    descAr: "أن تكون دراستي وعملي سبباً في كشف كربة أو تعليم جاهل أو بناء نفع مستمر.",
+    descEn:
+      "To use my education to relieve distress, teach others, and build lasting benefit on earth.",
+  },
+  {
+    id: "intent_parents_honor",
+    titleAr: "بر الوالدين وإدخال السرور على قلوبهما",
+    titleEn: "Honoring Parents & Bringing Sincere Joy to Their Hearts",
+    descAr: "أن يكون نجاحي واجتهادي قرة عين لأبي وأمي ورداً لجميلهما وفضلهما.",
+    descEn:
+      "To make my academic diligence a source of true joy for my parents and honor their sacrifices.",
+  },
+  {
+    id: "intent_halal_independence",
+    titleAr: "الاستغناء بالحلال والإنفاق في سبل الخير والصدقة",
+    titleEn: "Earning Halal Independence & Giving Generously in Charity",
+    descAr: "أن أستغني برزق حلال مبارك، وأتصدق منه وأعين به المحتاجين والضعفاء.",
+    descEn:
+      "To attain lawful sustenance and spend generously in charity to aid the needy and vulnerable.",
+  },
+  {
+    id: "intent_mastery_itqan",
+    titleAr: "إتقان العمل لنيل محبة الله ورضاه",
+    titleEn: "Mastery (Itqan) to Earn the Love & Pleasure of Allah",
+    descAr: "«إِنَّ اللَّهَ يُحِبُّ إِذَا عَمِلَ أَحَدُكُمْ عَمَلًا أَنْ يُتْقِنَهُ» — الإتقان في كل واجب ودرس.",
+    descEn:
+      "“Verily Allah loves when one of you does a deed, that he does it with mastery (Itqan).”",
+  },
+  {
+    id: "intent_sadaqah_jariyah",
+    titleAr: "جعل كل علم ومعلومة صدقة جارية تثقل الميزان",
+    titleEn: "Transforming Knowledge into Ongoing Charity (Sadaqah Jariyah)",
+    descAr: "أن أشارك ما أتعلمه بالمجان ليبقى ثوابه وأجره جارياً في صحائفي بعد مماتي.",
+    descEn:
+      "To share beneficial knowledge freely so its divine reward continues flowing after this life.",
+  },
+];
 
 interface ImpactInitiative {
   id: string;
@@ -152,6 +214,31 @@ export const GoodDeedsPanel: React.FC<GoodDeedsPanelProps> = ({ lang = "ar" }) =
   const [copiedNotice, setCopiedNotice] = useState(false);
   const [sustainableDone, setSustainableDone] = useState<string[]>([]);
 
+  const [activeIntentions, setActiveIntentions] = useState<string[]>(() => {
+    if (typeof window === "undefined") return ["intent_ignorance", "intent_benefit_ummah"];
+    try {
+      const saved = window.localStorage.getItem("btc_student_intentions_v1");
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // Ignore
+    }
+    return ["intent_ignorance", "intent_benefit_ummah"];
+  });
+
+  const toggleIntention = (id: string) => {
+    setActiveIntentions((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem("btc_student_intentions_v1", JSON.stringify(next));
+        } catch {
+          // Ignore
+        }
+      }
+      return next;
+    });
+  };
+
   const todayIso = new Date().toISOString().slice(0, 10);
   const activeWorshipKeys =
     eco.privateWorshipChecklist.dateIso === todayIso
@@ -234,6 +321,119 @@ export const GoodDeedsPanel: React.FC<GoodDeedsPanelProps> = ({ lang = "ar" }) =
             ? "نبتعد في هذه المنصة عن أنظمة النقاط المصطنعة أو الشارات الاستعراضية، احتراماً لقدسية العمل الصالح وإخلاصه لله وحده. هدفنا إرشادك إلى مبادرات عملية حقيقية تدوم بركتها وتترك أثراً نافعاً في مجتمعك وأمتك."
             : "This space deliberately has zero XP points, streaks leaderboard, or public badges for worship. Good deeds belong between you and Allah — focus on sincerity, private reflection, and beneficial community work that lasts."}
         </p>
+      </div>
+
+      {/* SINCERE DUA'A IN ABSENTIA FOR DEVELOPER & SADAQAH JARIYAH SECTION */}
+      <div
+        data-testid="good-deeds-duaa-sadaqah-card"
+        className="rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-emerald-950/40 dark:via-stone-900 dark:to-stone-900 p-5 sm:p-6 shadow-sm space-y-4"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
+              <Heart className="size-4 fill-emerald-600/30 text-emerald-600" />
+              <span>
+                {isAr
+                  ? "دعوة صالحة بظهر الغيب لمن بنى هذه المنصة ولوالديه (ولك بمثل ما دعوت وزيادة)"
+                  : "Supplication in Absentia for the Platform Creator & Parents"}
+              </span>
+            </div>
+            <h4 className="text-base sm:text-lg font-bold font-serif text-stone-900 dark:text-stone-100">
+              {isAr
+                ? "أعظم هدية تقدمها لأخيك المطور: دعوة مستجابة في ظهر الغيب"
+                : "The Greatest Gift: A sincere prayer for the developer in the unseen"}
+            </h4>
+            <p className="text-xs text-stone-600 dark:text-stone-300 max-w-2xl leading-relaxed">
+              {isAr
+                ? "صمم وبنى هذه المنصة أخوكم (يوسف وائل) متقرباً بها إلى الله تعالى صدقةً جارية وعِلماً يُنتفع به. ادعُ له ولوالديه بالمغفرة والقبول وصلاح البال، ولك مثل ما دعوت بدعاء الملك الموكل."
+                : "Architected and built by Yousef Wael as continuous beneficial knowledge (Sadaqah Jariyah) for Allah's Sake. Pray for him and his parents, and the appointed angel answers: Ameen, and for you the same!"}
+            </p>
+          </div>
+
+          <div className="shrink-0">
+            <SadaqahJariyahAndDuaaModal
+              lang={lang}
+              trigger={
+                <button
+                  type="button"
+                  data-testid="open-duaa-modal-from-good-deeds"
+                  className="min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold shadow-md transition-all active:scale-98"
+                >
+                  <Heart className="size-4 fill-current text-rose-300" />
+                  <span>{isAr ? "ادعُ للمطوّر بظهر الغيب 🤲" : "Pray in Absentia 🤲"}</span>
+                </button>
+              }
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 7 SINCERE INTENTIONS FOR SEEKING KNOWLEDGE (نوايا طالب العلم السبع لنيل حب الله ورضاه) */}
+      <div
+        data-testid="good-deeds-intentions-card"
+        className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5 sm:p-6 shadow-sm space-y-4"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 dark:border-stone-800 pb-3">
+          <div className="space-y-0.5">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+              <Sparkles className="size-3.5" />
+              <span>
+                {isAr ? "تجديد النية وتحويل المذاكرة إلى عبادة" : "Renewing Sincere Intentions"}
+              </span>
+            </div>
+            <h4 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100">
+              {isAr
+                ? "نوايا طالب العلم السبع لكسب حب الله ورضاه وأعظم الحسنات"
+                : "7 Sincere Intentions to Turn Every Study Hour into Divine Worship"}
+            </h4>
+          </div>
+          <span className="font-mono text-xs text-emerald-700 dark:text-emerald-400">
+            {activeIntentions.length}/{SINCERE_STUDENT_INTENTIONS.length}{" "}
+            {isAr ? "نوايا معقودة اليوم" : "intentions held"}
+          </span>
+        </div>
+
+        <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+          {isAr
+            ? "قال رسول الله ﷺ: «إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى». اعقد هذه النوايا الصالحة قبل أن تبدأ مذاكرتك أو عملك، لتتحول كل دقيقة تجلسها أمام دروسك إلى حسنات جارية في ميزانك."
+            : "The Prophet ﷺ said: “Actions are only by intentions, and every person will have only what they intended.” Align your heart before studying to transform every minute into lasting Hasanat."}
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {SINCERE_STUDENT_INTENTIONS.map((intent) => {
+            const isHeld = activeIntentions.includes(intent.id);
+            return (
+              <button
+                key={intent.id}
+                type="button"
+                onClick={() => toggleIntention(intent.id)}
+                className={`flex items-start gap-3 p-3.5 rounded-xl border text-start transition-all ${
+                  isHeld
+                    ? "border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/30 text-stone-900 dark:text-stone-100 shadow-2xs"
+                    : "border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-600 dark:text-stone-300 hover:border-emerald-400"
+                }`}
+              >
+                <div
+                  className={`size-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                    isHeld
+                      ? "bg-emerald-700 text-white"
+                      : "border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-transparent"
+                  }`}
+                >
+                  <Check className="size-3.5 stroke-[3]" />
+                </div>
+                <div className="space-y-1 min-w-0">
+                  <div className="font-bold text-xs leading-snug">
+                    {isAr ? intent.titleAr : intent.titleEn}
+                  </div>
+                  <div className="text-[11px] text-stone-500 dark:text-stone-400 leading-relaxed">
+                    {isAr ? intent.descAr : intent.descEn}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Private Worship Check-In & Sustainable Project Continuity Checklist */}
