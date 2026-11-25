@@ -2,23 +2,21 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Check,
+  CheckCircle2,
+  HelpCircle,
   Languages,
-  LayoutPanelTop,
   LogOut,
   Moon,
+  RotateCcw,
+  Settings,
+  Shield,
   Sparkles,
   Sun,
   UserCheck,
   Volume2,
-  HelpCircle,
-  MessageSquare,
-  Settings,
-  Shield,
 } from "lucide-react";
-import { useRbac } from "@/hooks/use-rbac";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { UpgradeAccountDialog } from "@/components/auth/UpgradeAccountDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,58 +27,65 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { UpgradeAccountDialog } from "@/components/auth/UpgradeAccountDialog";
 import { useProfile, useUser } from "@/hooks/use-nexora";
+import { useRbac } from "@/hooks/use-rbac";
 import { useSaveProfile } from "@/hooks/use-settings";
 import { useThemePersistence } from "@/hooks/use-theme-persistence";
-import { signOutFirebase } from "@/lib/firebase-auth";
-import { LANG_META, SUPPORTED_LANGS } from "@/lib/i18n-dict";
+import { resetGuestSession, signOutFirebase } from "@/lib/firebase-auth";
 import { usePrefs } from "@/lib/preferences";
 import { extractReadablePageText } from "@/lib/speech-service";
-import { getUiExperienceById, UI_EXPERIENCES } from "@/lib/ui-experiences";
 import { cn } from "@/lib/utils";
 
 export function UserMenu({ compact }: { compact?: boolean }) {
   const { data: user } = useUser();
   const { data: profile } = useProfile();
-  const {
-    t,
-    resolvedTheme,
-    lang,
-    setLang,
-    a11y,
-    speakText,
-    speechSupported,
-    effectiveUiExperience,
-    setUiExperience,
-  } = usePrefs();
+  const { t, resolvedTheme, lang, setLang, a11y, speakText, speechSupported } = usePrefs();
   const { applyColorMode } = useThemePersistence();
   const qc = useQueryClient();
   const saveProfile = useSaveProfile();
   const navigate = useNavigate();
   const rbac = useRbac();
+  const [resetBusy, setResetBusy] = useState(false);
+  const [signOutBusy, setSignOutBusy] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [avatarError, setAvatarError] = useState(false);
 
-  const isGuest = Boolean(user?.isAnonymous);
+  const isAr = lang === "ar";
+  const isGuest = !user || Boolean(user.isAnonymous);
   const name =
     profile?.display_name ||
     user?.displayName ||
-    (isGuest ? t("dash.guestName") : t("dash.studentName"));
-  const avatar = profile?.avatar_url || user?.photoURL || null;
+    (isGuest ? (isAr ? "طالب ضيف" : "Guest Student") : isAr ? "طالب" : "Student");
 
-  useEffect(() => {
-    setAvatarError(false);
-  }, [avatar]);
+  async function handleResetGuest() {
+    if (resetBusy) return;
+    setResetBusy(true);
+    try {
+      await qc.cancelQueries();
+      await resetGuestSession(user?.uid);
+      qc.clear();
+      toast.success(isAr ? "تمت إعادة ضبط جلسة الضيف." : "Guest session reset.");
+      void navigate({ to: "/auth", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("set.error"));
+    } finally {
+      setResetBusy(false);
+    }
+  }
 
-  async function signOut() {
+  async function handleSignOut() {
+    if (signOutBusy) return;
+    setSignOutBusy(true);
     try {
       await qc.cancelQueries();
       await signOutFirebase();
       qc.clear();
-      toast.success(t("common.signedout"));
-      navigate({ to: "/auth", replace: true });
+      toast.success(isAr ? "تم تسجيل الخروج بنجاح." : "Signed out successfully.");
+      void navigate({ to: "/auth", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("set.error"));
+    } finally {
+      setSignOutBusy(false);
     }
   }
 
@@ -94,106 +99,62 @@ export function UserMenu({ compact }: { compact?: boolean }) {
             compact && "justify-center",
           )}
         >
-          {avatar && !avatarError ? (
-            <img
-              src={avatar}
-              alt={name}
-              referrerPolicy="no-referrer"
-              onError={() => setAvatarError(true)}
-              className="size-8 shrink-0 rounded-full object-cover ring-1 ring-border"
-            />
-          ) : (
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent font-display text-xs font-bold text-accent-foreground">
-              {isGuest ? <UserCheck className="size-4" /> : name.slice(0, 1).toUpperCase()}
-            </span>
-          )}
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent font-display text-xs font-bold text-accent-foreground">
+            {isGuest ? <UserCheck className="size-4" /> : <CheckCircle2 className="size-4 text-emerald-500" />}
+          </span>
           {!compact && (
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium">{name}</div>
-              {isGuest && (
-                <div className="truncate text-[10px] font-medium text-primary">
-                  {t("auth.guest.badge")}
-                </div>
-              )}
+              <div className="truncate text-[10px] font-medium text-primary">
+                {isGuest
+                  ? isAr
+                    ? "جلسة ضيف"
+                    : "Guest Session"
+                  : user?.email || (isAr ? "حساب موثق" : "Verified Account")}
+              </div>
             </div>
           )}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-60">
-          {isGuest && (
-            <>
-              <DropdownMenuItem onClick={() => setUpgradeOpen(true)}>
-                <Sparkles className="text-primary" />
-                <span>{t("auth.guest.upgrade")}</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
+        <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuItem
             onClick={() => {
               const v = resolvedTheme === "dark" ? "light" : "dark";
               void applyColorMode(v);
             }}
           >
-            {resolvedTheme === "dark" ? <Sun /> : <Moon />}{" "}
+            {resolvedTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}{" "}
             {resolvedTheme === "dark" ? t("theme.light") : t("theme.dark")}
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Languages />
+              <Languages className="size-4" />
               <span>
-                {t("lang.switch")}: {LANG_META[lang].nativeName}
+                {t("lang.switch")}: {lang === "ar" ? "العربية" : "English"}
               </span>
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="w-48">
-              {SUPPORTED_LANGS.map((code) => {
-                const meta = LANG_META[code];
-                const active = code === lang;
-                return (
-                  <DropdownMenuItem
-                    key={code}
-                    onClick={() => {
-                      const prevLang = lang;
-                      setLang(code);
-                      saveProfile({ language: code }).catch(() => {
-                        setLang(prevLang);
-                        toast.error(t("set.error"));
-                      });
-                    }}
-                    className="flex items-center justify-between"
-                  >
-                    <span>{meta.nativeName}</span>
-                    {active && <Check className="size-3.5 text-primary" />}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <LayoutPanelTop />
-              <span>
-                {lang === "ar" ? "واجهة وتجربة الموقع" : "UI & UX"}:{" "}
-                {lang === "ar"
-                  ? getUiExperienceById(effectiveUiExperience).nameAr
-                  : getUiExperienceById(effectiveUiExperience).nameEn}
-              </span>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="w-60">
-              {UI_EXPERIENCES.map((exp) => {
-                const active = exp.id === effectiveUiExperience;
-                return (
-                  <DropdownMenuItem
-                    key={exp.id}
-                    onClick={() => {
-                      setUiExperience(exp.id);
-                    }}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="truncate">{lang === "ar" ? exp.nameAr : exp.nameEn}</span>
-                    {active && <Check className="size-3.5 shrink-0 text-primary" />}
-                  </DropdownMenuItem>
-                );
-              })}
+            <DropdownMenuSubContent className="w-40">
+              {(
+                [
+                  { code: "en" as const, label: "English" },
+                  { code: "ar" as const, label: "العربية" },
+                ] as const
+              ).map((opt) => (
+                <DropdownMenuItem
+                  key={opt.code}
+                  onClick={() => {
+                    const prevLang = lang;
+                    setLang(opt.code);
+                    saveProfile({ language: opt.code }).catch(() => {
+                      setLang(prevLang);
+                      toast.error(t("set.error"));
+                    });
+                  }}
+                  className="flex items-center justify-between"
+                >
+                  <span>{opt.label}</span>
+                  {lang === opt.code && <Check className="size-3.5 text-primary" />}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuSubContent>
           </DropdownMenuSub>
           {a11y.readAloud && speechSupported && (
@@ -204,7 +165,7 @@ export function UserMenu({ compact }: { compact?: boolean }) {
                 if (txt) speakText(txt);
               }}
             >
-              <Volume2 />
+              <Volume2 className="size-4" />
               <span>{t("a11y.readAloud.page")}</span>
             </DropdownMenuItem>
           )}
@@ -217,25 +178,36 @@ export function UserMenu({ compact }: { compact?: boolean }) {
             <HelpCircle className="size-4" />
             <span>{t("nav.helpCenter")}</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate({ to: "/app/support" })}>
-            <MessageSquare className="size-4" />
-            <span>{t("nav.supportTickets")}</span>
-          </DropdownMenuItem>
           {rbac.isStaff && (
             <DropdownMenuItem
               onClick={() => navigate({ to: "/app/admin" })}
-              className="text-primary font-semibold"
+              className="font-semibold text-primary"
             >
               <Shield className="size-4" />
               <span>{t("nav.adminCenter")}</span>
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={signOut}>
-            <LogOut /> {t("common.signout")}
-          </DropdownMenuItem>
+          {isGuest ? (
+            <>
+              <DropdownMenuItem onClick={() => setUpgradeOpen(true)}>
+                <Sparkles className="size-4 text-primary" />
+                <span>{isAr ? "ترقية إلى حساب دائم" : "Upgrade to Permanent Account"}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleResetGuest} disabled={resetBusy}>
+                <RotateCcw className="size-4" />
+                <span>{isAr ? "إعادة ضبط جلسة الضيف" : "Reset Guest Session"}</span>
+              </DropdownMenuItem>
+            </>
+          ) : (
+            <DropdownMenuItem onClick={handleSignOut} disabled={signOutBusy} className="text-destructive focus:text-destructive">
+              <LogOut className="size-4" />
+              <span>{isAr ? "تسجيل الخروج" : "Sign Out"}</span>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
+
       <UpgradeAccountDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
     </>
   );

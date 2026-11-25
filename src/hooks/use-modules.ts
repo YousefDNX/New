@@ -27,7 +27,12 @@ import {
   type CircleMemberRow,
   type CirclePostRow,
   type CircleTeamRow,
+  type CommunityCommentRow,
   type CommunityGroup,
+  type CommunityPostCategory,
+  type CommunityPostRow,
+  type CommunityReactionRow,
+  type CommunityReactionType,
   type FocusSessionRow,
   type FutureMilestoneItem,
   type FuturePlanRow,
@@ -40,8 +45,10 @@ import {
   type OpportunityRow,
   type ProfileRow,
   type QuizAttemptRow,
+  type SavedPostRow,
   type StudyItemRow,
   type StudyTopicStatus,
+  type TimeBlockRow,
 } from "@/lib/firestore-data";
 import {
   computeNextReviewIso,
@@ -1665,4 +1672,338 @@ export function useJournalActions() {
   };
 
   return { addJournalEntry, updateJournalEntry, deleteJournalEntry };
+}
+
+/* ─────────────────────────── TIME ORGANIZER BLOCKS ─────────────────────────── */
+
+export function useTimeBlocks() {
+  return useQuery({
+    queryKey: ["time_blocks"],
+    queryFn: async (): Promise<TimeBlockRow[]> => {
+      const userId = await requireEligibleUid();
+      if (!userId) return [];
+      try {
+        const snap = await getDocs(
+          query(collection(db, "time_blocks"), where("user_id", "==", userId)),
+        );
+        return snap.docs
+          .map((d) => d.data() as TimeBlockRow)
+          .sort((a, b) => {
+            const dayCmp = a.day_label.localeCompare(b.day_label);
+            if (dayCmp !== 0) return dayCmp;
+            return a.start_time.localeCompare(b.start_time);
+          });
+      } catch (err) {
+        handleFirestoreError(err, OperationType.LIST, "time_blocks");
+      }
+    },
+  });
+}
+
+export function useTimeBlockActions() {
+  const qc = useQueryClient();
+
+  const addTimeBlock = async (payload: {
+    title: string;
+    dayLabel: string;
+    startTime: string;
+    endTime: string;
+    notes?: string | null;
+  }): Promise<TimeBlockRow> => {
+    const userId = await requireEligibleUid();
+    if (!userId) throw new Error("Sign in required.");
+    const title = clampString(payload.title, 160);
+    const dayLabel = clampString(payload.dayLabel, 60);
+    const startTime = clampString(payload.startTime, 10);
+    const endTime = clampString(payload.endTime, 10);
+    if (!title || !dayLabel || !startTime || !endTime) {
+      throw new Error("Title, day, start time, and end time are required.");
+    }
+    const now = new Date().toISOString();
+    const id = generateSafeDocId("tb");
+    const row: TimeBlockRow = {
+      id,
+      user_id: userId,
+      title,
+      day_label: dayLabel,
+      start_time: startTime,
+      end_time: endTime,
+      notes: clampString(payload.notes, 500),
+      completed: false,
+      created_at: now,
+      updated_at: now,
+    };
+    try {
+      await setDoc(doc(db, "time_blocks", id), row);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `time_blocks/${id}`);
+    }
+    await qc.invalidateQueries({ queryKey: ["time_blocks"] });
+    return row;
+  };
+
+  const toggleTimeBlock = async (block: TimeBlockRow) => {
+    const userId = await requireEligibleUid();
+    if (!userId || userId !== block.user_id) return;
+    try {
+      await updateDoc(doc(db, "time_blocks", block.id), {
+        completed: !block.completed,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `time_blocks/${block.id}`);
+    }
+    await qc.invalidateQueries({ queryKey: ["time_blocks"] });
+  };
+
+  const deleteTimeBlock = async (id: string) => {
+    const userId = await requireEligibleUid();
+    if (!userId) return;
+    try {
+      await deleteDoc(doc(db, "time_blocks", id));
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `time_blocks/${id}`);
+    }
+    await qc.invalidateQueries({ queryKey: ["time_blocks"] });
+  };
+
+  return { addTimeBlock, toggleTimeBlock, deleteTimeBlock };
+}
+
+/* ─────────────────────────── SHARED KNOWLEDGE CIRCLE ─────────────────────────── */
+
+export function useCommunityPosts() {
+  return useQuery({
+    queryKey: ["community_posts"],
+    queryFn: async (): Promise<CommunityPostRow[]> => {
+      const userId = await requireEligibleUid();
+      if (!userId) return [];
+      try {
+        const snap = await getDocs(collection(db, "community_posts"));
+        return snap.docs
+          .map((d) => d.data() as CommunityPostRow)
+          .sort((a, b) => b.created_at.localeCompare(a.created_at));
+      } catch (err) {
+        handleFirestoreError(err, OperationType.LIST, "community_posts");
+      }
+    },
+  });
+}
+
+export function useCommunityComments(postId: string | null) {
+  return useQuery({
+    queryKey: ["community_comments", postId],
+    enabled: Boolean(postId),
+    queryFn: async (): Promise<CommunityCommentRow[]> => {
+      if (!postId) return [];
+      const userId = await requireEligibleUid();
+      if (!userId) return [];
+      try {
+        const snap = await getDocs(collection(db, "community_posts", postId, "comments"));
+        return snap.docs
+          .map((d) => d.data() as CommunityCommentRow)
+          .sort((a, b) => a.created_at.localeCompare(b.created_at));
+      } catch (err) {
+        handleFirestoreError(err, OperationType.LIST, `community_posts/${postId}/comments`);
+      }
+    },
+  });
+}
+
+export function useCommunityReactions(postId: string | null) {
+  return useQuery({
+    queryKey: ["community_reactions", postId],
+    enabled: Boolean(postId),
+    queryFn: async (): Promise<CommunityReactionRow[]> => {
+      if (!postId) return [];
+      const userId = await requireEligibleUid();
+      if (!userId) return [];
+      try {
+        const snap = await getDocs(collection(db, "community_posts", postId, "reactions"));
+        return snap.docs.map((d) => d.data() as CommunityReactionRow);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.LIST, `community_posts/${postId}/reactions`);
+      }
+    },
+  });
+}
+
+export function useSavedPosts() {
+  return useQuery({
+    queryKey: ["saved_posts"],
+    queryFn: async (): Promise<SavedPostRow[]> => {
+      const userId = await requireEligibleUid();
+      if (!userId) return [];
+      try {
+        const snap = await getDocs(collection(db, "users", userId, "saved_posts"));
+        return snap.docs
+          .map((d) => d.data() as SavedPostRow)
+          .sort((a, b) => b.saved_at.localeCompare(a.saved_at));
+      } catch (err) {
+        handleFirestoreError(err, OperationType.LIST, `users/${userId}/saved_posts`);
+      }
+    },
+  });
+}
+
+export function useCommunityActions() {
+  const qc = useQueryClient();
+
+  const createPost = async (payload: {
+    authorName: string;
+    category: CommunityPostCategory;
+    body: string;
+    mediaUrl?: string | null;
+  }): Promise<CommunityPostRow> => {
+    const userId = await requireEligibleUid();
+    if (!userId) throw new Error("Sign in required.");
+    const body = clampString(payload.body, 3000);
+    if (!body) throw new Error("Post message is required.");
+    const mediaUrl = sanitizeHttpUrl(payload.mediaUrl, 1024);
+    const now = new Date().toISOString();
+    const id = generateSafeDocId("cpost");
+    const row: CommunityPostRow = {
+      id,
+      author_id: userId,
+      author_name: clampString(payload.authorName, 60) ?? "Student",
+      category: payload.category,
+      body,
+      ...(mediaUrl ? { media_url: mediaUrl, media_kind: "link" as const } : {}),
+      created_at: now,
+      updated_at: now,
+    };
+    try {
+      await setDoc(doc(db, "community_posts", id), row);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `community_posts/${id}`);
+    }
+    await qc.invalidateQueries({ queryKey: ["community_posts"] });
+    return row;
+  };
+
+  const deletePost = async (postId: string) => {
+    const userId = await requireEligibleUid();
+    if (!userId) return;
+    try {
+      await deleteDoc(doc(db, "community_posts", postId));
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `community_posts/${postId}`);
+    }
+    await qc.invalidateQueries({ queryKey: ["community_posts"] });
+  };
+
+  const addComment = async (payload: {
+    postId: string;
+    authorName: string;
+    body: string;
+  }): Promise<CommunityCommentRow> => {
+    const userId = await requireEligibleUid();
+    if (!userId) throw new Error("Sign in required.");
+    const body = clampString(payload.body, 2000);
+    if (!body) throw new Error("Comment is required.");
+    const now = new Date().toISOString();
+    const id = generateSafeDocId("ccmt");
+    const row: CommunityCommentRow = {
+      id,
+      post_id: payload.postId,
+      author_id: userId,
+      author_name: clampString(payload.authorName, 60) ?? "Student",
+      body,
+      created_at: now,
+      updated_at: now,
+    };
+    try {
+      await setDoc(doc(db, "community_posts", payload.postId, "comments", id), row);
+    } catch (err) {
+      handleFirestoreError(
+        err,
+        OperationType.CREATE,
+        `community_posts/${payload.postId}/comments/${id}`,
+      );
+    }
+    await qc.invalidateQueries({ queryKey: ["community_comments", payload.postId] });
+    return row;
+  };
+
+  const deleteComment = async (postId: string, commentId: string) => {
+    const userId = await requireEligibleUid();
+    if (!userId) return;
+    try {
+      await deleteDoc(doc(db, "community_posts", postId, "comments", commentId));
+    } catch (err) {
+      handleFirestoreError(
+        err,
+        OperationType.DELETE,
+        `community_posts/${postId}/comments/${commentId}`,
+      );
+    }
+    await qc.invalidateQueries({ queryKey: ["community_comments", postId] });
+  };
+
+  const toggleReaction = async (
+    postId: string,
+    type: CommunityReactionType,
+    existingReaction: CommunityReactionRow | undefined,
+  ) => {
+    const userId = await requireEligibleUid();
+    if (!userId) return;
+    const ref = doc(db, "community_posts", postId, "reactions", userId);
+    const now = new Date().toISOString();
+    try {
+      if (existingReaction && existingReaction.type === type) {
+        await deleteDoc(ref);
+      } else if (existingReaction) {
+        await updateDoc(ref, { type, updated_at: now });
+      } else {
+        const row: CommunityReactionRow = {
+          user_id: userId,
+          post_id: postId,
+          type,
+          created_at: now,
+          updated_at: now,
+        };
+        await setDoc(ref, row);
+      }
+    } catch (err) {
+      handleFirestoreError(
+        err,
+        OperationType.WRITE,
+        `community_posts/${postId}/reactions/${userId}`,
+      );
+    }
+    await qc.invalidateQueries({ queryKey: ["community_reactions", postId] });
+  };
+
+  const toggleSavePost = async (postId: string, isCurrentlySaved: boolean) => {
+    const userId = await requireEligibleUid();
+    if (!userId) return;
+    const ref = doc(db, "users", userId, "saved_posts", postId);
+    try {
+      if (isCurrentlySaved) {
+        await deleteDoc(ref);
+      } else {
+        const row: SavedPostRow = {
+          post_id: postId,
+          user_id: userId,
+          saved_at: new Date().toISOString(),
+        };
+        await setDoc(ref, row);
+      }
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `users/${userId}/saved_posts/${postId}`);
+    }
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["saved_posts"] }),
+      qc.invalidateQueries({ queryKey: ["home_saved_posts_count"] }),
+    ]);
+  };
+
+  return {
+    createPost,
+    deletePost,
+    addComment,
+    deleteComment,
+    toggleReaction,
+    toggleSavePost,
+  };
 }

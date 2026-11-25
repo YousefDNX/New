@@ -1,21 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SimpleTasksWorkspace } from "@/components/tasks/SimpleTasksWorkspace";
+import { ProductivityFocusWorkspace } from "@/components/modules/ProductivityFocusWorkspace";
 import { BRAND } from "@/config/brand";
 
 export const Route = createFileRoute("/_authenticated/app/tasks")({
   head: () => ({
     meta: [
-      { title: `My Tasks — ${BRAND.name}` },
+      { title: `Productivity & Focus — ${BRAND.name}` },
       {
         name: "description",
-        content: `Simple student task manager on ${BRAND.name}.`,
+        content: `Calm tasks, goals, focus timer, and time organizer on ${BRAND.name}.`,
       },
-      { property: "og:title", content: `My Tasks — ${BRAND.name}` },
+      { property: "og:title", content: `Productivity & Focus — ${BRAND.name}` },
       {
         property: "og:description",
-        content: `Simple student task manager on ${BRAND.name}.`,
+        content: `Calm tasks, goals, focus timer, and time organizer on ${BRAND.name}.`,
       },
     ],
   }),
-  component: SimpleTasksWorkspace,
+  component: ProductivityFocusWorkspace,
 });

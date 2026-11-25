@@ -35,11 +35,102 @@ import {
   type ExpandedVocabItem,
 } from "@/data/grade9-expanded-vocab";
 import { speakEnglishText } from "@/lib/english-speech";
+import { useOptionalAuth } from "@/lib/auth";
+import { recordLastVisitedModule } from "@/lib/continue-tracker";
 import { usePrefs } from "@/lib/preferences";
 import { speakArabicText } from "@/lib/speech-service";
 
-type StudyTopView = "units" | "unit9_quiz" | "vocabulary_cards" | "test_center";
+type StudyTopView = "units" | "unit9_quiz" | "vocabulary_cards" | "test_center" | "summaries";
 type UnitViewMode = "flashcards" | "quiz";
+
+interface UnitSummaryGuide {
+  unit: number;
+  titleEn: string;
+  titleAr: string;
+  summaryEn: string;
+  summaryAr: string;
+  keyTakeawaysEn: string[];
+  keyTakeawaysAr: string[];
+}
+
+const UNIT_SUMMARY_GUIDES: UnitSummaryGuide[] = [
+  {
+    unit: 1,
+    titleEn: "Unit 1 — Explorers, Grit & Mindset",
+    titleAr: "الوحدة الأولى — الاستكشاف والعزيمة والعقلية الإيجابية",
+    summaryEn:
+      "Focuses on personal determination, overcoming difficult challenges ('tough', 'survive', 'will'), and building a steady mindset ('consistently', 'efficiently', 'trust').",
+    summaryAr:
+      "تركز الوحدة على قوة الإرادة وتجاوز الصعاب وبناء عقلية إيجابية منظمة تساعد الطالب على الاستمرار دون استسلام.",
+    keyTakeawaysEn: [
+      "Adverbs ending in -ly (proudly, merely, consistently, efficiently, equally) describe how an action is done.",
+      "Phrasal verb 'give up' means to stop trying; contrast it with 'will' and 'survive'.",
+      "Use 'highlight' and 'represent' when summarizing main ideas in reading passages.",
+    ],
+    keyTakeawaysAr: [
+      "الأحوال المنتهية بـ -ly تصف طريقة أداء الفعل مثل proudly وconsistently وefficiently.",
+      "الفعل المركب give up يعني الاستسلام، ويقابله الثبات والعزيمة (will / survive).",
+      "تُستخدم highlight وrepresent عند تلخيص الأفكار الرئيسية في نصوص القراءة.",
+    ],
+  },
+  {
+    unit: 2,
+    titleEn: "Unit 2 — Digital Safety, AI & Critical Judgement",
+    titleAr: "الوحدة الثانية — الأمان الرقمي والتقييم النقدي للمعلومات",
+    summaryEn:
+      "Teaches students how to evaluate claims online ('fake', 'phishing', 'scam'), protect digital access ('update', 'install', 'software'), and apply careful judgement before trusting sources.",
+    summaryAr:
+      "تعلم الطلاب كيفية التحقق من الأخبار والروابط المشبوهة، وحماية الحسابات والبرامج، واستخدام التفكير النقدي قبل تصديق أي ادعاء.",
+    keyTakeawaysEn: [
+      "Always verify 'claim' and 'fake' news with 'accurate' evidence before sharing.",
+      "Security verbs: 'access', 'update', 'install', 'evaluate', 'implement'.",
+      "Notice British spelling: 'judgement' (with the 'e').",
+    ],
+    keyTakeawaysAr: [
+      "تحقق دائماً من صحة أي ادعاء (claim) وتأكد من دقة المعلومة (accurate) قبل مشاركتها.",
+      "أفعال تقنية أساسية: access وupdate وinstall وevaluate وimplement.",
+      "انتبه للإملاء البريطاني المعتمد في كلمة judgement.",
+    ],
+  },
+  {
+    unit: 3,
+    titleEn: "Unit 3 — Food, Health & Balanced Living",
+    titleAr: "الوحدة الثالثة — الغذاء والصحة وأسلوب الحياة المتوازن",
+    summaryEn:
+      "Covers nutrition, balanced meals, British vocabulary spellings ('flavour', 'fibre'), and everyday health habits.",
+    summaryAr:
+      "تتناول التغذية الصحية، وتوازن الوجبات، والمفردات البريطانية الأساسية مثل flavour وfibre وعادات العناية بالصحة.",
+    keyTakeawaysEn: [
+      "Preserve British spellings: 'flavour' and 'fibre'.",
+      "Practice pairing food adjectives with healthy meal descriptions.",
+      "Review all 24 Unit 3 flashcards alongside audio pronunciation.",
+    ],
+    keyTakeawaysAr: [
+      "حافظ على الإملاء البريطاني في flavour وfibre.",
+      "تدرّب على ربط صفات الطعام بوصف الوجبات الصحية المتوازنة.",
+      "راجع البطاقات الـ ٢٤ كاملة مع الاستماع للنطق الصحيح.",
+    ],
+  },
+  {
+    unit: 4,
+    titleEn: "Unit 4 — Mindful Living & Conservation",
+    titleAr: "الوحدة الرابعة — الاستهلاك الواعي والحفاظ على الموارد",
+    summaryEn:
+      "Explores reducing waste ('discard', 'disposable', 'wasteful', 'minimise'), protecting resources ('conserve', 'preserve'), and making thoughtful daily choices ('mindful', 'donate', 'balanced').",
+    summaryAr:
+      "تتناول ترشيد الاستهلاك وتقليل الهدر والحفاظ على البيئة والموارد من خلال قرارات يومية واعية ومستدامة.",
+    keyTakeawaysEn: [
+      "Contrast wasteful habits ('discard', 'disposable') with sustainable choices ('conserve', 'preserve', 'donate').",
+      "British spelling check: 'minimise' (-ise ending).",
+      "Connectors for essays: 'instead', 'frankly', 'necessarily'.",
+    ],
+    keyTakeawaysAr: [
+      "قارن بين كلمات الهدر (discard / disposable) وكلمات الحفظ (conserve / preserve / donate).",
+      "انتبه للإملاء البريطاني في كلمة minimise.",
+      "استخدم روابط التعبير مثل instead وfrankly وnecessarily في الكتابة.",
+    ],
+  },
+];
 
 function GenericUnitImmediateQuiz({
   unitMeta,
@@ -210,7 +301,50 @@ function GenericUnitImmediateQuiz({
 
 export function StudyWorkspace() {
   const { lang } = usePrefs();
+  const auth = useOptionalAuth();
+  const uid = auth?.user?.uid ?? null;
   const isAr = lang === "ar";
+
+  useEffect(() => {
+    recordLastVisitedModule(uid, {
+      path: "/app/study",
+      labelEn: "Study & Academics",
+      labelAr: "الدراسة والأكاديميات",
+    });
+  }, [uid]);
+
+  const revisedStorageKey = `btc_study_revised_${uid || "guest"}`;
+  const [revisedUnits, setRevisedUnits] = useState<Record<number, boolean>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = window.localStorage.getItem(`btc_study_revised_${uid || "guest"}`);
+      return raw ? (JSON.parse(raw) as Record<number, boolean>) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(revisedStorageKey);
+      setRevisedUnits(raw ? (JSON.parse(raw) as Record<number, boolean>) : {});
+    } catch {
+      setRevisedUnits({});
+    }
+  }, [revisedStorageKey]);
+
+  const toggleRevisedUnit = (unitNum: number) => {
+    setRevisedUnits((prev) => {
+      const next = { ...prev, [unitNum]: !prev[unitNum] };
+      try {
+        window.localStorage.setItem(revisedStorageKey, JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  };
 
   const [topView, setTopView] = useState<StudyTopView>(() => {
     if (typeof window === "undefined") return "units";
@@ -220,6 +354,7 @@ export function StudyWorkspace() {
     if (tabParam === "test_center" || tabParam === "tests" || tabParam === "quiz")
       return "test_center";
     if (tabParam === "vocabulary" || tabParam === "essential") return "vocabulary_cards";
+    if (tabParam === "summaries") return "summaries";
     return "units";
   });
 
@@ -384,6 +519,116 @@ export function StudyWorkspace() {
     return (
       <div className="mx-auto max-w-5xl space-y-6 pb-14">
         <VocabTestCenter onBackToStudy={() => setTopView("units")} />
+      </div>
+    );
+  }
+
+  // Top-level Lesson Summaries & Revision view
+  if (topView === "summaries" && !selectedUnitNumber) {
+    const revisedCount = UNIT_SUMMARY_GUIDES.filter((g) => revisedUnits[g.unit]).length;
+    return (
+      <div className="mx-auto max-w-5xl space-y-6 pb-14">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-4">
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setTopView("units")}
+              className="gap-2 text-xs font-semibold cursor-pointer"
+            >
+              <ArrowLeft className="size-4 rtl-flip" />
+              <span>{isAr ? "العودة للوحدات" : "Back to Units"}</span>
+            </Button>
+            <div>
+              <h2 className="font-display text-xl font-bold text-foreground">
+                {isAr ? "ملخصات الدروس وخطة المراجعة" : "Lesson Summaries & Revision"}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {isAr
+                  ? `تمت مراجعة ${revisedCount} من ${UNIT_SUMMARY_GUIDES.length} وحدات`
+                  : `${revisedCount} of ${UNIT_SUMMARY_GUIDES.length} units revised`}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {UNIT_SUMMARY_GUIDES.map((guide) => {
+            const done = Boolean(revisedUnits[guide.unit]);
+            return (
+              <div
+                key={guide.unit}
+                className="surface-card flex flex-col justify-between rounded-2xl border border-border/80 p-5 space-y-4"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="rounded-md bg-primary/10 px-2.5 py-0.5 font-mono text-[11px] font-bold text-primary">
+                      UNIT {guide.unit}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => toggleRevisedUnit(guide.unit)}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
+                        done
+                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                          : "bg-surface-2 text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <CheckCircle2 className="size-3.5" />
+                      <span>
+                        {done
+                          ? isAr
+                            ? "تمت المراجعة"
+                            : "Revised"
+                          : isAr
+                            ? "تحديد كمُراجع"
+                            : "Mark Revised"}
+                      </span>
+                    </button>
+                  </div>
+
+                  <h3 className="font-display text-base font-bold text-foreground">
+                    {isAr ? guide.titleAr : guide.titleEn}
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {isAr ? guide.summaryAr : guide.summaryEn}
+                  </p>
+
+                  <ul className="space-y-1.5 rounded-xl bg-surface-2/60 p-3 text-xs text-foreground">
+                    {(isAr ? guide.keyTakeawaysAr : guide.keyTakeawaysEn).map((tip, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-3">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleSelectUnit(guide.unit, "flashcards")}
+                    className="h-8 text-xs cursor-pointer"
+                  >
+                    {isAr ? "افتح البطاقات" : "Open Flashcards"}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="glow"
+                    onClick={() => handleSelectUnit(guide.unit, "quiz")}
+                    className="h-8 text-xs cursor-pointer"
+                  >
+                    {isAr ? "اختبار سريع" : "Quick Quiz"}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -656,6 +901,17 @@ export function StudyWorkspace() {
                   ? "بطاقات المفردات الأساسية والموسّعة (١٤١ كلمة)"
                   : "Browse All Study Cards & Essential Words (141)"}
               </span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="default"
+              onClick={() => setTopView("summaries")}
+              className="gap-2 font-semibold cursor-pointer"
+            >
+              <Layers className="size-4 text-primary" />
+              <span>{isAr ? "ملخصات الدروس والمراجعة" : "Lesson Summaries & Revision"}</span>
             </Button>
           </div>
         </div>

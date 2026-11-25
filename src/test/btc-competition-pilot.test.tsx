@@ -38,9 +38,20 @@ describe("BTC Competition Pilot Guardrails", () => {
     expect(scrubbed).toContain("[redacted-phone]");
   });
 
-  it("exposes only competition navigation items and EN/AR pilot languages", () => {
+  it("exposes restored BTC navigation items and EN/AR bilingual languages", () => {
     const allIds = NAV_GROUPS.flatMap((g) => g.items.map((item) => item.id));
-    expect(allIds).toEqual(["home", "ai", "study", "tasks", "circle", "quran"]);
+    expect(allIds).toEqual([
+      "home",
+      "study",
+      "skills",
+      "tasks",
+      "care",
+      "future",
+      "circle",
+      "opportunities",
+      "english",
+      "quran",
+    ]);
     expect(PILOT_LANGS).toEqual(["en", "ar"]);
   });
 

@@ -36,16 +36,16 @@ export const BRAND_CONFIGS: Record<BrandMode, BrandConfig> = {
     name: "BTC",
     shortName: "BTC",
     fullName: "BE THE CHANGE",
-    tagline: "Be the Change. Learn. Lead. Grow.",
-    taglineAr: "كُن التغيير. تعلّم. قُد. انمُ.",
+    tagline: "Study. Focus. Grow.",
+    taglineAr: "الدراسة. التركيز. النمو.",
     subtagline: "International Student Technology & Innovation Platform",
     subtaglineAr: "منصة التكنولوجيا والابتكار الطلابي الدولية",
     mission:
       "Empowering students worldwide to master subjects, build healthy habits, explore careers, and drive positive global change.",
     missionAr:
       "تمكين الطلاب في كل مكان من إتقان المواد الدراسية، وبناء عادات متوازنة، واستكشاف المستقبل، وصناعة أثر عالمي إيجابي.",
-    heroHeadline: "Be the Change. Master Your Learning.",
-    heroHeadlineAr: "كُن التغيير. أتقن رحلتك التعليمية.",
+    heroHeadline: "Study. Focus. Grow.",
+    heroHeadlineAr: "الدراسة. التركيز. النمو.",
     heroSubheadline:
       "A unified student innovation workspace uniting active recall, smart focus, wellbeing care, and global opportunity pathways.",
     heroSubheadlineAr:

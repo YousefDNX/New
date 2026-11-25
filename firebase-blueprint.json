@@ -872,11 +872,11 @@
         },
         "reporter_email": { "type": "string", "maxLength": 160 },
         "circle_id": { "type": "string", "maxLength": 128 },
-        "target_type": { "type": "string", "enum": ["post", "resource", "task", "team"] },
+        "target_type": { "type": "string", "enum": ["post", "resource", "task", "team", "community_post", "community_comment"] },
         "target_id": { "type": "string", "maxLength": 128 },
         "reported_target_type": {
           "type": "string",
-          "enum": ["circle_post", "circle_member", "comment", "resource", "other"]
+          "enum": ["circle_post", "circle_member", "comment", "resource", "community_post", "community_comment", "other"]
         },
         "reported_target_id": { "type": "string", "maxLength": 128 },
         "reason": {
@@ -1550,6 +1550,82 @@
         "explanation",
         "created_at"
       ]
+    },
+    "TimeBlock": {
+      "title": "Productivity Time Organizer Block",
+      "description": "Private daily time organizer entry owned by user_id == request.auth.uid.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "user_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "day_label": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "start_time": { "type": "string", "minLength": 1, "maxLength": 10 },
+        "end_time": { "type": "string", "minLength": 1, "maxLength": 10 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "completed": { "type": "boolean" },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["id", "user_id", "title", "day_label", "start_time", "end_time", "created_at", "updated_at"]
+    },
+    "CommunityPost": {
+      "title": "Knowledge Circle Shared Community Post",
+      "description": "Shared educational post across all guest learners with category, optional media, and non-PII author display name.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "author_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "author_name": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "category": { "type": "string", "enum": ["general", "question", "info", "explanation"] },
+        "body": { "type": "string", "minLength": 1, "maxLength": 3000 },
+        "media_url": { "type": "string", "maxLength": 1024 },
+        "media_kind": { "type": "string", "enum": ["image", "video", "link"] },
+        "media_path": { "type": "string", "maxLength": 512 },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["id", "author_id", "author_name", "category", "body", "created_at", "updated_at"]
+    },
+    "CommunityComment": {
+      "title": "Knowledge Circle Post Comment or Reply",
+      "description": "Shared discussion comment or nested reply on a community post.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "post_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "parent_comment_id": { "type": "string", "maxLength": 128 },
+        "author_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "author_name": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "body": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["id", "post_id", "author_id", "author_name", "body", "created_at"]
+    },
+    "CommunityReaction": {
+      "title": "Unique Per-Guest Post Reaction",
+      "description": "Per-guest unique reaction keyed by userId under community_posts/{postId}/reactions/{userId}.",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "post_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "type": { "type": "string", "enum": ["like", "helpful", "insightful"] },
+        "created_at": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "updated_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["user_id", "post_id", "type", "created_at", "updated_at"]
+    },
+    "SavedPost": {
+      "title": "Private Saved Knowledge Circle Post",
+      "description": "Strictly private bookmark reference stored under users/{userId}/saved_posts/{postId}.",
+      "type": "object",
+      "properties": {
+        "post_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "user_id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 1, "maxLength": 128 },
+        "saved_at": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "required": ["post_id", "user_id", "saved_at"]
     }
   },
   "firestore": {
@@ -1680,6 +1756,26 @@
     "/exam_questions/{questionId}": {
       "schema": { "$ref": "#/entities/ExamQuestion" },
       "description": "Categorized practice exam simulation question bank queryable by topic and difficulty."
+    },
+    "/time_blocks/{blockId}": {
+      "schema": { "$ref": "#/entities/TimeBlock" },
+      "description": "Private student daily time organizer blocks owned by user_id == request.auth.uid."
+    },
+    "/community_posts/{postId}": {
+      "schema": { "$ref": "#/entities/CommunityPost" },
+      "description": "Shared Knowledge Circle community posts across all authenticated guests."
+    },
+    "/community_posts/{postId}/comments/{commentId}": {
+      "schema": { "$ref": "#/entities/CommunityComment" },
+      "description": "Comments and replies on shared Knowledge Circle posts."
+    },
+    "/community_posts/{postId}/reactions/{userId}": {
+      "schema": { "$ref": "#/entities/CommunityReaction" },
+      "description": "Unique per-guest reaction on a Knowledge Circle post."
+    },
+    "/users/{userId}/saved_posts/{postId}": {
+      "schema": { "$ref": "#/entities/SavedPost" },
+      "description": "Private per-guest saved posts bookmarks."
     }
   }
 }

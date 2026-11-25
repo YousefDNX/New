@@ -326,7 +326,29 @@ export const CANONICAL_MODULES: CanonicalModule[] = [
       "Global Traditions",
     ],
   },
-
+  {
+    id: "knowledge-circle",
+    number: "11",
+    name: "Knowledge Circle",
+    nameAr: "حلقة المعرفة والتعلم التشاركي",
+    description:
+      "Collaborative student community feed, peer study questions, educational explanations, and safe academic knowledge exchange.",
+    descriptionAr:
+      "مجتمع طلابي تشاركي، طرح الأسئلة الدراسية، تبادل الشروحات المعرفية، والتواصل الأكاديمي الآمن بين الأقران.",
+    category: "connect_contribute",
+    to: "/app/circle",
+    icon: Users,
+    guideId: "study-circles",
+    badge: "Community Circle",
+    color: "oklch(0.72 0.15 210)",
+    capabilities: [
+      "Peer Questions",
+      "Study Explanations",
+      "Realtime Community Feed",
+      "Saved Study Posts",
+      "Safe Student Moderation",
+    ],
+  },
   {
     id: "opportunity-radar",
     number: "12",

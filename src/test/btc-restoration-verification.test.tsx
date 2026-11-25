@@ -40,19 +40,30 @@ describe("BTC Restoration Verification (Parts 1-8)", () => {
     localStorage.clear();
   });
 
-  it("Part 1 & 6: excludes legacy modules from APPROVED_BTC_MODULES and ALL_NAV_ITEMS and shows 'Levelup peers' under BTC logo", () => {
-    const blockedNavIds = new Set([
-      "future",
-      "opportunities",
+  it("Part 1 & 6: includes restored core educational modules in ALL_NAV_ITEMS without gender-locked nav entries and shows 'Levelup peers' under BTC logo", () => {
+    const requiredNavIds = [
+      "home",
+      "study",
+      "skills",
+      "tasks",
       "care",
-      "girls",
-      "girls-space",
-      "martial-arts",
-      "rahmah",
-    ]);
+      "future",
+      "circle",
+      "opportunities",
+      "english",
+      "quran",
+      "settings",
+    ];
+    const presentIds = new Set(ALL_NAV_ITEMS.map((item) => item.id));
+    for (const id of requiredNavIds) {
+      expect(presentIds.has(id)).toBe(true);
+    }
+
+    const blockedNavIds = new Set(["girls", "girls-space", "martial-arts", "rahmah"]);
     for (const item of ALL_NAV_ITEMS) {
       expect(blockedNavIds.has(item.id)).toBe(false);
     }
+
     const excludedModuleIds = new Set([
       "wellbeing-healthy-habits",
       "future-careers",

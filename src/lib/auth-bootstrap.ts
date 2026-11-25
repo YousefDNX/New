@@ -146,9 +146,6 @@ async function runFirebaseUserBootstrap(
   let profile: ProfileRow | null = null;
   const writes: Promise<unknown>[] = [];
 
-  const pendingGender = getPendingRegistrationGender();
-  const pendingCommunityGroup = resolveCommunityGroup(pendingGender);
-
   if (!existingSnap.exists()) {
     const newProfile: ProfileRow = {
       id: user.uid,
@@ -158,7 +155,6 @@ async function runFirebaseUserBootstrap(
       region: "kuwait",
       date_of_birth: null,
       age_band: null,
-      ...(pendingGender ? { gender: pendingGender, community_group: pendingCommunityGroup } : {}),
       show_gender_on_profile: false,
       parental_consent: false,
       onboarded: false,
@@ -173,7 +169,7 @@ async function runFirebaseUserBootstrap(
     writes.push(
       setDoc(profileRef, newProfile)
         .then(() => {
-          if (pendingGender) clearPendingRegistrationGender();
+          clearPendingRegistrationGender();
         })
         .catch((err) => {
           handleFirestoreError(err, OperationType.CREATE, `profiles/${user.uid}`);
@@ -195,10 +191,6 @@ async function runFirebaseUserBootstrap(
     if (!existing.region || !VALID_REGIONS.has(existing.region)) {
       patch.region = "kuwait";
     }
-    if (!existing.gender && !existing.community_group && pendingGender && pendingCommunityGroup) {
-      patch.gender = pendingGender;
-      patch.community_group = pendingCommunityGroup;
-    }
     if (existing.show_gender_on_profile === undefined) {
       patch.show_gender_on_profile = false;
     }
@@ -219,13 +211,9 @@ async function runFirebaseUserBootstrap(
       patch.updated_at = now;
       profile = { ...existing, ...patch };
       writes.push(
-        updateDoc(profileRef, patch)
-          .then(() => {
-            if (patch.gender) clearPendingRegistrationGender();
-          })
-          .catch((err) => {
-            handleFirestoreError(err, OperationType.UPDATE, `profiles/${user.uid}`);
-          }),
+        updateDoc(profileRef, patch).catch((err) => {
+          handleFirestoreError(err, OperationType.UPDATE, `profiles/${user.uid}`);
+        }),
       );
     } else {
       profile = existing;

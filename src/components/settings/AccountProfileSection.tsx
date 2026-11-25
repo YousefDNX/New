@@ -1,67 +1,87 @@
-import { Check, Download, Loader2, Lock, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Download, Loader2, LogOut, RotateCcw, ShieldAlert, Sparkles, User } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { updateProfile } from "firebase/auth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ModernSelect } from "@/components/ui/modern-select";
+import { BRAND } from "@/config/brand";
+import { useUser } from "@/hooks/use-nexora";
 import { exportStudentDataJson, useSaveProfile } from "@/hooks/use-settings";
-import { resolveCommunityGroup, type ProfileRow, type StudentGender } from "@/lib/firestore-data";
+import { getNicknameErrorMessage, validateGuestNickname } from "@/lib/auth-validation";
+import { resetGuestSession, signOutFirebase } from "@/lib/firebase-auth";
+import type { ProfileRow } from "@/lib/firestore-data";
 import { usePrefs } from "@/lib/preferences";
 import { downloadTextFile } from "@/lib/safe-file";
-import { AVATAR_PRESETS, SUBJECT_OPTIONS } from "@/lib/settings";
-import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
-import { BRAND } from "@/config/brand";
+import { UpgradeAccountDialog } from "@/components/auth/UpgradeAccountDialog";
 import { SettingsSectionCard } from "./SettingsPrimitives";
 
 export function AccountProfileSection({ profile }: { profile: ProfileRow | null | undefined }) {
   const { t, lang } = usePrefs();
   const isAr = lang === "ar";
+  const { data: user } = useUser();
+  const qc = useQueryClient();
+  const navigate = useNavigate();
   const saveProfile = useSaveProfile();
 
-  const [name, setName] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
-  const [gradeLevel, setGradeLevel] = useState("high");
-  const [schoolName, setSchoolName] = useState("");
-  const [subjects, setSubjects] = useState<string[]>([]);
-  const [learningGoals, setLearningGoals] = useState("");
-  const [pendingGender, setPendingGender] = useState<StudentGender | "">("");
+  const [nickname, setNickname] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [exportBusy, setExportBusy] = useState(false);
-  const resolvedGroup = resolveCommunityGroup(profile?.gender, profile?.community_group);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [signOutBusy, setSignOutBusy] = useState(false);
 
-  useEffect(() => {
-    if (!profile) return;
-    setName(profile.display_name ?? "");
-    setAvatarUrl(profile.avatar_url ?? "");
-    setGradeLevel(profile.grade_level ?? "high");
-    setSchoolName(profile.school_name ?? "");
-    setSubjects(Array.isArray(profile.preferred_subjects) ? profile.preferred_subjects : []);
-    setLearningGoals(profile.learning_goals ?? "");
-  }, [profile]);
+  const isGuest = !user || Boolean(user.isAnonymous);
 
-  function toggleSubject(subject: string) {
-    setSubjects((prev) =>
-      prev.includes(subject) ? prev.filter((s) => s !== subject) : [...prev, subject].slice(0, 12),
-    );
+  async function handleSignOut() {
+    if (signOutBusy) return;
+    setSignOutBusy(true);
+    try {
+      await qc.cancelQueries();
+      await signOutFirebase();
+      qc.clear();
+      toast.success(isAr ? "تم تسجيل الخروج بنجاح." : "Signed out successfully.");
+      void navigate({ to: "/auth", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("set.error"));
+    } finally {
+      setSignOutBusy(false);
+    }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  useEffect(() => {
+    if (profile?.display_name) {
+      setNickname(profile.display_name);
+    }
+  }, [profile]);
+
+  async function handleSaveNickname(e: React.FormEvent) {
     e.preventDefault();
+    const check = validateGuestNickname(nickname);
+    if (!check.valid) {
+      setNameError(getNicknameErrorMessage(check.reason, lang));
+      return;
+    }
+    setNameError(null);
     setSaving(true);
     try {
-      await saveProfile({
-        display_name: name.trim().slice(0, 60) || "Student",
-        avatar_url: avatarUrl.trim() ? avatarUrl.trim().slice(0, 512) : null,
-        grade_level: gradeLevel,
-        school_name: schoolName.trim() ? schoolName.trim().slice(0, 120) : null,
-        preferred_subjects: subjects,
-        learning_goals: learningGoals.trim() ? learningGoals.trim().slice(0, 300) : null,
-        ...(!resolvedGroup && (pendingGender === "male" || pendingGender === "female")
-          ? { gender: pendingGender }
-          : {}),
-      });
-      toast.success(t("set.saved"), { id: "set-saved", duration: 1500 });
+      if (user) {
+        await updateProfile(user, { displayName: check.cleaned }).catch(() => undefined);
+      }
+      await saveProfile({ display_name: check.cleaned });
+      toast.success(isAr ? "تم تحديث الاسم المستعار." : "Nickname updated.");
     } catch {
       toast.error(t("set.error"));
     } finally {
@@ -76,10 +96,10 @@ export function AccountProfileSection({ profile }: { profile: ProfileRow | null 
       const payload = await exportStudentDataJson();
       downloadTextFile(
         JSON.stringify(payload, null, 2),
-        `${BRAND.shortName.toLowerCase()}-student-export-${new Date().toISOString().slice(0, 10)}.json`,
+        `${BRAND.shortName.toLowerCase()}-guest-data-${new Date().toISOString().slice(0, 10)}.json`,
         "application/json;charset=utf-8",
       );
-      toast.success(t("set.sec.export.done"));
+      toast.success(isAr ? "تم تصدير بياناتك بنجاح." : "Your data has been exported.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("set.error"));
     } finally {
@@ -87,229 +107,236 @@ export function AccountProfileSection({ profile }: { profile: ProfileRow | null 
     }
   }
 
+  async function handleResetSession() {
+    if (resetBusy) return;
+    setResetBusy(true);
+    try {
+      await qc.cancelQueries();
+      await resetGuestSession(user?.uid);
+      qc.clear();
+      setResetOpen(false);
+      toast.success(isAr ? "تمت إعادة ضبط جلسة الضيف." : "Guest session reset.");
+      void navigate({ to: "/auth", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("set.error"));
+    } finally {
+      setResetBusy(false);
+    }
+  }
+
   return (
     <SettingsSectionCard
       id="cat-account"
-      title={t("set.profile")}
-      desc={t("set.profile.d")}
-      badge={<FeatureGuideTrigger featureId="settings-privacy-account" />}
+      title={isAr ? "جلسة الضيف والبيانات" : "Guest Session & Data"}
+      desc={
+        isAr
+          ? "إدارة الاسم المستعار وتصدير البيانات أو إعادة ضبط جلسة الضيف الحالية."
+          : "Manage your nickname, export your data, or reset your current guest session."
+      }
     >
-      <form onSubmit={handleSubmit} className="space-y-5 pt-2">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="prof-name">{t("set.name")}</Label>
-            <Input
-              id="prof-name"
-              value={name}
-              maxLength={60}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="prof-grade">{t("set.grade")}</Label>
-            <ModernSelect
-              id="prof-grade"
-              size="sm"
-              ariaLabel={t("set.grade")}
-              value={gradeLevel}
-              onValueChange={setGradeLevel}
-              options={[
-                { value: "middle", label: t("set.grade.middle") },
-                { value: "high", label: t("set.grade.high") },
-                { value: "prep", label: t("set.grade.prep") },
-                { value: "undergrad", label: t("set.grade.undergrad") },
-                { value: "self", label: t("set.grade.self") },
-              ]}
-            />
-          </div>
-        </div>
-
-        {/* Private Knowledge Circle Community Status */}
-        <div className="rounded-xl border border-border bg-surface-2/40 p-3.5 text-xs space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5 font-semibold text-foreground">
-              <ShieldCheck className="size-3.5 text-primary" />
+      <div className="space-y-5 pt-3">
+        <div className="rounded-xl border border-border bg-surface-2/50 p-3.5 text-xs text-muted-foreground">
+          <div className="flex items-center justify-between gap-2 font-semibold text-foreground">
+            <div className="flex items-center gap-2">
+              {isGuest ? (
+                <User className="size-4 text-primary" />
+              ) : (
+                <CheckCircle2 className="size-4 text-emerald-500" />
+              )}
               <span>
-                {isAr ? "مجتمع حلقة المعرفة المخصص (خاص)" : "Knowledge Circle Community (Private)"}
+                {isGuest
+                  ? isAr
+                    ? "معلومة جلسة الضيف"
+                    : "Guest Session Info"
+                  : isAr
+                    ? "الحساب الموثق"
+                    : "Verified Account"}
               </span>
-            </span>
-            {resolvedGroup && (
-              <span className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                <Lock className="size-3" />
-                <span>
-                  {resolvedGroup === "girls"
-                    ? isAr
-                      ? "مجتمع البنات · محمي"
-                      : "Girls' Community · Locked"
-                    : isAr
-                      ? "مجتمع البنين · محمي"
-                      : "Boys' Community · Locked"}
-                </span>
-              </span>
+            </div>
+            {!isGuest && user?.email && (
+              <span className="font-mono text-[11px] text-muted-foreground">{user.email}</span>
             )}
           </div>
-          {resolvedGroup ? (
-            <p className="text-[11px] text-muted-foreground">
-              {isAr
-                ? "تم تعيين قسمك الدراسي في حلقة المعرفة تلقائياً ولا يظهر الجنس في ملفك العام إلا إذا فعّلت ذلك من إعدادات الخصوصية."
-                : "Your Knowledge Circle community assignment is private and locked for community safety. Gender remains hidden from public profiles unless you opt in under Privacy & Security."}
-            </p>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-[11px] text-muted-foreground">
-                {isAr
-                  ? "اختر الجنس مرة واحدة لتحديد مجتمع حلقة المعرفة المخصص لحسابك:"
-                  : "Select your gender once to unlock your assigned Knowledge Circle community:"}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  {
-                    value: "male" as const,
-                    label: isAr ? "ذكر (مجتمع البنين)" : "Male (Boys' Community)",
-                  },
-                  {
-                    value: "female" as const,
-                    label: isAr ? "أنثى (مجتمع البنات)" : "Female (Girls' Community)",
-                  },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setPendingGender(opt.value)}
-                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium cursor-pointer ${
-                      pendingGender === opt.value
-                        ? "border-primary bg-primary/15 text-foreground"
-                        : "border-border bg-surface text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+          <p className="mt-1 leading-relaxed">
+            {isGuest
+              ? isAr
+                ? "أنت تستخدم BTC في وضع الضيف. يتم حفظ تفضيلاتك وبياناتك الدراسية المرتبطة بهذه الجلسة على هذا المتصفح، ويمكنك ترقية حسابك لحفظ تقدمك بشكل دائم."
+                : "You are using BTC in Guest Mode. Your preferences and progress remain tied to this browser session. You can upgrade to a permanent account anytime."
+              : isAr
+                ? "حسابك موثّق وبياناتك متزامنة بأمان عبر السحابة مع BTC."
+                : "Your account is verified and your study progress syncs securely with BTC."}
+          </p>
+        </div>
+
+        {isGuest && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3.5">
+            <div>
+              <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                <Sparkles className="size-4 text-primary" />
+                <span>{isAr ? "ترقية إلى حساب دائم" : "Upgrade to Permanent Account"}</span>
               </div>
+              <p className="text-xs text-muted-foreground">
+                {isAr
+                  ? "احفظ مهامك وسلسلتك الدراسية وتفضيلاتك بحساب بريد إلكتروني أو Google."
+                  : "Preserve your tasks, study streaks, and progress with an email or Google account."}
+              </p>
             </div>
-          )}
-        </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="glow"
+              onClick={() => setUpgradeOpen(true)}
+              className="gap-1.5 cursor-pointer"
+            >
+              <Sparkles className="size-3.5" />
+              <span>{isAr ? "ترقية الحساب" : "Upgrade Now"}</span>
+            </Button>
+          </div>
+        )}
 
-        {/* Avatar presets + optional URL */}
-        <div className="space-y-2">
-          <Label>{t("set.avatar")}</Label>
-          <div className="flex flex-wrap items-center gap-3">
-            {AVATAR_PRESETS.map((presetUrl, idx) => {
-              const selected = avatarUrl === presetUrl;
-              return (
-                <button
-                  key={presetUrl}
-                  type="button"
-                  onClick={() => setAvatarUrl(presetUrl)}
-                  aria-label={`${t("set.avatar")} ${idx + 1}`}
-                  aria-pressed={selected}
-                  className={`relative size-11 overflow-hidden rounded-full border-2 transition-transform ${
-                    selected
-                      ? "scale-105 border-primary"
-                      : "border-border hover:border-foreground/50"
-                  }`}
-                >
-                  <img
-                    src={presetUrl}
-                    alt=""
-                    referrerPolicy="no-referrer"
-                    className="size-full object-cover"
-                  />
-                  {selected && (
-                    <span className="absolute inset-0 flex items-center justify-center bg-black/35 text-white">
-                      <Check className="size-4" />
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+        <form onSubmit={handleSaveNickname} className="space-y-2.5">
+          <Label htmlFor="prof-nickname" className="text-xs font-semibold">
+            {isAr ? "الاسم المستعار" : "Guest Nickname"}
+          </Label>
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Input
-              value={avatarUrl}
-              maxLength={512}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-              placeholder={t("set.avatar.url")}
-              dir="ltr"
-              className="min-w-[14rem] flex-1 font-mono text-xs"
+              id="prof-nickname"
+              value={nickname}
+              minLength={2}
+              maxLength={40}
+              onChange={(e) => {
+                setNickname(e.target.value);
+                if (nameError) setNameError(null);
+              }}
+              className="flex-1"
             />
+            <Button type="submit" disabled={saving}>
+              {saving ? <Loader2 className="size-4 animate-spin" /> : t("common.save")}
+            </Button>
           </div>
-        </div>
+          {nameError && (
+            <p role="alert" className="text-xs font-medium text-destructive">
+              {nameError}
+            </p>
+          )}
+        </form>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="prof-school">{t("set.school")}</Label>
-          <Input
-            id="prof-school"
-            value={schoolName}
-            maxLength={120}
-            onChange={(e) => setSchoolName(e.target.value)}
-            placeholder={t("set.school.ph")}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>{t("set.subjects")}</Label>
-          <div className="flex flex-wrap gap-2">
-            {SUBJECT_OPTIONS.map((subj) => {
-              const active = subjects.includes(subj);
-              return (
-                <button
-                  key={subj}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => toggleSubject(subj)}
-                  className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                    active
-                      ? "border-primary bg-primary/15 text-foreground"
-                      : "border-border bg-surface-2/50 text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {subj}
-                </button>
-              );
-            })}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
+          <div>
+            <div className="text-sm font-semibold text-foreground">
+              {isAr ? "تصدير البيانات (JSON)" : "Export My Data (JSON)"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isAr
+                ? "تنزيل نسخة من مهامك وأهدافك وملاحظاتك من جلسة الضيف."
+                : "Download a copy of your tasks, goals, and notes from this session."}
+            </p>
           </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="prof-goals">{t("set.learningGoals")}</Label>
-          <Input
-            id="prof-goals"
-            value={learningGoals}
-            maxLength={300}
-            onChange={(e) => setLearningGoals(e.target.value)}
-            placeholder={t("set.learningGoals.ph")}
-          />
-        </div>
-
-        <div className="flex items-center justify-end pt-1">
-          <Button type="submit" disabled={saving}>
-            {t("common.save")}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={exportBusy}
+            onClick={handleExportAllData}
+            data-testid="settings-export-all-btn"
+            className="gap-1.5"
+          >
+            {exportBusy ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Download className="size-3.5" />
+            )}
+            <span>{isAr ? "تصدير" : "Export"}</span>
           </Button>
         </div>
-      </form>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/80 pt-4">
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-foreground">{t("set.exportAll")}</div>
-          <p className="text-xs text-muted-foreground">{t("set.exportAllDesc")}</p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={exportBusy}
-          onClick={handleExportAllData}
-          data-testid="settings-export-all-btn"
-          className="gap-1.5"
-        >
-          {exportBusy ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <Download className="size-3.5" />
-          )}
-          <span>{t("set.exportAll")}</span>
-        </Button>
+        {isGuest ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
+            <div>
+              <div className="text-sm font-semibold text-destructive">
+                {isAr ? "إعادة ضبط جلسة الضيف" : "Reset Guest Session"}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {isAr
+                  ? "حذف بيانات جلسة الضيف الحالية والبدء بملف ضيف جديد."
+                  : "Delete this guest session's data and start a fresh session."}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => setResetOpen(true)}
+              className="gap-1.5"
+            >
+              <RotateCcw className="size-3.5" />
+              <span>{isAr ? "إعادة ضبط" : "Reset Session"}</span>
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
+            <div>
+              <div className="text-sm font-semibold text-destructive">
+                {isAr ? "تسجيل الخروج" : "Sign Out"}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {isAr
+                  ? "تسجيل الخروج الآمن من حسابك على هذا الجهاز."
+                  : "Securely sign out of your account on this device."}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={handleSignOut}
+              disabled={signOutBusy}
+              className="gap-1.5"
+            >
+              {signOutBusy ? <Loader2 className="size-3.5 animate-spin" /> : <LogOut className="size-3.5" />}
+              <span>{isAr ? "تسجيل الخروج" : "Sign Out"}</span>
+            </Button>
+          </div>
+        )}
       </div>
+
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-display text-destructive">
+              <ShieldAlert className="size-5" />
+              <span>{isAr ? "تأكيد إعادة ضبط الجلسة" : "Confirm Session Reset"}</span>
+            </DialogTitle>
+            <DialogDescription>
+              {isAr
+                ? "سيؤدي هذا الإجراء إلى مسح مهامك ومشاركاتك المحفوظة وتفضيلات هذه الجلسة نهائياً."
+                : "This will permanently remove your tasks, saved items, and preferences for this guest session."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setResetOpen(false)}
+              disabled={resetBusy}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleResetSession}
+              disabled={resetBusy}
+              className="gap-1.5"
+            >
+              {resetBusy && <Loader2 className="size-3.5 animate-spin" />}
+              <span>{isAr ? "تأكيد إعادة الضبط" : "Reset Guest Session"}</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <UpgradeAccountDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
     </SettingsSectionCard>
   );
 }

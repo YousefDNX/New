@@ -69,6 +69,135 @@ export function validateFullName(name: string): { valid: boolean; cleaned: strin
   };
 }
 
+export type NicknameValidationReason =
+  "empty" | "too_short" | "too_long" | "reserved" | "profanity";
+
+const RESERVED_NICKNAME_TERMS = [
+  "admin",
+  "administrator",
+  "moderator",
+  "staff",
+  "founder",
+  "owner",
+  "official",
+  "support",
+  "system",
+  "sysadmin",
+  "btcadmin",
+  "مدير",
+  "مشرف",
+  "المشرف",
+  "المدير",
+  "الإدارة",
+  "الادارة",
+  "الدعم",
+  "مؤسس",
+  "المؤسس",
+];
+
+const PROFANITY_TERMS = [
+  "fuck",
+  "shit",
+  "bitch",
+  "asshole",
+  "bastard",
+  "dick",
+  "pussy",
+  "whore",
+  "slut",
+  "cunt",
+  "nigger",
+  "nigga",
+  "faggot",
+  "retard",
+  "porn",
+  "sex",
+  "nude",
+  "شرموط",
+  "قحب",
+  "عاهر",
+  "منيوك",
+  "كس",
+  "زب",
+  "طيز",
+  "كلب",
+  "حمار",
+  "خنزير",
+  "عرص",
+  "لوطي",
+  "اباحي",
+];
+
+export function validateGuestNickname(name: string): {
+  valid: boolean;
+  cleaned: string;
+  reason?: NicknameValidationReason;
+} {
+  const cleaned = name.replace(/\s+/g, " ").trim();
+  if (!cleaned) {
+    return { valid: false, cleaned, reason: "empty" };
+  }
+  if (cleaned.length < 2) {
+    return { valid: false, cleaned, reason: "too_short" };
+  }
+  if (cleaned.length > 40) {
+    return { valid: false, cleaned, reason: "too_long" };
+  }
+
+  const lower = cleaned.toLowerCase();
+  const normalizedWords = lower
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  for (const term of RESERVED_NICKNAME_TERMS) {
+    if (
+      lower === term ||
+      normalizedWords.includes(term) ||
+      (term.length >= 4 && lower.includes(term))
+    ) {
+      return { valid: false, cleaned, reason: "reserved" };
+    }
+  }
+
+  for (const bad of PROFANITY_TERMS) {
+    if (normalizedWords.includes(bad) || (bad.length >= 4 && lower.includes(bad))) {
+      return { valid: false, cleaned, reason: "profanity" };
+    }
+  }
+
+  return { valid: true, cleaned };
+}
+
+export function getNicknameErrorMessage(
+  reason: NicknameValidationReason | undefined,
+  lang: Lang,
+): string {
+  const isAr = lang === "ar";
+  switch (reason) {
+    case "empty":
+      return isAr ? "يرجى إدخال اسم مستعار للمتابعة." : "Please enter a nickname to continue.";
+    case "too_short":
+      return isAr
+        ? "يجب أن يتكون الاسم المستعار من حرفين على الأقل."
+        : "Nickname must be at least 2 characters.";
+    case "too_long":
+      return isAr
+        ? "يجب ألا يتجاوز الاسم المستعار 40 حرفاً."
+        : "Nickname must be 40 characters or fewer.";
+    case "reserved":
+      return isAr
+        ? "لا يمكن استخدام أسماء محجوزة أو توحي بصفة إدارية (مثل مدير أو مشرف)."
+        : "Reserved or staff-impersonating names (such as admin or moderator) are not allowed.";
+    case "profanity":
+      return isAr
+        ? "يرجى اختيار اسم مستعار لائق ومحترم."
+        : "Please choose a respectful, appropriate nickname.";
+    default:
+      return isAr ? "يرجى إدخال اسم مستعار صحيح." : "Please enter a valid nickname.";
+  }
+}
+
 export function evaluatePasswordStrength(password: string): PasswordStrengthResult {
   const checks = {
     length: password.length >= 8,

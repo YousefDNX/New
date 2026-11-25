@@ -1,42 +1,47 @@
 /**
- * NAVIGATION CONFIG — single source of truth for every nav surface.
- * Reorder, regroup, rename (via i18n keys), swap icons, or choose which items
- * appear in the mobile bar here. Visual sizes/colors live in --nav-* tokens in styles.css.
+ * NAVIGATION CONFIG — Flat, simple single-level source of truth for BTC.
  */
 import {
-  Sparkles,
-  Map,
   BookOpen,
   BookOpenCheck,
+  Briefcase,
   CheckSquare,
-  Trophy,
-  Languages,
-  Users,
-  Settings,
+  Compass,
+  Globe,
+  Heart,
   HelpCircle,
-  MessageSquare,
+  Home,
+  Languages,
+  Settings,
   Shield,
+  Sparkles,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import type { DictKey } from "@/lib/i18n-dict";
 
 export type NavTo =
   | "/app"
-  | "/app/ai"
   | "/app/study"
-  | "/app/english"
+  | "/app/skills"
   | "/app/tasks"
-  | "/app/level-up"
+  | "/app/care"
+  | "/app/future"
+  | "/app/circle"
+  | "/app/opportunities"
+  | "/app/english"
   | "/app/quran"
-  | "/app/settings"
+  | "/app/ai"
   | "/app/help"
-  | "/app/support"
+  | "/app/settings"
   | "/app/admin";
 
 export interface NavItem {
   id: string;
   to: NavTo;
   label: DictKey;
+  labelEn: string;
+  labelAr: string;
   icon: LucideIcon;
   exact?: boolean;
   staffOnly?: boolean;
@@ -48,64 +53,144 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+export const NAV_PRIMARY_ITEMS: NavItem[] = [
+  {
+    id: "home",
+    to: "/app",
+    label: "nav.home",
+    labelEn: "Home",
+    labelAr: "الرئيسية",
+    icon: Home,
+    exact: true,
+  },
+  {
+    id: "study",
+    to: "/app/study",
+    label: "nav.study",
+    labelEn: "Study & Academics",
+    labelAr: "الدراسة والأكاديميات",
+    icon: BookOpen,
+  },
+  {
+    id: "skills",
+    to: "/app/skills",
+    label: "nav.study",
+    labelEn: "Skills Academy",
+    labelAr: "أكاديمية المهارات",
+    icon: Compass,
+  },
+  {
+    id: "tasks",
+    to: "/app/tasks",
+    label: "nav.tasks",
+    labelEn: "Productivity & Focus",
+    labelAr: "الإنتاجية والتركيز",
+    icon: CheckSquare,
+  },
+  {
+    id: "care",
+    to: "/app/care",
+    label: "nav.care",
+    labelEn: "Personal Growth & Wellbeing",
+    labelAr: "النمو الشخصي والعافية",
+    icon: Heart,
+  },
+  {
+    id: "future",
+    to: "/app/future",
+    label: "nav.future",
+    labelEn: "Future & Careers",
+    labelAr: "المستقبل والمهن",
+    icon: Briefcase,
+  },
+  {
+    id: "circle",
+    to: "/app/circle",
+    label: "nav.circle",
+    labelEn: "Knowledge Circle",
+    labelAr: "حلقة المعرفة",
+    icon: Users,
+  },
+  {
+    id: "opportunities",
+    to: "/app/opportunities",
+    label: "nav.radar",
+    labelEn: "Opportunity Radar",
+    labelAr: "رادار الفرص",
+    icon: Globe,
+  },
+  {
+    id: "english",
+    to: "/app/english",
+    label: "nav.english",
+    labelEn: "English World",
+    labelAr: "عالم الإنجليزية",
+    icon: Languages,
+  },
+  {
+    id: "quran",
+    to: "/app/quran",
+    label: "nav.quran",
+    labelEn: "Quran & Islamic Center",
+    labelAr: "القرآن والمركز الإسلامي",
+    icon: BookOpenCheck,
+  },
+];
+
+export const NAV_SECONDARY_ITEMS: NavItem[] = [
+  {
+    id: "ai",
+    to: "/app/ai",
+    label: "nav.ai",
+    labelEn: "BTC AI",
+    labelAr: "BTC الذكي",
+    icon: Sparkles,
+  },
+  {
+    id: "help",
+    to: "/app/help",
+    label: "nav.helpCenter",
+    labelEn: "Help Center",
+    labelAr: "مركز المساعدة",
+    icon: HelpCircle,
+  },
+  {
+    id: "settings",
+    to: "/app/settings",
+    label: "nav.settings",
+    labelEn: "Settings",
+    labelAr: "الإعدادات",
+    icon: Settings,
+  },
+];
+
 export const NAV_GROUPS: NavGroup[] = [
   {
-    id: "core",
+    id: "all",
     label: "nav.group.core",
-    items: [
-      { id: "home", to: "/app", label: "nav.home", icon: Map, exact: true },
-      { id: "ai", to: "/app/ai", label: "nav.ai", icon: Sparkles },
-    ],
-  },
-  {
-    id: "learn",
-    label: "nav.group.learn",
-    items: [{ id: "study", to: "/app/study", label: "nav.study", icon: BookOpen }],
-  },
-  {
-    id: "do",
-    label: "nav.group.do",
-    items: [{ id: "tasks", to: "/app/tasks", label: "nav.tasks", icon: CheckSquare }],
-  },
-  {
-    id: "self",
-    label: "nav.group.self",
-    items: [{ id: "quran", to: "/app/quran", label: "nav.quran", icon: BookOpenCheck }],
+    items: NAV_PRIMARY_ITEMS,
   },
 ];
 
 export const EXTENDED_NAV_GROUPS: NavGroup[] = [];
 
-export const NAV_FOOTER: NavItem[] = [
-  { id: "settings", to: "/app/settings", label: "nav.settings", icon: Settings },
-];
+export const NAV_FOOTER: NavItem[] = [NAV_SECONDARY_ITEMS[2]!];
 
-export const NAV_UTILITIES: NavItem[] = [
-  { id: "help", to: "/app/help", label: "nav.helpCenter", icon: HelpCircle },
-  { id: "support", to: "/app/support", label: "nav.support", icon: MessageSquare },
-];
+export const NAV_UTILITIES: NavItem[] = [NAV_SECONDARY_ITEMS[0]!, NAV_SECONDARY_ITEMS[1]!];
 
 export const NAV_ADMIN: NavItem = {
   id: "admin",
   to: "/app/admin",
   label: "nav.adminCenter",
+  labelEn: "Moderation & Admin",
+  labelAr: "الإشراف والإدارة",
   icon: Shield,
   staffOnly: true,
 };
 
-export const PRIMARY_TOP_NAV_IDS = ["home", "ai", "study", "tasks", "quran"] as const;
+export const PRIMARY_TOP_NAV_IDS = ["home", "study", "skills", "tasks", "circle", "quran"] as const;
 
-export const ALL_NAV_ITEMS: NavItem[] = [
-  ...NAV_GROUPS.flatMap((g) => g.items),
-  ...EXTENDED_NAV_GROUPS.flatMap((g) => g.items),
-  ...NAV_FOOTER,
-  ...NAV_UTILITIES,
-  NAV_ADMIN,
-].filter(
-  (item, idx, arr): item is NavItem =>
-    Boolean(item && typeof item.id === "string" && typeof item.to === "string") &&
-    arr.findIndex((other) => other.id === item.id) === idx,
-);
+export const ALL_NAV_ITEMS: NavItem[] = [...NAV_PRIMARY_ITEMS, ...NAV_SECONDARY_ITEMS, NAV_ADMIN];
 
 export function getNavItemById(id: string): NavItem | undefined {
   if (!id) return undefined;
@@ -120,40 +205,21 @@ export interface RouteMetaEntry {
 }
 
 export const ROUTE_META: Record<string, RouteMetaEntry> = {
-  "/app": { labelKey: "nav.home", labelEn: "Home", labelAr: "الرئيسية" },
-  "/app/ai": {
-    labelKey: "nav.ai",
-    labelEn: "BTC AI",
-    labelAr: "BTC الذكي",
-    groupLabelKey: "nav.group.core",
-  },
-  "/app/study": {
-    labelKey: "nav.study",
-    labelEn: "Study",
-    labelAr: "الدراسة",
-    groupLabelKey: "nav.group.learn",
-  },
-  "/app/tasks": {
-    labelKey: "nav.tasks",
-    labelEn: "My Tasks",
-    labelAr: "مهامي",
-    groupLabelKey: "nav.group.do",
-  },
-
-  "/app/quran": {
-    labelKey: "nav.quran",
-    labelEn: "Quran & Islamic",
-    labelAr: "القرآن الكريم",
-    groupLabelKey: "nav.group.self",
-  },
-  "/app/settings": { labelKey: "nav.settings", labelEn: "Settings", labelAr: "الإعدادات" },
-  "/app/help": { labelKey: "nav.helpCenter", labelEn: "Help Center", labelAr: "مركز المساعدة" },
-  "/app/support": { labelKey: "nav.support", labelEn: "Support", labelAr: "الدعم الفني" },
-  "/app/admin": {
-    labelKey: "nav.adminCenter",
-    labelEn: "Admin Center",
-    labelAr: "لوحة الإدارة",
-  },
+  "/app": { labelEn: "Home", labelAr: "الرئيسية" },
+  "/app/study": { labelEn: "Study & Academics", labelAr: "الدراسة والأكاديميات" },
+  "/app/skills": { labelEn: "Skills Academy", labelAr: "أكاديمية المهارات" },
+  "/app/tasks": { labelEn: "Productivity & Focus", labelAr: "الإنتاجية والتركيز" },
+  "/app/care": { labelEn: "Personal Growth & Wellbeing", labelAr: "النمو الشخصي والعافية" },
+  "/app/future": { labelEn: "Future & Careers", labelAr: "المستقبل والمهن" },
+  "/app/circle": { labelEn: "Knowledge Circle", labelAr: "حلقة المعرفة" },
+  "/app/opportunities": { labelEn: "Opportunity Radar", labelAr: "رادار الفرص" },
+  "/app/english": { labelEn: "English World", labelAr: "عالم الإنجليزية" },
+  "/app/quran": { labelEn: "Quran & Islamic Center", labelAr: "القرآن والمركز الإسلامي" },
+  "/app/ai": { labelEn: "BTC AI", labelAr: "BTC الذكي" },
+  "/app/help": { labelEn: "Help Center", labelAr: "مركز المساعدة" },
+  "/app/support": { labelEn: "Help & Support", labelAr: "المساعدة والدعم" },
+  "/app/settings": { labelEn: "Settings", labelAr: "الإعدادات" },
+  "/app/admin": { labelEn: "Moderation & Admin", labelAr: "الإشراف والإدارة" },
 };
 
 export function resolveRouteMeta(pathname: string): RouteMetaEntry | null {
@@ -167,20 +233,17 @@ export function resolveRouteMeta(pathname: string): RouteMetaEntry | null {
   return null;
 }
 
-/** Layout options — change to restyle without touching components. */
 export const NAV_LAYOUT = {
   sidebar: {
-    variant: "grouped" as "grouped" | "flat",
+    variant: "flat" as "grouped" | "flat",
     collapsible: true,
-    showGroupLabels: true,
-    showProgressCard: true,
+    showGroupLabels: false,
+    showProgressCard: false,
   },
   mobile: {
-    style: "floating" as "floating" | "docked",
-    /** item ids shown in the bar; others go into the "More" sheet */
-    tabs: ["home", "study", "tasks", "quran"],
-    /** item id for the raised center button (null to disable) */
-    centerAction: "ai" as string | null,
-    moreColumns: 3,
+    style: "docked" as "floating" | "docked",
+    tabs: ["home", "study", "tasks", "circle"],
+    centerAction: null as string | null,
+    moreColumns: 2,
   },
 };

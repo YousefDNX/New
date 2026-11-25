@@ -761,6 +761,7 @@ export async function deleteCurrentUserAndData(uid: string): Promise<void> {
   const ownedCollections = [
     "tasks",
     "goals",
+    "time_blocks",
     "activity_events",
     "study_items",
     "quiz_attempts",
@@ -778,37 +779,58 @@ export async function deleteCurrentUserAndData(uid: string): Promise<void> {
       const snap = await getDocs(query(collection(db, colName), where("user_id", "==", uid)));
       await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
     } catch (err) {
-      if (colName !== "journal_entries") {
+      if (colName !== "journal_entries" && colName !== "time_blocks") {
         throw err;
       }
     }
   }
 
-  // Leave or clean up Knowledge Circle memberships/teams
-  const circleSnap = await getDocs(
-    query(collection(db, "circles"), where("member_uids", "array-contains", uid)),
-  );
-  const nowIso = new Date().toISOString();
-  for (const cDoc of circleSnap.docs) {
-    const data = cDoc.data() as { owner_id?: string; invite_code?: string };
-    if (data.owner_id === uid) {
-      const [postsSnap, membersSnap] = await Promise.all([
-        getDocs(collection(db, "circles", cDoc.id, "posts")),
-        getDocs(collection(db, "circles", cDoc.id, "members")),
-      ]);
-      await Promise.all(postsSnap.docs.map((p) => deleteDoc(p.ref)));
-      await Promise.all(membersSnap.docs.map((m) => deleteDoc(m.ref)));
-      if (data.invite_code) {
-        await deleteDoc(doc(db, "circle_invites", data.invite_code)).catch(() => undefined);
+  // Delete Knowledge Circle community posts authored by this guest & private saved posts
+  try {
+    const myPostsSnap = await getDocs(
+      query(collection(db, "community_posts"), where("author_id", "==", uid)),
+    );
+    await Promise.all(myPostsSnap.docs.map((d) => deleteDoc(d.ref).catch(() => undefined)));
+  } catch {
+    // Ignore if collection is empty or unavailable
+  }
+
+  try {
+    const savedSnap = await getDocs(collection(db, "users", uid, "saved_posts"));
+    await Promise.all(savedSnap.docs.map((d) => deleteDoc(d.ref).catch(() => undefined)));
+  } catch {
+    // Ignore if empty
+  }
+
+  // Leave or clean up legacy circle memberships/teams if present
+  try {
+    const circleSnap = await getDocs(
+      query(collection(db, "circles"), where("member_uids", "array-contains", uid)),
+    );
+    const nowIso = new Date().toISOString();
+    for (const cDoc of circleSnap.docs) {
+      const data = cDoc.data() as { owner_id?: string; invite_code?: string };
+      if (data.owner_id === uid) {
+        const [postsSnap, membersSnap] = await Promise.all([
+          getDocs(collection(db, "circles", cDoc.id, "posts")),
+          getDocs(collection(db, "circles", cDoc.id, "members")),
+        ]);
+        await Promise.all(postsSnap.docs.map((p) => deleteDoc(p.ref)));
+        await Promise.all(membersSnap.docs.map((m) => deleteDoc(m.ref)));
+        if (data.invite_code) {
+          await deleteDoc(doc(db, "circle_invites", data.invite_code)).catch(() => undefined);
+        }
+        await deleteDoc(cDoc.ref);
+      } else {
+        await deleteDoc(doc(db, "circles", cDoc.id, "members", uid)).catch(() => undefined);
+        await updateDoc(cDoc.ref, {
+          member_uids: arrayRemove(uid),
+          updated_at: nowIso,
+        }).catch(() => undefined);
       }
-      await deleteDoc(cDoc.ref);
-    } else {
-      await deleteDoc(doc(db, "circles", cDoc.id, "members", uid)).catch(() => undefined);
-      await updateDoc(cDoc.ref, {
-        member_uids: arrayRemove(uid),
-        updated_at: nowIso,
-      }).catch(() => undefined);
     }
+  } catch {
+    // Ignore legacy circle cleanup failures
   }
 
   // Delete 1:1 user docs (ignore missing docs)
@@ -819,6 +841,38 @@ export async function deleteCurrentUserAndData(uid: string): Promise<void> {
   ]);
 
   await deleteUser(user);
+}
+
+export async function resetGuestSession(uid?: string): Promise<void> {
+  const activeUser = auth.currentUser;
+  const targetUid = uid ?? activeUser?.uid;
+
+  if (targetUid && activeUser && activeUser.uid === targetUid) {
+    try {
+      await deleteCurrentUserAndData(targetUid);
+    } catch {
+      await signOut(auth).catch(() => undefined);
+    }
+  } else {
+    await signOut(auth).catch(() => undefined);
+  }
+
+  if (typeof window !== "undefined") {
+    try {
+      if (targetUid) {
+        localStorage.removeItem(`nexora.prefs.${targetUid}`);
+        localStorage.removeItem(`btc_continue_${targetUid}`);
+        localStorage.removeItem(`btc_skills_progress_${targetUid}`);
+        localStorage.removeItem(`btc_english_progress_${targetUid}`);
+        localStorage.removeItem(`btc_study_progress_${targetUid}`);
+      }
+      localStorage.removeItem("nexora.prefs");
+      localStorage.removeItem("btc-visual-theme");
+      localStorage.removeItem("btc-nav-layout");
+    } catch {
+      // Ignore storage cleanup errors
+    }
+  }
 }
 
 export async function signOutFirebase(): Promise<void> {

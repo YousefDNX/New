@@ -1,7 +1,5 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Outlet, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
-import { VerificationPending } from "@/components/auth/VerificationPending";
 import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
 import { ProtectedRoute, useAuth } from "@/lib/auth";
 import {
@@ -10,6 +8,7 @@ import {
   userRequiresEmailVerification,
   waitForAuthReady,
 } from "@/lib/firebase-auth";
+import { VerificationPending } from "@/components/auth/VerificationPending";
 import { usePrefs } from "@/lib/preferences";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -35,43 +34,30 @@ export const Route = createFileRoute("/_authenticated")({
       });
     }
     const signInProvider = await resolveUserSignInProvider(user);
+    const needsVerification = userRequiresEmailVerification(user, signInProvider);
     return {
       user,
       signInProvider,
-      needsVerification: userRequiresEmailVerification(user, signInProvider),
+      needsVerification,
     };
   },
   component: AuthenticatedGate,
 });
 
 function AuthenticatedContent() {
-  const { user, requiresVerification, status, refreshUser } = useAuth();
-  const router = useRouter();
-  const qc = useQueryClient();
-
+  const { user } = useAuth();
   if (!user) return null;
-
-  if (requiresVerification || userRequiresEmailVerification(user, status.activeSignInProvider)) {
-    return (
-      <VerificationPending
-        variant="standalone"
-        user={user}
-        email={user.email}
-        phoneNumber={user.phoneNumber}
-        onVerified={async () => {
-          await refreshUser();
-          await qc.invalidateQueries();
-          await router.invalidate();
-        }}
-      />
-    );
-  }
-
   return <Outlet />;
 }
 
 function AuthenticatedGate() {
   const { t } = usePrefs();
+  const { user, requiresVerification } = useAuth();
+
+  if (user && requiresVerification) {
+    return <VerificationPending user={user} variant="standalone" />;
+  }
+
   return (
     <ProtectedRoute>
       <AppErrorBoundary

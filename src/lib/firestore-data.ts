@@ -477,12 +477,66 @@ export interface CirclePostRow {
   created_at: string;
 }
 
+export type CommunityPostCategory = "general" | "question" | "info" | "explanation";
+export type CommunityReactionType = "like" | "helpful" | "insightful";
+
+export interface TimeBlockRow {
+  id: string;
+  user_id: string;
+  title: string;
+  day_label: string;
+  start_time: string;
+  end_time: string;
+  notes?: string | null;
+  completed?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommunityPostRow {
+  id: string;
+  author_id: string;
+  author_name: string;
+  category: CommunityPostCategory;
+  body: string;
+  media_url?: string | null;
+  media_kind?: "image" | "video" | "link" | null;
+  media_path?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommunityCommentRow {
+  id: string;
+  post_id: string;
+  parent_comment_id?: string | null;
+  author_id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface CommunityReactionRow {
+  user_id: string;
+  post_id: string;
+  type: CommunityReactionType;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavedPostRow {
+  post_id: string;
+  user_id: string;
+  saved_at: string;
+}
+
 export interface ModerationReportRow {
   id: string;
   reporter_id: string;
   circle_id: string | null;
   community_group?: CommunityGroup | null;
-  target_type: "post" | "resource" | "task" | "team";
+  target_type: "post" | "resource" | "task" | "team" | "community_post" | "community_comment";
   target_id: string;
   reason: "harassment" | "spam" | "pii_exposed" | "inappropriate" | "cheating" | "other";
   details: string | null;

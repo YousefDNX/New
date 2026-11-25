@@ -53,7 +53,7 @@ export function LanguageSwitcher({
           align="end"
           className="min-w-[10rem] border-emerald-500/25 bg-surface/95 text-popover-foreground shadow-[0_12px_36px_-12px_rgba(16,185,129,0.28)] backdrop-blur-xl"
         >
-          {SUPPORTED_LANGS.map((code) => (
+          {SUPPORTED_LANGS.filter((c) => c === "en" || c === "ar").map((code) => (
             <SelectItem key={code} value={code} className="cursor-pointer text-xs font-medium">
               <span className="flex items-center justify-between gap-3 w-full">
                 <span>{LANG_META[code].nativeName}</span>

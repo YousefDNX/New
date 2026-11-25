@@ -16,6 +16,7 @@ import {
   type PopupRedirectResolver,
 } from "firebase/auth";
 import { doc, getDocFromServer, getFirestore, type Firestore } from "firebase/firestore";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
 import firebaseConfig from "../../firebase-applet-config.json";
 
 export interface FirebaseConfigShape {
@@ -45,6 +46,7 @@ export const firebaseProjectMeta = {
 let _app: FirebaseApp | undefined;
 let _auth: Auth | undefined;
 let _db: Firestore | undefined;
+let _storage: FirebaseStorage | undefined;
 let _connectionProbed = false;
 
 export function getPopupRedirectResolver(): PopupRedirectResolver | undefined {
@@ -98,9 +100,19 @@ export function getFirebaseDb(): Firestore {
   return _db;
 }
 
+export function getFirebaseStorage(): FirebaseStorage {
+  if (!_storage) {
+    _storage = config.storageBucket
+      ? getStorage(getFirebaseApp(), `gs://${config.storageBucket}`)
+      : getStorage(getFirebaseApp());
+  }
+  return _storage;
+}
+
 export const firebaseApp = getFirebaseApp();
 export const auth = getFirebaseAuth();
 export const db = getFirebaseDb();
+export const storage = getFirebaseStorage();
 
 export const AUTH_PROVIDER_IDS = {
   EMAIL_PASSWORD: ProviderId.PASSWORD,

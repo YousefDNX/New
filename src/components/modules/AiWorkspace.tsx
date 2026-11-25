@@ -91,7 +91,7 @@ const MODEL_TIERS: Array<{
 }> = [
   {
     id: "balanced",
-    modelName: "btc-ai-normal",
+    modelName: "gemini-4-hydrogen",
     labelEn: "Normal",
     labelAr: "عادي",
     taskEn: "Standard Q&A",
@@ -100,7 +100,7 @@ const MODEL_TIERS: Array<{
   },
   {
     id: "fast",
-    modelName: "btc-ai-fast",
+    modelName: "gemini-3.1-flash-lite",
     labelEn: "Fast",
     labelAr: "سريع",
     taskEn: "Quick replies",
@@ -109,7 +109,7 @@ const MODEL_TIERS: Array<{
   },
   {
     id: "complex",
-    modelName: "btc-ai-pro",
+    modelName: "gemini-4-neon",
     labelEn: "Pro",
     labelAr: "احترافي (Pro)",
     taskEn: "Detailed reasoning",
@@ -118,10 +118,10 @@ const MODEL_TIERS: Array<{
   },
   {
     id: "deep",
-    modelName: "btc-ai-research",
-    labelEn: "Research",
-    labelAr: "بحث علمي",
-    taskEn: "Deep research",
+    modelName: "gemini-4-carbon",
+    labelEn: "Deep Reason (Carbon)",
+    labelAr: "بحث وتفكير عميق (Carbon)",
+    taskEn: "Deep research & reasoning",
     taskAr: "بحث وتحليل عميق",
     icon: Brain,
   },

@@ -1,8 +1,16 @@
-import { createFileRoute, Navigate, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { SimpleOpportunitiesWorkspace } from "@/components/modules/SimpleOpportunitiesWorkspace";
+import { BRAND } from "@/config/brand";
 
 export const Route = createFileRoute("/_authenticated/app/opportunities")({
-  beforeLoad: () => {
-    throw redirect({ to: "/app" });
-  },
-  component: () => <Navigate to="/app" replace />,
+  head: () => ({
+    meta: [
+      { title: `Opportunity Radar — ${BRAND.name}` },
+      {
+        name: "description",
+        content: `Verified scholarships, competitions, workshops, and personal application tracking on ${BRAND.name}.`,
+      },
+    ],
+  }),
+  component: SimpleOpportunitiesWorkspace,
 });

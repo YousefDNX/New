@@ -1,7 +1,8 @@
+import { useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { QuranWorkspace } from "@/components/modules/QuranWorkspace";
-import { AlternativeQuranSanctuary } from "@/components/islamic/AlternativeQuranSanctuary";
-import { usePrefs } from "@/lib/preferences";
+import { useOptionalAuth } from "@/lib/auth";
+import { recordLastVisitedModule } from "@/lib/continue-tracker";
 import { BRAND } from "@/config/brand";
 
 export const Route = createFileRoute("/_authenticated/app/quran")({
@@ -23,10 +24,14 @@ export const Route = createFileRoute("/_authenticated/app/quran")({
 });
 
 function QuranRouteComponent() {
-  const { effectiveBtcVisualTheme } = usePrefs();
-  return effectiveBtcVisualTheme === "btc_alternative" ? (
-    <AlternativeQuranSanctuary />
-  ) : (
-    <QuranWorkspace />
-  );
+  const auth = useOptionalAuth();
+  useEffect(() => {
+    recordLastVisitedModule(auth?.user?.uid, {
+      path: "/app/quran",
+      labelEn: "Quran & Islamic Center",
+      labelAr: "القرآن الكريم والمركز الإسلامي",
+    });
+  }, [auth?.user?.uid]);
+
+  return <QuranWorkspace />;
 }

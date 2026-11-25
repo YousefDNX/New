@@ -1,21 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import {
   Accessibility,
   ArrowLeft,
   ArrowRight,
-  BookOpen,
-  Calendar,
-  Check,
-  Compass,
-  Globe,
-  GraduationCap,
+  CheckCircle2,
+  Languages,
   Loader2,
-  Lock,
-  Palette,
-  ShieldCheck,
-  Sidebar,
   Sparkles,
   User,
 } from "lucide-react";
@@ -24,251 +17,143 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ModernSelect } from "@/components/ui/modern-select";
 import { Switch } from "@/components/ui/switch";
 import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
 import { Logo } from "@/components/app/Logo";
 import { useOptionalAuth } from "@/lib/auth.tsx";
 import {
   clearCachedBootstrappedProfile,
-  clearPendingRegistrationGender,
   deriveDisplayName,
   ensureFirebaseUserBootstrap,
-  getPendingRegistrationGender,
 } from "@/lib/auth-bootstrap";
-import { maskEmail, maskPhone } from "@/lib/auth-state";
-import { validateFullName } from "@/lib/auth-validation";
+import { getNicknameErrorMessage, validateGuestNickname } from "@/lib/auth-validation";
 import { db, handleFirestoreError, OperationType } from "@/lib/firebase";
-import {
-  clampString,
-  generateSafeDocId,
-  resolveCommunityGroup,
-  type GoalRow,
-  type StudentGender,
-} from "@/lib/firestore-data";
-import { ageBand } from "@/lib/growth";
 import { usePrefs } from "@/lib/preferences";
-import { SUBJECT_OPTIONS } from "@/lib/settings";
+import { useSaveProfile, useSaveSettings } from "@/hooks/use-settings";
 import { BRAND } from "@/config/brand";
 
-import { redirect } from "@tanstack/react-router";
-
 export const Route = createFileRoute("/_authenticated/onboarding")({
-  beforeLoad: async ({ context }) => {
-    if (context.user?.isAnonymous) {
-      throw redirect({ to: "/app" });
-    }
-  },
   head: () => ({
     meta: [
-      { title: `Get started — ${BRAND.name}` },
-      { name: "description", content: `Set up your ${BRAND.name} profile.` },
-      { property: "og:title", content: `Get started — ${BRAND.name}` },
-      { property: "og:description", content: "Set up your profile." },
+      { title: `Welcome — ${BRAND.name}` },
+      { name: "description", content: `Set up your ${BRAND.name} guest experience.` },
+      { property: "og:title", content: `Welcome — ${BRAND.name}` },
+      { property: "og:description", content: "Quick guest setup." },
     ],
   }),
-  component: Onb,
+  component: GuestOnboardingPage,
 });
 
-function Onb() {
-  const {
-    t,
-    lang,
-    setLang,
-    a11y,
-    setA11y,
-    btcVisualTheme,
-    setBtcVisualTheme,
-    btcNavLayout,
-    setBtcNavLayout,
-    setLayoutMode,
-  } = usePrefs();
+function GuestOnboardingPage() {
+  const { t, lang, setLang, a11y, setA11y } = usePrefs();
   const isAr = lang === "ar";
   const routeCtx = Route.useRouteContext();
   const optionalAuth = useOptionalAuth();
   const user = routeCtx?.user ?? optionalAuth?.user ?? null;
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const saveProfile = useSaveProfile();
+  const saveSettings = useSaveSettings();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [displayName, setDisplayName] = useState(() => (user ? deriveDisplayName(user) : ""));
-  const [dob, setDob] = useState("");
-  const [region, setRegion] = useState<"kuwait" | "gcc" | "global">("kuwait");
-  const [gradeLevel, setGradeLevel] = useState("high");
-  const [gender, setGender] = useState<StudentGender | "">(
-    () => getPendingRegistrationGender() ?? "",
-  );
-  const [genderLocked, setGenderLocked] = useState(false);
-  const [showGenderOnProfile, setShowGenderOnProfile] = useState(false);
-  const [learningGoals, setLearningGoals] = useState("");
-  const [preferredSubjects, setPreferredSubjects] = useState<string[]>(["Mathematics", "English"]);
-  const [consent, setConsent] = useState(false);
+  const [nickname, setNickname] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-    setDisplayName((prev) => (prev ? prev : deriveDisplayName(user)));
     void ensureFirebaseUserBootstrap(user, lang)
       .then((profile) => {
-        if (profile?.display_name) setDisplayName(profile.display_name);
-        if (profile?.preferred_subjects?.length) {
-          setPreferredSubjects(profile.preferred_subjects.slice(0, 12));
+        if (profile?.onboarded) {
+          void navigate({ to: "/app", replace: true });
+          return;
         }
-        if (
-          profile?.region === "kuwait" ||
-          profile?.region === "gcc" ||
-          profile?.region === "global"
-        ) {
-          setRegion(profile.region);
+        const existing = profile?.display_name;
+        if (existing && existing !== "Guest Student" && existing !== "Student") {
+          setNickname(existing);
         }
-        if (profile?.grade_level) {
-          setGradeLevel(profile.grade_level);
-        }
-        if (profile?.gender === "male" || profile?.gender === "female") {
-          setGender(profile.gender);
-          setGenderLocked(true);
-        } else if (profile?.community_group) {
-          setGender(profile.community_group === "girls" ? "female" : "male");
-          setGenderLocked(true);
-        } else {
-          const pending = getPendingRegistrationGender();
-          if (pending) setGender(pending);
-        }
-        if (typeof profile?.show_gender_on_profile === "boolean") {
-          setShowGenderOnProfile(profile.show_gender_on_profile);
-        }
-        if (profile?.onboarded) navigate({ to: "/app", replace: true });
       })
       .catch(() => {
         // Keep wizard interactive
       });
   }, [user, lang, navigate]);
 
-  const toggleSubject = (subj: string) => {
-    setPreferredSubjects((prev) =>
-      prev.includes(subj)
-        ? prev.filter((s) => s !== subj)
-        : prev.length < 12
-          ? [...prev, subj]
-          : prev,
-    );
-  };
-
   function validateStepOne(): boolean {
-    const nameCheck = validateFullName(displayName);
-    if (!nameCheck.valid) {
-      toast.error(t("auth.name.error"));
+    const check = validateGuestNickname(nickname);
+    if (!check.valid) {
+      const msg = getNicknameErrorMessage(check.reason, lang);
+      setNameError(msg);
       return false;
     }
-    if (!dob) {
-      toast.error(t("onb.age.error"));
-      return false;
-    }
-    const band = ageBand(dob);
-    if (band === "under13") {
-      toast.error(t("onb.age.error"));
-      return false;
-    }
-    if (gender !== "male" && gender !== "female") {
-      toast.error(
-        isAr
-          ? "يرجى اختيار الجنس لتحديد مجتمع حلقة المعرفة الخاص بك (يُحفظ بخصوصية تامة)"
-          : "Please select your gender to assign your Knowledge Circle community (kept private).",
-      );
-      return false;
-    }
+    setNameError(null);
     return true;
   }
 
-  function goNext() {
+  function handleNext() {
     if (step === 1 && !validateStepOne()) return;
-    if (step < 4) setStep((s) => (s + 1) as 1 | 2 | 3 | 4);
+    if (step < 4) {
+      setStep((s) => (s + 1) as 1 | 2 | 3 | 4);
+    }
   }
 
-  function goBack() {
-    if (step > 1) setStep((s) => (s - 1) as 1 | 2 | 3 | 4);
+  function handleBack() {
+    if (step > 1) {
+      setStep((s) => (s - 1) as 1 | 2 | 3 | 4);
+    }
   }
 
-  async function submit(e: React.FormEvent) {
+  async function handleFinish(e: React.FormEvent) {
     e.preventDefault();
     if (!user || busy) return;
-    if (!validateStepOne()) {
+    const check = validateGuestNickname(nickname);
+    if (!check.valid) {
       setStep(1);
-      return;
-    }
-    const band = ageBand(dob);
-    if (band !== "18+" && !consent) {
-      toast.error(t("onb.consent"));
+      setNameError(getNicknameErrorMessage(check.reason, lang));
       return;
     }
 
     setBusy(true);
     try {
       await ensureFirebaseUserBootstrap(user, lang);
-      const nameCheck = validateFullName(displayName);
-      const cleanedName = nameCheck.cleaned || deriveDisplayName(user);
       const now = new Date().toISOString();
-      const trimmedGoals = learningGoals.trim().slice(0, 280);
-      const cleanSubjects = preferredSubjects.slice(0, 12);
+      const cleanedName = check.cleaned || deriveDisplayName(user);
 
-      const resolvedGroup =
-        gender === "male" || gender === "female" ? resolveCommunityGroup(gender) : undefined;
+      await updateProfile(user, { displayName: cleanedName }).catch(() => undefined);
 
       try {
         await setDoc(
           doc(db, "profiles", user.uid),
           {
+            id: user.uid,
             display_name: cleanedName,
-            date_of_birth: dob,
-            age_band: band,
-            region,
             language: lang,
-            grade_level: gradeLevel,
-            preferred_subjects: cleanSubjects,
-            learning_goals: trimmedGoals,
-            parental_consent: band === "18+" ? true : consent,
-            show_gender_on_profile: showGenderOnProfile,
-            ...(!genderLocked && (gender === "male" || gender === "female") && resolvedGroup
-              ? { gender, community_group: resolvedGroup }
-              : {}),
+            region: "kuwait",
+            parental_consent: true,
+            is_anonymous: Boolean(user.isAnonymous),
             onboarded: true,
             updated_at: now,
           },
           { merge: true },
         );
-        clearPendingRegistrationGender();
         clearCachedBootstrappedProfile(user.uid);
       } catch (err) {
         handleFirestoreError(err, OperationType.UPDATE, `profiles/${user.uid}`);
       }
 
-      const initialGoalTitle = clampString(trimmedGoals, 200);
-      if (initialGoalTitle) {
-        const goalId = generateSafeDocId("goal");
-        const seededGoal: GoalRow = {
-          id: goalId,
-          user_id: user.uid,
-          title: initialGoalTitle,
-          area: "academic",
-          status: "active",
-          is_daily: false,
-          last_reset_date: null,
-          target_date: null,
-          completed_at: null,
-          created_at: now,
-        };
-        await setDoc(doc(db, "goals", goalId), seededGoal).catch(() => undefined);
-      }
+      await saveProfile({ display_name: cleanedName, language: lang, onboarded: true }).catch(
+        () => undefined,
+      );
+      await saveSettings({
+        font_scale: a11y.fontScale,
+        dyslexia_font: a11y.dyslexia,
+        high_contrast: a11y.contrast,
+        reduced_motion: a11y.reduceMotion,
+        read_aloud: a11y.readAloud,
+      }).catch(() => undefined);
 
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ["profile"] }),
-        qc.invalidateQueries({ queryKey: ["goals"] }),
-        qc.invalidateQueries({ queryKey: ["stats"] }),
-        qc.invalidateQueries({ queryKey: ["activity_events"] }),
-      ]);
-
-      toast.success(isAr ? "تم إعداد مساحتك بنجاح!" : "Growth Map setup complete!");
-      navigate({ to: "/app", replace: true });
+      await qc.invalidateQueries({ queryKey: ["profile"] });
+      toast.success(isAr ? "أهلاً بك في BTC!" : "Welcome to BTC!");
+      void navigate({ to: "/app", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("set.error"));
     } finally {
@@ -285,46 +170,46 @@ function Onb() {
   }
 
   const stepsMeta = [
-    { id: 1 as const, label: isAr ? "الترحيب والبيانات" : "Profile" },
-    { id: 2 as const, label: isAr ? "الراحة والوصول" : "Comfort" },
-    { id: 3 as const, label: isAr ? "التصميم والتنقل" : "Look & Nav" },
+    { id: 1 as const, label: isAr ? "الاسم" : "Nickname" },
+    { id: 2 as const, label: isAr ? "اللغة" : "Language" },
+    { id: 3 as const, label: isAr ? "الوصول" : "Accessibility" },
     { id: 4 as const, label: isAr ? "البدء" : "Enter BTC" },
   ];
 
-  const band = dob ? ageBand(dob) : null;
+  const a11yEnabledSummary = [
+    a11y.dyslexia ? (isAr ? "خط عسر القراءة" : "Dyslexia-friendly font") : null,
+    a11y.contrast ? (isAr ? "تباين عالٍ" : "High contrast") : null,
+    a11y.reduceMotion ? (isAr ? "تقليل الحركة" : "Reduced motion") : null,
+    a11y.readAloud ? (isAr ? "القراءة الصوتية" : "Read aloud") : null,
+  ].filter(Boolean);
 
   return (
     <div className="flex min-h-dvh flex-col bg-background bg-hero">
-      <header className="mx-auto flex w-full max-w-4xl items-center justify-between gap-2 px-5 py-5">
+      <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-5 py-5">
         <Logo />
         <LanguageSwitcher compact />
       </header>
 
-      <div className="flex flex-1 items-center justify-center px-4 pb-16 pt-2">
+      <main className="flex flex-1 items-center justify-center px-4 pb-16 pt-2">
         <form
-          onSubmit={submit}
-          className="surface-card w-full max-w-2xl space-y-6 border-border/80 p-6 shadow-card sm:p-8"
+          onSubmit={handleFinish}
+          className="surface-card w-full max-w-xl space-y-6 border-border/80 p-6 shadow-card sm:p-8"
         >
-          {/* Header & Step Progress */}
+          {/* Step Progress */}
           <div className="space-y-4 border-b border-border/70 pb-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2">
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
                 <Sparkles className="size-3.5" />
-                <span>{isAr ? "ادرس. ركّز. انمُ." : "Study. Focus. Grow."}</span>
+                <span>{isAr ? "إعداد سريع للضيف" : "Quick Guest Setup"}</span>
               </span>
               <span className="font-mono text-xs text-muted-foreground tabular-nums">
                 {step} / 4
               </span>
             </div>
 
-            <div>
-              <h1 className="font-display text-2xl font-bold text-foreground">{t("onb.title")}</h1>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {maskEmail(user.email) ||
-                  maskPhone(user.phoneNumber) ||
-                  (user.isAnonymous ? t("auth.guest.badge") : "")}
-              </p>
-            </div>
+            <h1 className="font-display text-2xl font-bold text-foreground">
+              {isAr ? "تهيئة مساحتك في BTC" : "Set Up Your BTC Space"}
+            </h1>
 
             <div className="grid grid-cols-4 gap-2">
               {stepsMeta.map((s) => {
@@ -339,7 +224,7 @@ function Onb() {
                         setStep(s.id);
                       }
                     }}
-                    className={`flex flex-col gap-1.5 text-start transition-colors cursor-pointer ${
+                    className={`flex cursor-pointer flex-col gap-1.5 text-start transition-colors ${
                       active || done ? "text-foreground" : "text-muted-foreground"
                     }`}
                   >
@@ -357,253 +242,120 @@ function Onb() {
             </div>
           </div>
 
-          {/* STEP 1: Basic Info + Language + Subjects */}
+          {/* Step 1: Nickname */}
           {step === 1 && (
             <section className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-surface-2/60 p-3 text-xs">
-                <span className="font-semibold text-foreground">
-                  {isAr ? "لغة الواجهة المفضلة" : "Preferred Interface Language"}
-                </span>
-                <div className="inline-flex gap-1.5">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={lang === "en" ? "default" : "outline"}
-                    onClick={() => setLang("en")}
-                    className="h-8 px-3 text-xs"
-                  >
-                    English
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={lang === "ar" ? "default" : "outline"}
-                    onClick={() => setLang("ar")}
-                    className="h-8 px-3 text-xs"
-                  >
-                    العربية
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="onb-name"
-                  className="flex items-center gap-1.5 text-xs font-semibold"
-                >
-                  <User className="size-3.5 text-primary" />
-                  <span>{t("set.name")}</span>
-                </Label>
-                <Input
-                  id="onb-name"
-                  required
-                  minLength={2}
-                  maxLength={60}
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="h-11 rounded-xl bg-surface-2/60 text-foreground"
-                  placeholder={isAr ? "ادخل اسمك الكامل" : "Enter your full name"}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="dob" className="flex items-center gap-1.5 text-xs font-semibold">
-                    <Calendar className="size-3.5 text-primary" />
-                    <span>{t("onb.dob")}</span>
-                  </Label>
-                  <Input
-                    id="dob"
-                    type="date"
-                    required
-                    value={dob}
-                    onChange={(e) => setDob(e.target.value)}
-                    className="h-11 rounded-xl bg-surface-2/60 text-foreground"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="rg" className="flex items-center gap-1.5 text-xs font-semibold">
-                    <Globe className="size-3.5 text-primary" />
-                    <span>{t("onb.region")}</span>
-                  </Label>
-                  <ModernSelect
-                    id="rg"
-                    ariaLabel={t("onb.region")}
-                    value={region}
-                    onValueChange={(val) => setRegion(val as "kuwait" | "gcc" | "global")}
-                    options={[
-                      { value: "kuwait", label: t("region.kuwait") },
-                      { value: "gcc", label: t("region.gcc") },
-                      { value: "global", label: t("region.global") },
-                    ]}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="onb-grade"
-                    className="flex items-center gap-1.5 text-xs font-semibold"
-                  >
-                    <GraduationCap className="size-3.5 text-primary" />
-                    <span>{t("set.grade")}</span>
-                  </Label>
-                  <ModernSelect
-                    id="onb-grade"
-                    ariaLabel={t("set.grade")}
-                    value={gradeLevel}
-                    onValueChange={setGradeLevel}
-                    options={[
-                      { value: "middle", label: t("set.grade.middle") },
-                      { value: "high", label: t("set.grade.high") },
-                      { value: "prep", label: t("set.grade.prep") },
-                      { value: "undergrad", label: t("set.grade.undergrad") },
-                      { value: "self", label: t("set.grade.self") },
-                    ]}
-                  />
-                </div>
-              </div>
-
-              {/* Respectful & Private Gender Selection for Knowledge Circle Community */}
-              <div className="space-y-2 rounded-xl border border-border bg-surface-2/50 p-3.5 text-xs">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Label className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                    <ShieldCheck className="size-3.5 text-primary" />
-                    <span>
-                      {isAr
-                        ? "مجتمع حلقة المعرفة (خاص ومعتمد)"
-                        : "Knowledge Circle Community (Private)"}
-                    </span>
-                  </Label>
-                  {genderLocked && (
-                    <span className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                      <Lock className="size-3" />
-                      <span>
-                        {gender === "female"
-                          ? isAr
-                            ? "مجتمع البنات"
-                            : "Girls' Community"
-                          : isAr
-                            ? "مجتمع البنين"
-                            : "Boys' Community"}
-                      </span>
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] leading-relaxed text-muted-foreground">
+              <div className="space-y-1">
+                <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
+                  <User className="size-4 text-primary" />
+                  <span>{isAr ? "ما الاسم الذي تفضل أن نناديك به؟" : "Choose Your Nickname"}</span>
+                </h2>
+                <p className="text-xs text-muted-foreground">
                   {isAr
-                    ? "يُحدِّد هذا الاختيار القسم المخصص لك داخل حلقة المعرفة (بنين / بنات). يُحفظ بخصوصية تامة ولا يظهر في ملفك العام إلا إذا فعّلت ذلك اختيارياً."
-                    : "This determines which Knowledge Circle community area your account accesses. Your selection is kept private and is never shown publicly unless you choose to enable it in Settings."}
+                    ? "يظهر هذا الاسم في الترحيب ومشاركاتك داخل حلقة المعرفة (2 إلى 40 حرفاً)."
+                    : "Shown in your greeting and Knowledge Circle posts (2 to 40 characters)."}
                 </p>
-                <div
-                  className="grid grid-cols-2 gap-2.5 pt-1"
-                  role="radiogroup"
-                  aria-label={isAr ? "الجنس" : "Gender"}
-                >
-                  {[
-                    {
-                      value: "male" as const,
-                      en: "Male",
-                      ar: "ذكر",
-                      descEn: "Access Boys' Community",
-                      descAr: "دخول مجتمع البنين",
-                    },
-                    {
-                      value: "female" as const,
-                      en: "Female",
-                      ar: "أنثى",
-                      descEn: "Access Girls' Community",
-                      descAr: "دخول مجتمع البنات",
-                    },
-                  ].map((opt) => {
-                    const active = gender === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        disabled={genderLocked}
-                        onClick={() => {
-                          if (!genderLocked) setGender(opt.value);
-                        }}
-                        className={`rounded-xl border px-3 py-2.5 text-start transition-colors ${
-                          active
-                            ? "border-primary bg-primary/15 text-foreground"
-                            : "border-border bg-surface text-muted-foreground hover:text-foreground"
-                        } ${genderLocked ? "cursor-not-allowed opacity-75" : "cursor-pointer"}`}
-                      >
-                        <div className="text-xs font-bold">{isAr ? opt.ar : opt.en}</div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {isAr ? opt.descAr : opt.descEn}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="onb-goals"
-                  className="flex items-center gap-1.5 text-xs font-semibold"
-                >
-                  <BookOpen className="size-3.5 text-primary" />
-                  <span>{t("onb.goals")}</span>
-                </Label>
-                <Input
-                  id="onb-goals"
-                  maxLength={280}
-                  placeholder={t("set.learningGoals.ph")}
-                  value={learningGoals}
-                  onChange={(e) => setLearningGoals(e.target.value)}
-                  className="h-11 rounded-xl bg-surface-2/60 text-foreground"
-                />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-semibold">{t("onb.subjects")}</Label>
-                <div className="flex flex-wrap gap-1.5">
-                  {SUBJECT_OPTIONS.map((subj) => {
-                    const selected = preferredSubjects.includes(subj);
-                    return (
-                      <button
-                        key={subj}
-                        type="button"
-                        onClick={() => toggleSubject(subj)}
-                        aria-pressed={selected}
-                        className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
-                          selected
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border bg-surface-2/70 text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {subj}
-                      </button>
-                    );
-                  })}
-                </div>
+                <Label htmlFor="guest-nickname" className="text-xs font-semibold">
+                  {isAr ? "الاسم المستعار / الاسم المعروض" : "Nickname / Display Name"}
+                </Label>
+                <Input
+                  id="guest-nickname"
+                  autoFocus
+                  required
+                  minLength={2}
+                  maxLength={40}
+                  value={nickname}
+                  onChange={(e) => {
+                    setNickname(e.target.value);
+                    if (nameError) setNameError(null);
+                  }}
+                  placeholder={isAr ? "مثال: سارة، يوسف، طالب مجتهد" : "e.g. Sara, Yousef, Omar"}
+                  className="h-11 rounded-xl bg-surface-2/60 text-foreground"
+                />
+                {nameError && (
+                  <p role="alert" className="text-xs font-medium text-destructive">
+                    {nameError}
+                  </p>
+                )}
               </div>
             </section>
           )}
 
-          {/* STEP 2: Optional Accessibility Comfort with Live Preview */}
+          {/* Step 2: Language */}
           {step === 2 && (
             <section className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-bold text-foreground">
-                <Accessibility className="size-4 text-primary" />
-                <span>
+              <div className="space-y-1">
+                <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
+                  <Languages className="size-4 text-primary" />
+                  <span>{isAr ? "اختر لغة التطبيق" : "Choose Your Language"}</span>
+                </h2>
+                <p className="text-xs text-muted-foreground">
                   {isAr
-                    ? "تفضيلات الراحة وإمكانية الوصول (اختياري)"
-                    : "Accessibility Comfort (Optional)"}
-                </span>
+                    ? "يتغير اتجاه الواجهة وكل الوحدات فوراً، ويمكنك التبديل في أي وقت."
+                    : "Updates layout direction and all modules immediately. You can switch anytime."}
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setLang("en")}
+                  className={`cursor-pointer rounded-xl border p-4 text-start transition-colors ${
+                    lang === "en"
+                      ? "border-primary bg-primary/10 ring-1 ring-primary/40"
+                      : "border-border bg-surface-2/60 hover:border-primary/40"
+                  }`}
+                >
+                  <div className="text-sm font-bold text-foreground">English</div>
+                  <div className="mt-1 text-xs text-muted-foreground">Left-to-right (LTR)</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLang("ar")}
+                  className={`cursor-pointer rounded-xl border p-4 text-start transition-colors ${
+                    lang === "ar"
+                      ? "border-primary bg-primary/10 ring-1 ring-primary/40"
+                      : "border-border bg-surface-2/60 hover:border-primary/40"
+                  }`}
+                >
+                  <div className="text-sm font-bold text-foreground">العربية</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    من اليمين إلى اليسار (RTL)
+                  </div>
+                </button>
+              </div>
+            </section>
+          )}
+
+          {/* Step 3: Accessibility Preferences */}
+          {step === 3 && (
+            <section className="space-y-4">
+              <div className="space-y-1">
+                <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
+                  <Accessibility className="size-4 text-primary" />
+                  <span>
+                    {isAr
+                      ? "تفضيلات إمكانية الوصول (اختياري)"
+                      : "Accessibility Preferences (Optional)"}
+                  </span>
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {isAr
+                    ? "اضبط القراءة والراحة البصرية بما يناسبك، أو اضغط تخطي."
+                    : "Adjust reading comfort to fit your needs, or press Skip."}
+                </p>
               </div>
 
               <div className="space-y-3 rounded-xl border border-border bg-surface-2/50 p-4 text-xs">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="font-semibold text-foreground">
-                      {isAr ? "حجم الخط الأساسي" : "Reading Font Scale"}
+                      {isAr ? "حجم الخط" : "Font Scale"}
                     </p>
-                    <p className="text-muted-foreground font-mono tabular-nums">
+                    <p className="font-mono text-muted-foreground tabular-nums">
                       {a11y.fontScale.toFixed(2)}x
                     </p>
                   </div>
@@ -613,14 +365,16 @@ function Onb() {
                     max={1.5}
                     step={0.05}
                     value={a11y.fontScale}
-                    aria-label="Font Scale"
+                    aria-label={isAr ? "حجم الخط" : "Font Scale"}
                     onChange={(e) => setA11y({ fontScale: Number(e.target.value) })}
                     className="w-40 accent-primary"
                   />
                 </div>
 
                 <label className="flex cursor-pointer items-center justify-between gap-3 border-t border-border/60 pt-3">
-                  <span className="font-medium text-foreground">{t("onb.comfort.dyslexia")}</span>
+                  <span className="font-medium text-foreground">
+                    {isAr ? "خط مريح لعسر القراءة" : "Dyslexia-Friendly Font"}
+                  </span>
                   <Switch
                     checked={a11y.dyslexia}
                     onCheckedChange={(v) => setA11y({ dyslexia: v })}
@@ -629,7 +383,7 @@ function Onb() {
 
                 <label className="flex cursor-pointer items-center justify-between gap-3 border-t border-border/60 pt-3">
                   <span className="font-medium text-foreground">
-                    {isAr ? "وضع التباين العالي" : "High-Contrast Borders & Text"}
+                    {isAr ? "تباين عالٍ للنصوص والحدود" : "High Contrast"}
                   </span>
                   <Switch
                     checked={a11y.contrast}
@@ -639,7 +393,7 @@ function Onb() {
 
                 <label className="flex cursor-pointer items-center justify-between gap-3 border-t border-border/60 pt-3">
                   <span className="font-medium text-foreground">
-                    {isAr ? "تقليل الحركة والانتقالات" : "Reduced Motion"}
+                    {isAr ? "تقليل الحركة والانتقالات" : "Reduce Motion"}
                   </span>
                   <Switch
                     checked={a11y.reduceMotion}
@@ -648,206 +402,67 @@ function Onb() {
                 </label>
 
                 <label className="flex cursor-pointer items-center justify-between gap-3 border-t border-border/60 pt-3">
-                  <span className="font-medium text-foreground">{t("onb.comfort.readAloud")}</span>
+                  <span className="font-medium text-foreground">
+                    {isAr ? "تفعيل القراءة الصوتية للصفحات" : "Read Aloud Support"}
+                  </span>
                   <Switch
                     checked={a11y.readAloud}
                     onCheckedChange={(v) => setA11y({ readAloud: v })}
                   />
                 </label>
               </div>
-
-              <div className="rounded-xl border border-primary/25 bg-surface p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
-                  {isAr ? "معاينة فورية للنص" : "Live Readability Preview"}
-                </p>
-                <p className="mt-2 leading-relaxed text-foreground">
-                  {isAr
-                    ? "هذا نموذج مباشر لمدى وضوح القراءة داخل الدروس وبطاقات المراجعة."
-                    : "Consistent active recall helps turn today's Grade 9 Unit 3 notes into long-term mastery."}
-                </p>
-              </div>
             </section>
           )}
 
-          {/* STEP 3: Visual Theme & Navigation Layout Selection (Live Switching) */}
-          {step === 3 && (
-            <section className="space-y-5">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-bold text-foreground">
-                  <Palette className="size-4 text-primary" />
-                  <span>{isAr ? "اختر هويتك البصرية" : "Choose Visual Theme"}</span>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => setBtcVisualTheme("btc_original")}
-                    className={`rounded-xl border p-4 text-start transition-all cursor-pointer ${
-                      btcVisualTheme === "btc_original"
-                        ? "border-primary bg-primary/10 ring-1 ring-primary/40"
-                        : "border-border bg-surface-2/60 hover:border-primary/40"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-foreground">
-                        {isAr ? "BTC الأصلي" : "BTC Original"}
-                      </span>
-                      {btcVisualTheme === "btc_original" && (
-                        <Check className="size-4 text-primary" />
-                      )}
-                    </div>
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">
-                      {isAr
-                        ? "ألوان الفيروزي الكلاسيكية المعتمدة وتصميم البطاقات الكلاسيكي."
-                        : "Classic approved teal clarity & flagship dashboard layout."}
-                    </p>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setBtcVisualTheme("btc_alternative")}
-                    className={`rounded-xl border p-4 text-start transition-all cursor-pointer ${
-                      btcVisualTheme === "btc_alternative"
-                        ? "border-primary bg-primary/10 ring-1 ring-primary/40"
-                        : "border-border bg-surface-2/60 hover:border-primary/40"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-foreground">
-                        {isAr ? "BTC البديل (Atelier Indigo)" : "BTC Alternative (Redesign)"}
-                      </span>
-                      {btcVisualTheme === "btc_alternative" && (
-                        <Check className="size-4 text-primary" />
-                      )}
-                    </div>
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">
-                      {isAr
-                        ? "إعادة تصميم كاملة بألوان النيلي الليلي وخطوط Outfit."
-                        : "Complete Atelier Indigo editorial redesign across all modules."}
-                    </p>
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2 border-t border-border/60 pt-4">
-                <div className="flex items-center gap-2 text-sm font-bold text-foreground">
-                  <Compass className="size-4 text-primary" />
-                  <span>{isAr ? "اختر هيكل التنقل" : "Choose Navigation Layout"}</span>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBtcNavLayout("classic");
-                      setLayoutMode("classic");
-                    }}
-                    className={`rounded-xl border p-4 text-start transition-all cursor-pointer ${
-                      btcNavLayout === "classic"
-                        ? "border-primary bg-primary/10 ring-1 ring-primary/40"
-                        : "border-border bg-surface-2/60 hover:border-primary/40"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground">
-                        <Sidebar className="size-3.5 text-primary" />
-                        <span>{isAr ? "التنقل الكلاسيكي" : "Classic Navigation"}</span>
-                      </span>
-                      {btcNavLayout === "classic" && <Check className="size-4 text-primary" />}
-                    </div>
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">
-                      {isAr
-                        ? "شريط جانبي منظم للمكتب وشريط سفلي للهاتف."
-                        : "Structured collapsible desktop sidebar & mobile tab bar."}
-                    </p>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBtcNavLayout("modern");
-                      setLayoutMode("top_nav");
-                    }}
-                    className={`rounded-xl border p-4 text-start transition-all cursor-pointer ${
-                      btcNavLayout === "modern"
-                        ? "border-primary bg-primary/10 ring-1 ring-primary/40"
-                        : "border-border bg-surface-2/60 hover:border-primary/40"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground">
-                        <Compass className="size-3.5 text-primary" />
-                        <span>{isAr ? "التنقل العصري" : "Modern Navigation"}</span>
-                      </span>
-                      {btcNavLayout === "modern" && <Check className="size-4 text-primary" />}
-                    </div>
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">
-                      {isAr
-                        ? "شريط أوامر علوي، قائمة مساحات، ومنصة سريعة عائمة."
-                        : "Floating 3-zone top command bar, Spaces popover & quick dock."}
-                    </p>
-                  </button>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* STEP 4: Final Summary & Parental Consent */}
+          {/* Step 4: Summary */}
           {step === 4 && (
             <section className="space-y-4">
-              <div className="rounded-xl border border-border bg-surface-2/60 p-4 text-xs space-y-2.5">
-                <p className="font-display text-sm font-bold text-foreground">
-                  {isAr ? "ملخص مساحتك الجاهزة" : "Your Workspace Summary"}
-                </p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <div>
-                    <span className="text-muted-foreground">{t("set.name")}: </span>
-                    <strong className="text-foreground">{displayName}</strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">{t("set.grade")}: </span>
-                    <strong className="text-foreground">{gradeLevel}</strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">{isAr ? "التصميم: " : "Theme: "}</span>
-                    <strong className="text-foreground">
-                      {btcVisualTheme === "btc_alternative" ? "BTC Alternative" : "BTC Original"}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">
-                      {isAr ? "التنقل: " : "Navigation: "}
-                    </span>
-                    <strong className="text-foreground">
-                      {btcNavLayout === "modern" ? "Modern" : "Classic"}
-                    </strong>
-                  </div>
-                </div>
-                {preferredSubjects.length > 0 && (
-                  <p className="text-muted-foreground">
-                    {isAr ? "المواد: " : "Subjects: "}
-                    <span className="text-foreground">{preferredSubjects.join(", ")}</span>
-                  </p>
-                )}
+              <div className="flex items-center gap-2 text-base font-bold text-foreground">
+                <CheckCircle2 className="size-5 text-success" />
+                <span>{isAr ? "أنت جاهز للبدء" : "Ready to Enter BTC"}</span>
               </div>
 
-              {band && band !== "18+" && band !== "under13" && (
-                <label className="flex items-start gap-2.5 rounded-xl border border-primary/30 bg-primary/5 p-3.5 text-xs leading-relaxed">
-                  <input
-                    type="checkbox"
-                    required
-                    checked={consent}
-                    onChange={(e) => setConsent(e.target.checked)}
-                    className="mt-0.5 size-4 rounded-sm accent-primary"
-                  />
-                  <span className="text-foreground">{t("onb.consent")}</span>
-                </label>
-              )}
+              <div className="space-y-2.5 rounded-xl border border-border bg-surface-2/60 p-4 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">
+                    {isAr ? "الاسم المستعار:" : "Nickname:"}
+                  </span>
+                  <strong className="text-foreground">{nickname.trim()}</strong>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">{isAr ? "اللغة:" : "Language:"}</span>
+                  <strong className="text-foreground">
+                    {lang === "ar" ? "العربية (RTL)" : "English (LTR)"}
+                  </strong>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">
+                    {isAr ? "حجم الخط:" : "Font Scale:"}
+                  </span>
+                  <strong className="font-mono text-foreground">
+                    {a11y.fontScale.toFixed(2)}x
+                  </strong>
+                </div>
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-muted-foreground">
+                    {isAr ? "الوصول:" : "Accessibility:"}
+                  </span>
+                  <strong className="text-end text-foreground">
+                    {a11yEnabledSummary.length > 0
+                      ? a11yEnabledSummary.join(" · ")
+                      : isAr
+                        ? "الإعدادات الافتراضية"
+                        : "Standard Defaults"}
+                  </strong>
+                </div>
+              </div>
             </section>
           )}
 
-          {/* Wizard Controls */}
+          {/* Controls */}
           <div className="flex items-center justify-between gap-3 border-t border-border/70 pt-4">
             {step > 1 ? (
-              <Button type="button" variant="outline" onClick={goBack} className="gap-1.5">
+              <Button type="button" variant="outline" onClick={handleBack} className="gap-1.5">
                 <ArrowLeft className="size-4 rtl-flip" />
                 <span>{isAr ? "السابق" : "Back"}</span>
               </Button>
@@ -857,12 +472,12 @@ function Onb() {
 
             {step < 4 ? (
               <div className="flex items-center gap-2">
-                {step === 2 && (
-                  <Button type="button" variant="ghost" onClick={goNext} className="text-xs">
+                {step === 3 && (
+                  <Button type="button" variant="ghost" onClick={handleNext} className="text-xs">
                     {isAr ? "تخطي" : "Skip"}
                   </Button>
                 )}
-                <Button type="button" onClick={goNext} className="gap-1.5 px-6">
+                <Button type="button" onClick={handleNext} className="gap-1.5 px-6">
                   <span>{isAr ? "التالي" : "Next"}</span>
                   <ArrowRight className="size-4 rtl-flip" />
                 </Button>
@@ -871,8 +486,8 @@ function Onb() {
               <Button
                 type="submit"
                 size="lg"
-                className="h-11 px-7 text-sm font-semibold shadow-glow cursor-pointer"
                 disabled={busy}
+                className="h-11 cursor-pointer px-7 text-sm font-semibold shadow-glow"
               >
                 {busy ? (
                   <span className="flex items-center gap-2">
@@ -880,13 +495,13 @@ function Onb() {
                     <span>{t("common.loading")}</span>
                   </span>
                 ) : (
-                  <span>{isAr ? "دخول إلى BTC" : "Enter BTC"}</span>
+                  <span>{isAr ? "الدخول إلى BTC" : "Enter BTC"}</span>
                 )}
               </Button>
             )}
           </div>
         </form>
-      </div>
+      </main>
     </div>
   );
 }

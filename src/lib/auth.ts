@@ -251,6 +251,7 @@ export {
   AuthProvider,
   AuthContext,
   useAuth,
+  useOptionalAuth,
   ProtectedRoute,
   type AuthContextValue,
   type AuthProviderProps,
