@@ -13,7 +13,7 @@ import {
   isQuranicRecitationForbidden,
 } from "./speech-service";
 import { detectUnsafeDojoRequest } from "./dojo-safety";
-import type { ChatbotRoleId } from "./ai-fallback";
+import { generateCurriculumAwareReply, type ChatbotRoleId } from "./ai-fallback";
 export { detectUnsafeDojoRequest };
 
 export type AiModelTier = "balanced" | "fast" | "complex" | "stem" | "deep" | "deep_research";
@@ -360,12 +360,20 @@ function isPlaceholderSecretValue(val: string | undefined | null): boolean {
 }
 
 export function resolveGeminiApiKey(env?: unknown): string | null {
+  const p = typeof process !== "undefined" ? process.env : undefined;
   const fromProcess =
-    typeof process !== "undefined" ? process.env?.["GEMINI_API_KEY"]?.trim() : undefined;
+    p?.["GEMINI_API_KEY"]?.trim() || p?.["API_KEY"]?.trim() || p?.["GOOGLE_API_KEY"]?.trim();
   if (fromProcess && !isPlaceholderSecretValue(fromProcess)) return fromProcess;
-  if (env && typeof env === "object" && "GEMINI_API_KEY" in env) {
-    const val = String((env as Record<string, unknown>)["GEMINI_API_KEY"] ?? "").trim();
+  if (env && typeof env === "object") {
+    const envObj = env as Record<string, unknown>;
+    const val = String(
+      envObj["GEMINI_API_KEY"] ?? envObj["API_KEY"] ?? envObj["GOOGLE_API_KEY"] ?? "",
+    ).trim();
     if (val && !isPlaceholderSecretValue(val)) return val;
+  }
+  // In AI Studio preview/runtime, if GEMINI_API_KEY isn't explicitly set in process.env, check if there's any non-empty fallback or let's accept any available key
+  if (p?.["GEMINI_API_KEY"]) {
+    return p["GEMINI_API_KEY"].trim();
   }
   return null;
 }
@@ -1192,11 +1200,14 @@ export function sanitizeAiDisplayText(raw: string): string {
       // Odd indices match captured fenced code blocks
       if (index % 2 === 1) return segment;
       return segment
+        .replace(/\*{3,}/g, "")
         .replace(/"""+/g, "")
         .replace(/'''+/g, "")
-        .replace(/\*{3,}/g, "")
-        .replace(/^([ \t]*)["«»]+\s*/gm, "$1")
-        .replace(/\s*["«»]+(?=[؟?!.,،]*[ \t]*$)/gm, "");
+        .replace(/^([ \t]*)(?:\*+|["«»‘’“„]+)\s*/gm, "$1")
+        .replace(/\s*(?:\*+|["«»‘’“„]+)(?=[؟?!.,،]*[ \t]*$)/gm, "")
+        .replace(/\s*\*{3,}\s*/g, " ")
+        .replace(/\s*"""+\s*/g, " ")
+        .trim();
     })
     .join("")
     .trim();
@@ -1266,16 +1277,25 @@ export async function generateStudyAssistantReply(
   }
 
   const apiKey = resolveGeminiApiKey(env);
+  const route = resolveChatModelConfig(req.modelTier);
   if (!apiKey) {
+    const fallbackText = generateCurriculumAwareReply({
+      message: userMessage,
+      history: req.history,
+      role: req.chatbotRole,
+      langHint: req.prefs?.responseLanguage,
+    });
     return {
-      ok: false,
-      status: 503,
-      code: "NOT_CONFIGURED",
-      message: "BTC AI is not configured yet (missing GEMINI_API_KEY in Settings > Secrets).",
+      ok: true,
+      text: fallbackText,
+      modelUsed: "btc-intelligent-fallback",
+      tierUsed: route.tier,
+      isGrounded: false,
+      sources: [],
+      searchQueries: [],
+      proposedActions: [],
     };
   }
-
-  const route = resolveChatModelConfig(req.modelTier);
   const ai = createGenAiClient(apiKey);
   const chatHistory = buildGeminiChatHistory(req.history, userMessage);
   const systemInstruction = buildSystemInstruction(req);
@@ -1363,7 +1383,26 @@ export async function generateStudyAssistantReply(
       proposedActions,
     };
   } catch (err) {
-    return formatGeminiError(err, route.isPaidTier);
+    const formatted = formatGeminiError(err, route.isPaidTier);
+    if (formatted.isPaidModelError) {
+      return formatted;
+    }
+    const fallbackText = generateCurriculumAwareReply({
+      message: userMessage,
+      history: req.history,
+      role: req.chatbotRole,
+      langHint: req.prefs?.responseLanguage,
+    });
+    return {
+      ok: true,
+      text: fallbackText,
+      modelUsed: "btc-intelligent-fallback",
+      tierUsed: route.tier,
+      isGrounded: false,
+      sources: [],
+      searchQueries: [],
+      proposedActions: [],
+    };
   }
 }
 
@@ -1433,17 +1472,26 @@ export async function* streamStudyAssistantReply(
   }
 
   const apiKey = resolveGeminiApiKey(env);
+  const route = resolveChatModelConfig(req.modelTier);
   if (!apiKey) {
+    const fallbackText = generateCurriculumAwareReply({
+      message: userMessage,
+      history: req.history,
+      role: req.chatbotRole,
+      langHint: req.prefs?.responseLanguage,
+    });
+    yield { type: "delta", text: fallbackText };
     yield {
-      type: "error",
-      status: 503,
-      code: "NOT_CONFIGURED",
-      message: "BTC AI is not configured yet (missing GEMINI_API_KEY in Settings > Secrets).",
+      type: "done",
+      modelUsed: "btc-intelligent-fallback",
+      tierUsed: route.tier,
+      isGrounded: false,
+      sources: [],
+      searchQueries: [],
+      proposedActions: [],
     };
     return;
   }
-
-  const route = resolveChatModelConfig(req.modelTier);
   const ai = createGenAiClient(apiKey);
   const chatHistory = buildGeminiChatHistory(req.history, userMessage);
   const systemInstruction = buildSystemInstruction(req);
@@ -1564,12 +1612,31 @@ export async function* streamStudyAssistantReply(
     };
   } catch (err) {
     const formatted = formatGeminiError(err, route.isPaidTier);
+    if (formatted.isPaidModelError) {
+      yield {
+        type: "error",
+        status: formatted.status,
+        code: formatted.code,
+        message: formatted.message,
+        isPaidModelError: formatted.isPaidModelError,
+      };
+      return;
+    }
+    const fallbackText = generateCurriculumAwareReply({
+      message: userMessage,
+      history: req.history,
+      role: req.chatbotRole,
+      langHint: req.prefs?.responseLanguage,
+    });
+    yield { type: "delta", text: fallbackText };
     yield {
-      type: "error",
-      status: formatted.status,
-      code: formatted.code,
-      message: formatted.message,
-      isPaidModelError: formatted.isPaidModelError,
+      type: "done",
+      modelUsed: "btc-intelligent-fallback",
+      tierUsed: route.tier,
+      isGrounded: false,
+      sources: [],
+      searchQueries: [],
+      proposedActions: [],
     };
   }
 }

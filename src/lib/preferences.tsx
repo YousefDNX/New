@@ -256,28 +256,23 @@ export function PreferencesProvider({
   const [themePresetId, setThemePresetIdState] = useState<string | null>("btc_classic");
   const [layoutMode, setLayoutModeState] = useState<LayoutMode>("classic");
   const [uiExperience, setUiExperienceState] = useState<UiExperienceId>("classic");
-  const [btcVisualTheme, setBtcVisualThemeState] = useState<BtcVisualTheme>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("btc-visual-theme");
-        if (stored === "btc_original" || stored === "btc_alternative") return stored;
-      } catch {
-        // Ignore storage read error
+  const [btcVisualTheme, setBtcVisualThemeState] = useState<BtcVisualTheme>("btc_original");
+  const [btcNavLayout, setBtcNavLayoutState] = useState<BtcNavLayout>("classic");
+
+  useEffect(() => {
+    try {
+      const storedTheme = localStorage.getItem("btc-visual-theme");
+      if (storedTheme === "btc_original" || storedTheme === "btc_alternative") {
+        setBtcVisualThemeState(storedTheme);
       }
-    }
-    return "btc_original";
-  });
-  const [btcNavLayout, setBtcNavLayoutState] = useState<BtcNavLayout>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("btc-nav-layout");
-        if (stored === "classic" || stored === "modern") return stored;
-      } catch {
-        // Ignore storage read error
+      const storedLayout = localStorage.getItem("btc-nav-layout");
+      if (storedLayout === "classic" || storedLayout === "modern") {
+        setBtcNavLayoutState(storedLayout);
       }
+    } catch {
+      // Ignore storage read error
     }
-    return "classic";
-  });
+  }, []);
   const [previewDraft, setPreviewDraft] = useState<PreferencePreviewDraft | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
   const [activeUid, setActiveUid] = useState<string | null>(null);
