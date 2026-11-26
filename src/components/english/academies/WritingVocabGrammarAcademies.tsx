@@ -147,7 +147,7 @@ export function WritingAcademyPanel({
   return (
     <div className="grid gap-5 lg:grid-cols-12">
       {/* Organized Writing Prompt Selector & Sidebar */}
-      <div className="surface-card space-y-3.5 p-4 lg:col-span-4">
+      <div className="surface-card space-y-3.5 p-4 sm:p-5 lg:col-span-5">
         <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground">
           <PenTool className="size-4 text-primary" />
           <span>Writing Prompts ({WRITING_TASKS.length})</span>
@@ -217,7 +217,7 @@ export function WritingAcademyPanel({
       </div>
 
       {/* Drafting & Constructive Feedback Coach */}
-      <div className="surface-card space-y-4 p-5 lg:col-span-8">
+      <div className="surface-card space-y-4 p-5 sm:p-6 lg:col-span-7">
         <div className="border-b border-border pb-3">
           <div className="text-xs font-medium text-primary">
             {task.level} · {task.typeLabel} · Target: {task.minWords}–{task.maxWords} words
@@ -594,6 +594,8 @@ export function VocabularyAcademyPanel({
       normalized === expected || (expected.startsWith(normalized + " ") && normalized.length > 3);
     const isExact = normalized === expected;
     setFillChecked(isExact);
+    if (isExact || ok) playCorrectSound();
+    else playIncorrectSound();
     onPracticeWord({
       wordId: currentWord.id,
       word: currentWord.word,
@@ -774,7 +776,7 @@ export function VocabularyAcademyPanel({
             }}
             placeholder="Search word or Arabic meaning..."
             aria-label="Search unit vocabulary"
-            className="min-h-[40px] max-w-xs text-xs"
+            className="min-h-[40px] w-full sm:w-96 text-xs"
           />
         </div>
       </div>
@@ -981,7 +983,7 @@ export function VocabularyAcademyPanel({
               onChange={(e) => setFillInput(e.target.value)}
               placeholder="Type exact English word..."
               aria-label="Vocabulary fill-in-the-blank answer"
-              className="max-w-xs text-sm"
+              className="w-full sm:w-96 text-sm"
             />
             <Button type="button" variant="glow" onClick={handleCheckFill} className="min-h-[40px]">
               Check Word
@@ -1393,7 +1395,7 @@ export function GrammarAcademyPanel({
 
   return (
     <div className="grid gap-5 lg:grid-cols-12">
-      <div className="surface-card space-y-3 p-4 lg:col-span-4">
+      <div className="surface-card space-y-3 p-4 sm:p-5 lg:col-span-5">
         <ModernSelect
           label={
             isAr
@@ -1437,7 +1439,7 @@ export function GrammarAcademyPanel({
         </div>
       </div>
 
-      <div className="surface-card space-y-4 p-5 lg:col-span-8">
+      <div className="surface-card space-y-4 p-5 sm:p-6 lg:col-span-7">
         <div className="border-b border-border pb-3">
           <div className="text-xs font-medium text-primary">
             {topic.cefr} · {isAr ? "قواعد اللغة الإنجليزية" : "Systematic Grammar"}

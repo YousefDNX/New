@@ -17,6 +17,7 @@ import {
 } from "firebase/auth";
 import { doc, getDocFromServer, getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
+import { getPerformance, trace } from "firebase/performance";
 import firebaseConfig from "../../firebase-applet-config.json";
 
 export interface FirebaseConfigShape {
@@ -107,6 +108,38 @@ export function getFirebaseStorage(): FirebaseStorage {
       : getStorage(getFirebaseApp());
   }
   return _storage;
+}
+
+let _perf: ReturnType<typeof getPerformance> | undefined;
+export function getFirebasePerformance() {
+  if (!_perf && typeof window !== "undefined" && isFirebaseConfigured) {
+    try {
+      _perf = getPerformance(getFirebaseApp());
+    } catch {
+      // Non-fatal if performance monitoring is blocked or unsupported
+    }
+  }
+  return _perf;
+}
+
+export function traceDashboardOperation<T>(name: string, operation: () => T): T {
+  const perf = getFirebasePerformance();
+  if (!perf || typeof trace !== "function") {
+    return operation();
+  }
+  const t = trace(perf, name);
+  t.start();
+  try {
+    const res = operation();
+    if (res instanceof Promise) {
+      return res.finally(() => t.stop()) as unknown as T;
+    }
+    t.stop();
+    return res;
+  } catch (err) {
+    t.stop();
+    throw err;
+  }
 }
 
 export const firebaseApp = getFirebaseApp();

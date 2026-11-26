@@ -245,22 +245,26 @@ export function SimpleEnglishWorkspace() {
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
-        {/* Clean Searchable & Vertical Navigation */}
+      <div className="space-y-6">
+        {/* Spacious Full-Width Searchable Section Bar */}
         <nav
           aria-label={isAr ? "أقسام عالم الإنجليزية" : "English World sections"}
-          className="surface-card flex flex-col gap-2 rounded-2xl border border-border p-3 lg:col-span-3"
+          className="surface-card flex flex-col gap-3.5 rounded-2xl border border-border p-4 sm:p-5"
         >
-          <ModernSelect
-            label={isAr ? "القسم الدراسي" : "English Section"}
-            value={tab}
-            onValueChange={(v) => setTab(v as EnglishTab)}
-            options={navOptions}
-            searchable
-            searchPlaceholder={isAr ? "ابحث في أقسام الإنجليزية..." : "Search English sections..."}
-            data-testid="english-world-section-select"
-          />
-          <div className="flex flex-col gap-1.5 pt-1">
+          <div className="w-full sm:max-w-sm">
+            <ModernSelect
+              label={isAr ? "القسم الدراسي" : "English Section"}
+              value={tab}
+              onValueChange={(v) => setTab(v as EnglishTab)}
+              options={navOptions}
+              searchable
+              searchPlaceholder={
+                isAr ? "ابحث في أقسام الإنجليزية..." : "Search English sections..."
+              }
+              data-testid="english-world-section-select"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = tab === item.id;
@@ -269,22 +273,22 @@ export function SimpleEnglishWorkspace() {
                   key={item.id}
                   type="button"
                   onClick={() => setTab(item.id)}
-                  className={`flex min-h-[44px] w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-start text-sm font-medium transition-colors cursor-pointer ${
+                  className={`flex min-h-[44px] items-center gap-2.5 rounded-xl px-4 py-2.5 text-start text-sm font-medium transition-colors cursor-pointer ${
                     active
                       ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                      : "text-foreground hover:bg-surface-2"
+                      : "border border-border/70 bg-surface-2/60 text-foreground hover:border-primary/40 hover:bg-surface-2"
                   }`}
                 >
                   <Icon className="size-4 shrink-0" />
-                  <span className="leading-snug">{isAr ? item.ar : item.en}</span>
+                  <span className="leading-snug whitespace-nowrap">{isAr ? item.ar : item.en}</span>
                 </button>
               );
             })}
           </div>
         </nav>
 
-        {/* Main Content Panel */}
-        <div className="min-w-0 lg:col-span-9">
+        {/* Main Content Panel — Full Width */}
+        <div className="min-w-0 w-full">
           {tab === "dashboard" && (
             <div className="space-y-4">
               <div className="surface-card space-y-3 rounded-2xl p-6">

@@ -291,7 +291,7 @@ describe("TTS Configuration, Speaking Confidence Meter & Unified ModernSelect", 
       const { notes } = useLocalAiLibrary();
       return (
         <div data-testid="ssr-probe">
-          {state.curriculumSelection.track}:{conversations.length}:{notes.length}
+          {state.curriculumSelection.subject}:{conversations.length}:{notes.length}
         </div>
       );
     }

@@ -1195,7 +1195,7 @@ export function GrowthMapExperience() {
               </Link>
 
               <Link
-                to="/app/circle"
+                to="/app/skills"
                 className="group flex flex-col justify-between rounded-xl border border-border bg-surface-2 p-4 transition-all hover:border-primary/50 hover:bg-surface-2/90"
               >
                 <div>
@@ -1203,16 +1203,16 @@ export function GrowthMapExperience() {
                     <Compass className="size-4" />
                   </div>
                   <h4 className="mt-3 font-display text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
-                    {isAr ? "حلقة المعرفة" : "Knowledge Circle"}
+                    {isAr ? "أكاديمية المهارات والتعاون" : "Skills & Collaboration"}
                   </h4>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {isAr
-                      ? "تعاون مع زملائك في المذاكرة وتبادل الملخصات والأسئلة."
-                      : "Collaborate in your peer study circle, notes, and Q&A rooms."}
+                      ? "طوّر مهارات التواصل، القيادة، وحل المشكلات مع زملائك."
+                      : "Build communication, teamwork, and problem-solving skills step by step."}
                   </p>
                 </div>
                 <div className="mt-4 flex items-center justify-between text-xs font-medium text-primary">
-                  <span>{isAr ? "ادخل حلقة المعرفة" : "Open Knowledge Circle"}</span>
+                  <span>{isAr ? "افتح أكاديمية المهارات" : "Open Skills Academy"}</span>
                   <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1 rtl-flip" />
                 </div>
               </Link>

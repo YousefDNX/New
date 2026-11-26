@@ -107,8 +107,8 @@ export function SkillAcademiesPanel({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-12 md:items-end">
-        <div className="md:col-span-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+        <div className="w-full lg:w-80 shrink-0">
           <ModernSelect
             label="Skill Academy"
             value={activeAcademy}
@@ -119,7 +119,7 @@ export function SkillAcademiesPanel({
             data-testid="english-skill-academy-select"
           />
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-surface-2/60 p-1.5 md:col-span-8">
+        <div className="flex flex-1 flex-wrap items-center gap-2 rounded-xl border border-border bg-surface-2/60 p-2">
           {ACADEMY_TABS.map((item) => {
             const Icon = item.icon;
             const active = activeAcademy === item.id;
@@ -130,7 +130,7 @@ export function SkillAcademiesPanel({
                 size="sm"
                 variant={active ? "glow" : "ghost"}
                 onClick={() => onSelectAcademy(item.id)}
-                className="min-h-[44px] gap-1.5 whitespace-nowrap shrink-0 text-xs"
+                className="min-h-[44px] gap-2 px-3.5 whitespace-nowrap shrink-0 text-xs"
               >
                 <Icon className="size-3.5" />
                 <span>{item.label}</span>

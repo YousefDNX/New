@@ -219,7 +219,7 @@ export function useKeyboardShortcuts({
           break;
         case "c":
           event.preventDefault();
-          void navigate({ to: "/app/circle" });
+          void navigate({ to: "/app/skills" });
           break;
         case "l":
           event.preventDefault();

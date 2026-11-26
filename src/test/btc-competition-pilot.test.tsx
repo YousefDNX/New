@@ -47,7 +47,6 @@ describe("BTC Competition Pilot Guardrails", () => {
       "tasks",
       "care",
       "future",
-      "circle",
       "opportunities",
       "english",
       "quran",

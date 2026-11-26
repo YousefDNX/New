@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -7,8 +8,16 @@ import { GoodDeedsPanel } from "@/components/islamic/GoodDeedsPanel";
 
 // Mock TanStack Link
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, to, className }: Record<string, unknown>) => (
-    <a href={to as string} className={className as string}>
+  Link: ({
+    children,
+    to,
+    className,
+  }: {
+    children?: ReactNode;
+    to?: string;
+    className?: string;
+  }) => (
+    <a href={to} className={className}>
       {children}
     </a>
   ),
@@ -28,7 +37,7 @@ function renderWithQuery(ui: React.ReactElement) {
   );
 }
 
-describe("Sadaqah Jariyah, Duaa in Absentia for Yousef Wael & Good Deeds Multipliers", () => {
+describe("Sadaqah Jariyah, Duaa in Absentia for Yousef Wael & Family, and Good Deeds Multipliers", () => {
   beforeEach(() => {
     localStorage.clear();
   });
@@ -38,7 +47,7 @@ describe("Sadaqah Jariyah, Duaa in Absentia for Yousef Wael & Good Deeds Multipl
     vi.restoreAllMocks();
   });
 
-  it("opens SadaqahJariyahAndDuaaModal, shows authentic Hadith, and confirms heartfelt prayer in the unseen", () => {
+  it("opens SadaqahJariyahAndDuaaModal, shows authentic Hadith, family presets, custom dedication, and confirms prayer in the unseen", () => {
     render(<SadaqahJariyahAndDuaaModal defaultOpen={true} lang="ar" />);
 
     // Modal is open
@@ -50,8 +59,19 @@ describe("Sadaqah Jariyah, Duaa in Absentia for Yousef Wael & Good Deeds Multipl
     expect(modal).toHaveTextContent(/آمِينَ، وَلَكَ بِمِثْلٍ/);
     expect(modal).toHaveTextContent(/صحيح مسلم/);
 
-    // Mentions Yousef Wael and parents
+    // Mentions Yousef Wael, parents, and whole family
     expect(modal).toHaveTextContent(/يوسف وائل/);
+    expect(modal).toHaveTextContent(/وَأَهْلِ بَيْتِهِ/);
+
+    // Switch to Quranic family preset
+    fireEvent.click(screen.getByRole("button", { name: /دعاء القرآن للوالدين والأهل والذرية/i }));
+    expect(modal).toHaveTextContent(/رَّبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا/);
+
+    // Enter optional family dedication (persisted locally)
+    const familyInput = screen.getByLabelText(/أضف أسماء أهلك وأحبابك/i);
+    fireEvent.change(familyInput, { target: { value: "عائلة وائل" } });
+    expect(localStorage.getItem("btc_sadaqah_family_names_v1")).toBe("عائلة وائل");
+    expect(modal).toHaveTextContent(/عائلة وائل/);
 
     // Click confirm duaa button
     const confirmBtn = screen.getByTestId("confirm-duaa-prayed-btn");

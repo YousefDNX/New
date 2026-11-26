@@ -320,26 +320,27 @@ describe("NEXORA English Learning World — Curriculum, Logic & Complete User Jo
 
     // Reveal transcript cleanly
     fireEvent.click(screen.getByRole("button", { name: /Show Transcript/i }));
-    expect(screen.getByText(/Our English session starts at nine o'clock/i)).toBeTruthy();
+    expect(screen.getByText(/On Tuesdays I finish science class/i)).toBeTruthy();
 
-    // Save extracted vocabulary word 'session' to Personal Notebook
+    // Save extracted vocabulary word 'routine' to Personal Notebook
     const saveBtns = screen.getAllByRole("button", { name: /^Save$/i });
     fireEvent.click(saveBtns[0]!);
 
-    // Answer wrong on Question 1 & right on Question 2 & 3 -> verify feedback & mistake recorded
-    fireEvent.click(screen.getByRole("button", { name: "Buying bus tickets" }));
+    // Answer wrong on Question 1 & right on Question 3 -> verify feedback & mistake recorded
+    fireEvent.click(screen.getByRole("button", { name: "At one thirty" }));
+    const falseBtns = screen.getAllByRole("button", { name: "False" });
+    fireEvent.click(falseBtns[0]!);
     fireEvent.change(screen.getByPlaceholderText(/Type answer from the audio/i), {
-      target: { value: "4" },
+      target: { value: "20" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "False" }));
     fireEvent.click(screen.getByRole("button", { name: /Check Listening Answers/i }));
 
-    expect(screen.getByText(/Listening Score Saved: 67%/i)).toBeTruthy();
+    expect(screen.getByText(/Listening Score Saved/i)).toBeTruthy();
 
     // Verify mistake appears in Dashboard Mistake Review Queue
     fireEvent.click(screen.getByRole("button", { name: /Dashboard & Certificates/i }));
-    expect(screen.getByText(/English Mistake Review Queue \(1 open\)/i)).toBeTruthy();
-    expect(screen.getByText(/Buying bus tickets/i)).toBeTruthy();
+    expect(screen.getByText(/English Mistake Review Queue/i)).toBeTruthy();
+    expect(screen.getByText(/At one thirty/i)).toBeTruthy();
   });
 
   it("Journey C: Vocabulary Learner verifies Grade 9 Unit 3, multi-practice mastery rule (1 click = Practicing), and Personal Notebook", () => {

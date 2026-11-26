@@ -272,7 +272,7 @@ export function SpeakingAcademyPanel({
   return (
     <div className="grid gap-5 lg:grid-cols-12">
       {/* Scenario Menu */}
-      <div className="surface-card space-y-3 p-4 lg:col-span-4">
+      <div className="surface-card space-y-3 p-4 sm:p-5 lg:col-span-5">
         <ModernSelect
           label={`Speaking Scenario (${SPEAKING_SCENARIOS.length})`}
           value={scenario.id}
@@ -313,7 +313,7 @@ export function SpeakingAcademyPanel({
       </div>
 
       {/* Interactive Speaking Console */}
-      <div className="surface-card space-y-4 p-5 lg:col-span-8">
+      <div className="surface-card space-y-4 p-5 sm:p-6 lg:col-span-7">
         <div className="flex flex-col gap-3 border-b border-border pb-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
             <div className="text-xs font-medium text-primary">
@@ -612,7 +612,7 @@ export function PronunciationAcademyPanel({
 
   return (
     <div className="grid gap-5 lg:grid-cols-12">
-      <div className="surface-card space-y-3 p-4 lg:col-span-4">
+      <div className="surface-card space-y-3 p-4 sm:p-5 lg:col-span-5">
         <ModernSelect
           label={`Pronunciation Drill (${PRONUNCIATION_MODULES.length})`}
           value={mod.id}
@@ -651,7 +651,7 @@ export function PronunciationAcademyPanel({
         </div>
       </div>
 
-      <div className="surface-card space-y-5 p-5 lg:col-span-8">
+      <div className="surface-card space-y-5 p-5 sm:p-6 lg:col-span-7">
         <div className="border-b border-border pb-3">
           <div className="text-xs font-medium text-primary">
             {mod.cefr} · {mod.focusArea.replace("_", " ")}

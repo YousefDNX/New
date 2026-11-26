@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Heart,
   BookOpen,
@@ -9,8 +9,6 @@ import {
   Copy,
   Check,
   Share2,
-  ShieldCheck,
-  Award,
 } from "lucide-react";
 import { useStudentEcosystem } from "@/lib/student-ecosystem";
 import { SadaqahJariyahAndDuaaModal } from "./SadaqahJariyahAndDuaaModal";
@@ -334,19 +332,19 @@ export const GoodDeedsPanel: React.FC<GoodDeedsPanelProps> = ({ lang = "ar" }) =
               <Heart className="size-4 fill-emerald-600/30 text-emerald-600" />
               <span>
                 {isAr
-                  ? "دعوة صالحة بظهر الغيب لمن بنى هذه المنصة ولوالديه (ولك بمثل ما دعوت وزيادة)"
-                  : "Supplication in Absentia for the Platform Creator & Parents"}
+                  ? "صدقة جارية ودعاء بظهر الغيب لمن بنى المنصة ووالديه وأهله أجمعين"
+                  : "Ongoing Charity & Supplication for the Creator, Parents & Whole Family"}
               </span>
             </div>
             <h4 className="text-base sm:text-lg font-bold font-serif text-stone-900 dark:text-stone-100">
               {isAr
-                ? "أعظم هدية تقدمها لأخيك المطور: دعوة مستجابة في ظهر الغيب"
-                : "The Greatest Gift: A sincere prayer for the developer in the unseen"}
+                ? "أعظم هدية تقدمها: دعوة صادقة ليوسف وائل وأهله ولكل أهالينا بظهر الغيب"
+                : "The Greatest Gift: Sincere Prayers for Yousef Wael's Family & Yours"}
             </h4>
             <p className="text-xs text-stone-600 dark:text-stone-300 max-w-2xl leading-relaxed">
               {isAr
-                ? "صمم وبنى هذه المنصة أخوكم (يوسف وائل) متقرباً بها إلى الله تعالى صدقةً جارية وعِلماً يُنتفع به. ادعُ له ولوالديه بالمغفرة والقبول وصلاح البال، ولك مثل ما دعوت بدعاء الملك الموكل."
-                : "Architected and built by Yousef Wael as continuous beneficial knowledge (Sadaqah Jariyah) for Allah's Sake. Pray for him and his parents, and the appointed angel answers: Ameen, and for you the same!"}
+                ? "صمم وبنى هذه المنصة (يوسف وائل) صدقةً جارية وعِلماً يُنتفع به عن نفسه ووالديه وإخوته وأجداده وأقاربه الأحياء والأموات. ادعُ لهم بالقبول والمغفرة والبركة، وأضف أسماء أهلك ليشملهم الدعاء ولك مثل ما دعوت بدعاء الملك الموكل."
+                : "Built by Yousef Wael as continuous beneficial knowledge (Sadaqah Jariyah) dedicated to his parents, siblings, grandparents, and entire family. Add your own loved ones' names too — the appointed angel answers: Ameen, and for you the same!"}
             </p>
           </div>
 
@@ -357,10 +355,12 @@ export const GoodDeedsPanel: React.FC<GoodDeedsPanelProps> = ({ lang = "ar" }) =
                 <button
                   type="button"
                   data-testid="open-duaa-modal-from-good-deeds"
-                  className="min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold shadow-md transition-all active:scale-98"
+                  className="min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold shadow-md transition-all active:scale-98 cursor-pointer"
                 >
                   <Heart className="size-4 fill-current text-rose-300" />
-                  <span>{isAr ? "ادعُ للمطوّر بظهر الغيب 🤲" : "Pray in Absentia 🤲"}</span>
+                  <span>
+                    {isAr ? "ادعُ للمطوّر وأهله بظهر الغيب 🤲" : "Pray for Creator & Family 🤲"}
+                  </span>
                 </button>
               }
             />

@@ -11,7 +11,6 @@ import { ProductivityFocusWorkspace } from "@/components/modules/ProductivityFoc
 import { WellbeingWorkspace } from "@/components/modules/WellbeingWorkspace";
 import { SimpleFutureWorkspace } from "@/components/modules/SimpleFutureWorkspace";
 import { SimpleOpportunitiesWorkspace } from "@/components/modules/SimpleOpportunitiesWorkspace";
-import { SimpleCircleWorkspace } from "@/components/modules/SimpleCircleWorkspace";
 import { SimpleEnglishWorkspace } from "@/components/modules/SimpleEnglishWorkspace";
 import { getLastVisitedModule } from "@/lib/continue-tracker";
 
@@ -23,7 +22,6 @@ const mockAddCareEntry = vi.fn(async () => ({ id: "care-1" }));
 const mockAddJournalEntry = vi.fn(async () => ({ id: "j-1" }));
 const mockSaveFuturePlan = vi.fn(async () => ({ id: "fp-1" }));
 const mockSaveOpportunity = vi.fn(async () => ({ id: "opp-1" }));
-const mockCreatePost = vi.fn(async () => ({ id: "post-1" }));
 
 vi.mock("@/lib/auth", () => ({
   useOptionalAuth: () => ({ user: { uid: "student-guest-1", displayName: "Student Guest" } }),
@@ -86,7 +84,7 @@ vi.mock("@/hooks/use-modules", () => ({
   useCommunityReactions: () => ({ data: [] }),
   useSavedPosts: () => ({ data: [] }),
   useCommunityActions: () => ({
-    createPost: mockCreatePost,
+    createPost: vi.fn(async () => ({ id: "post-1" })),
     updatePost: vi.fn(async () => undefined),
     deletePost: vi.fn(async () => undefined),
     addComment: vi.fn(async () => undefined),
@@ -201,21 +199,6 @@ describe("BTC Restored & Simplified Educational Modules", () => {
     expect(screen.getAllByText(/Verified official information/i).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /My Saved Tracker \(0\)/i }));
     expect(screen.getByPlaceholderText("https://...")).toBeInTheDocument();
-  });
-
-  it("SimpleCircleWorkspace renders shared community with instant composer, filters, tags & PII guardrails", () => {
-    renderModule(<SimpleCircleWorkspace />);
-    expect(getLastVisitedModule("student-guest-1")?.path).toBe("/app/circle");
-
-    expect(screen.getByText(/A shared student space/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Invite Code/i)).toBeNull();
-    expect(screen.getByRole("button", { name: /^Liked \(/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^Saved \(/i })).toBeInTheDocument();
-
-    const bodyInput = screen.getByPlaceholderText(/Ask a clear study question/i);
-    fireEvent.change(bodyInput, { target: { value: "Email me at test@student.edu" } });
-    fireEvent.click(screen.getByRole("button", { name: /Publish Post/i }));
-    expect(mockCreatePost).not.toHaveBeenCalled();
   });
 
   it("SimpleEnglishWorkspace exposes Grade 9 — Vocabulary and all 6 English skills cleanly unlocked", () => {

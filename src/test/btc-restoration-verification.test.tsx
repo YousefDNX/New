@@ -48,7 +48,7 @@ describe("BTC Restoration Verification (Parts 1-8)", () => {
       "tasks",
       "care",
       "future",
-      "circle",
+      "ai",
       "opportunities",
       "english",
       "quran",

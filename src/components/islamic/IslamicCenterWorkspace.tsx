@@ -15,6 +15,7 @@ import { TafsirPanel } from "./TafsirPanel";
 import { TajweedAcademyPanel } from "./TajweedAcademyPanel";
 import { IslamicKnowledgeHub, type KnowledgeHubSubSection } from "./IslamicKnowledgeHub";
 import { UnifiedIslamicSearchPanel } from "./UnifiedIslamicSearchPanel";
+import { SadaqahJariyahWidget } from "@/components/dashboard/SadaqahJariyahWidget";
 import type { GlobalCountryCode } from "@/lib/quran-reciters-directory";
 import type { UnifiedIslamicSearchResult } from "@/lib/islamic-search";
 import { SURAHS_INDEX } from "@/lib/quran-mushaf";
@@ -198,7 +199,12 @@ export const IslamicCenterWorkspace: React.FC<IslamicCenterWorkspaceProps> = ({
       titleEn: "Reflection & Search",
       items: [
         { id: "reminders", nameAr: "تذكرة اليوم", nameEn: "Daily Reminders", icon: Bell },
-        { id: "charity", nameAr: "أبواب الخير", nameEn: "Good Deeds", icon: ShieldCheck },
+        {
+          id: "charity",
+          nameAr: "الصدقة الجارية وأبواب الخير",
+          nameEn: "Sadaqah Jariyah & Good Deeds",
+          icon: ShieldCheck,
+        },
         { id: "search", nameAr: "البحث الشامل", nameEn: "Unified Search", icon: Search },
       ],
     },
@@ -501,7 +507,8 @@ export const IslamicCenterWorkspace: React.FC<IslamicCenterWorkspaceProps> = ({
         )}
 
         {activeTab === "charity" && (
-          <div className="space-y-4">
+          <div className="space-y-6">
+            <SadaqahJariyahWidget lang={lang} />
             <GoodDeedsPanel lang={lang} />
           </div>
         )}

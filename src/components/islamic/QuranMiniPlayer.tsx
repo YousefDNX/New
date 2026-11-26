@@ -36,6 +36,7 @@ const SURAH_LIST_OPEN_KEY = "btc_quran_player_surah_list_open_v1";
 const MINI_PLAYER_DISMISSED_KEY = "btc_quran_player_dismissed_v1";
 const MINI_PLAYER_SIZE_KEY = "btc_quran_player_size_v1";
 const MINI_PLAYER_DOCKED_TAB_KEY = "btc_quran_player_docked_tab_v1";
+const MINI_PLAYER_HIDDEN_KEY = "btc_quran_player_hidden_v1";
 
 export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
   lang = "en",
@@ -80,6 +81,16 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
     }
   });
 
+  // Complete hide mode (closes and hides mini player completely until user plays Quran again)
+  const [isCompletelyHidden, setIsCompletelyHidden] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem(MINI_PLAYER_HIDDEN_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+
   const [surahQuery, setSurahQuery] = useState("");
 
   // Persist open/collapsed state of the surah list
@@ -113,13 +124,30 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
     }
   }, [isDockedAsTab]);
 
+  // Persist hidden state
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(MINI_PLAYER_HIDDEN_KEY, String(isCompletelyHidden));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [isCompletelyHidden]);
+
+  // Automatically reveal mini player if user actively starts playback
+  useEffect(() => {
+    if (audio?.isPlaying && isCompletelyHidden) {
+      setIsCompletelyHidden(false);
+    }
+  }, [audio?.isPlaying, isCompletelyHidden]);
+
   const filteredSurahs = useMemo(() => {
     const q = surahQuery.trim();
     if (!q) return SURAHS_INDEX;
     return SURAHS_INDEX.filter((s) => matchesSurahOrAyah(s.id, s.nameAr, s.nameEn, q));
   }, [surahQuery]);
 
-  if (!audio) {
+  if (!audio || isCompletelyHidden) {
     return null;
   }
 
@@ -129,6 +157,13 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
 
   const handleRestoreFromTab = () => {
     setIsDockedAsTab(false);
+  };
+
+  const handleHideCompletely = () => {
+    if (audio.isPlaying) {
+      audio.pause();
+    }
+    setIsCompletelyHidden(true);
   };
 
   const displayTitle = audio.activeCustomTrack
@@ -206,6 +241,17 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
             className="w-8 h-8 rounded-lg text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 flex items-center justify-center transition-colors"
           >
             <ChevronUp className="w-4 h-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleHideCompletely}
+            data-testid="mini-player-close-hide"
+            title={isAr ? "إغلاق وإخفاء المشغل تماماً" : "Close & hide player"}
+            aria-label={isAr ? "إغلاق وإخفاء المشغل تماماً" : "Close and hide player"}
+            className="w-8 h-8 rounded-lg text-stone-400 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 flex items-center justify-center transition-colors"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -426,7 +472,7 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
               </button>
             )}
 
-            {/* Dock into sleek bottom tab (مش إخفاء كامل — تظل كـ tab في الأسفل) */}
+            {/* Dock into sleek bottom tab */}
             <button
               type="button"
               onClick={handleDockToBottomTab}
@@ -440,6 +486,18 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
               className="flex min-h-[32px] min-w-[32px] items-center justify-center rounded-lg text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
             >
               <ChevronDown className="size-4" />
+            </button>
+
+            {/* Complete Hide / Close X Button */}
+            <button
+              type="button"
+              onClick={handleHideCompletely}
+              data-testid="mini-player-close-hide"
+              aria-label={isAr ? "إغلاق وإخفاء المشغل تماماً" : "Close & hide player"}
+              title={isAr ? "إغلاق وإخفاء المشغل تماماً" : "Close & hide player"}
+              className="flex min-h-[32px] min-w-[32px] items-center justify-center rounded-lg text-stone-400 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+            >
+              <X className="size-4" />
             </button>
           </div>
         </div>
@@ -539,6 +597,21 @@ export const QuranMiniPlayer: React.FC<QuranMiniPlayerProps> = ({
               <Volume2 className="size-4" />
             )}
           </button>
+        </div>
+
+        {/* Background playback reassurance badge */}
+        <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-stone-200/60 dark:border-stone-800 text-[10px] text-emerald-800 dark:text-emerald-300">
+          <span className="flex items-center gap-1 min-w-0 truncate">
+            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="truncate">
+              {isAr
+                ? "الصوت مستمر بالخلفية عند قفل الشاشة أو مغادرة المتصفح"
+                : "Background audio active (plays when locked)"}
+            </span>
+          </span>
+          <span className="font-mono text-stone-400 dark:text-stone-500 text-[9px] shrink-0">
+            Background Play
+          </span>
         </div>
       </div>
 

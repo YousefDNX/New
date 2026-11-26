@@ -1018,7 +1018,7 @@ export interface StudentLibrarySearchResult {
   kind: SearchResultKind;
   title: string;
   subtitle: string;
-  to: "/app/tasks" | "/app" | "/app/study" | "/app/level-up" | "/app/circle";
+  to: "/app/tasks" | "/app" | "/app/study" | "/app/level-up" | "/app/skills" | "/app/opportunities";
 }
 
 const STATIC_ECOSYSTEM_EXPERIENCES: StudentLibrarySearchResult[] = [
@@ -1188,7 +1188,7 @@ const STATIC_ECOSYSTEM_EXPERIENCES: StudentLibrarySearchResult[] = [
     kind: "civic",
     title: "Model United Nations (MUN) Diplomatic Simulator",
     subtitle: "Diplomacy Lab #37",
-    to: "/app/circle",
+    to: "/app/study",
   },
   {
     id: "exp:sci_fair",
@@ -1201,22 +1201,22 @@ const STATIC_ECOSYSTEM_EXPERIENCES: StudentLibrarySearchResult[] = [
     id: "exp:com_impact",
     kind: "civic",
     title: "Supervised Community Impact Initiative Planner",
-    subtitle: "Knowledge Circle",
-    to: "/app/circle",
+    subtitle: "Skills & Service",
+    to: "/app/skills",
   },
   {
     id: "exp:mus_world",
     kind: "study",
     title: "Virtual World Museum & Historical Artifacts",
     subtitle: "Global Discovery #30",
-    to: "/app/circle",
+    to: "/app/study",
   },
   {
     id: "exp:book_club",
     kind: "study",
     title: "Curated Reading & Book Discovery Club",
     subtitle: "Global Discovery #35",
-    to: "/app/circle",
+    to: "/app/study",
   },
 ];
 
@@ -1329,7 +1329,7 @@ export function searchStudentLibrary(
         kind: "opportunity",
         title: o.title,
         subtitle: `${o.organizer} • ${o.category}`,
-        to: "/app/circle",
+        to: "/app/opportunities",
       });
     }
   }

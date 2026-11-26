@@ -2,19 +2,16 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Sparkles,
-  Heart,
   Copy,
   Check,
   RefreshCw,
   Bookmark,
   BookmarkCheck,
-  Volume2,
-  Share2,
   ArrowRight,
-  Sun,
-  ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import { VERIFIED_DAILY_ADHKAR, type DhikrRecord } from "@/data/islamic-center";
+import { VERIFIED_DAILY_ADHKAR } from "@/data/islamic-center";
 
 interface DailyDuaWidgetProps {
   lang?: string;
@@ -29,7 +26,6 @@ export const DailyDuaWidget: React.FC<DailyDuaWidgetProps> = ({ lang = "ar", cla
   // Pick a rotating duaa daily or allow cycling
   const [currentIndex, setCurrentIndex] = useState<number>(() => {
     if (typeof window === "undefined") return 0;
-    // Rotate based on day of year
     const now = new Date();
     const start = new Date(now.getFullYear(), 0, 0);
     const diff = now.getTime() - start.getTime();
@@ -61,37 +57,51 @@ export const DailyDuaWidget: React.FC<DailyDuaWidgetProps> = ({ lang = "ar", cla
     }
   }, [favoriteIds]);
 
-  const currentItem = useMemo(() => {
-    if (showOnlyFavorites && favoriteIds.length > 0) {
-      const favList = VERIFIED_DAILY_ADHKAR.filter((item) => favoriteIds.includes(item.id));
-      const idx = currentIndex % favList.length;
-      return favList[idx] ?? VERIFIED_DAILY_ADHKAR[0]!;
+  const activeList = useMemo(() => {
+    if (showOnlyFavorites) {
+      return VERIFIED_DAILY_ADHKAR.filter((item) => favoriteIds.includes(item.id));
     }
-    return VERIFIED_DAILY_ADHKAR[currentIndex % VERIFIED_DAILY_ADHKAR.length]!;
-  }, [currentIndex, favoriteIds, showOnlyFavorites]);
+    return VERIFIED_DAILY_ADHKAR;
+  }, [favoriteIds, showOnlyFavorites]);
 
+  const safeIndex = activeList.length > 0 ? currentIndex % activeList.length : 0;
+  const currentItem = activeList[safeIndex] ?? VERIFIED_DAILY_ADHKAR[0]!;
   const isFavorite = favoriteIds.includes(currentItem.id);
+  const noFavoritesInFilter = showOnlyFavorites && activeList.length === 0;
 
   const handleToggleFavorite = () => {
-    setFavoriteIds((prev) => {
-      const next = prev.includes(currentItem.id)
+    setFavoriteIds((prev) =>
+      prev.includes(currentItem.id)
         ? prev.filter((id) => id !== currentItem.id)
-        : [...prev, currentItem.id];
-      return next;
-    });
+        : [...prev, currentItem.id],
+    );
   };
 
   const handleNextDua = () => {
-    setCurrentIndex((prev) => (prev + 1) % VERIFIED_DAILY_ADHKAR.length);
+    const len = Math.max(1, activeList.length);
+    setCurrentIndex((prev) => (prev + 1) % len);
+  };
+
+  const handlePrevDua = () => {
+    const len = Math.max(1, activeList.length);
+    setCurrentIndex((prev) => (prev - 1 + len) % len);
   };
 
   const handleCopyDua = () => {
-    const text = `${currentItem.textAr}\n\n[${currentItem.categoryLabelAr} · ${currentItem.sourceReference}]\n— ${currentItem.virtueExplanationAr}`;
+    const label = isAr ? currentItem.categoryLabelAr : currentItem.categoryLabelEn;
+    const virtue = isAr ? currentItem.virtueExplanationAr : currentItem.virtueExplanationEn;
+    const text = `${currentItem.textAr}\n\n[${label} · ${currentItem.sourceReference}]${virtue ? `\n— ${virtue}` : ""}`;
     if (navigator?.clipboard?.writeText) {
-      void navigator.clipboard.writeText(text).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
+      void navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        })
+        .catch(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        });
     } else {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -102,19 +112,19 @@ export const DailyDuaWidget: React.FC<DailyDuaWidgetProps> = ({ lang = "ar", cla
     <div
       dir={isAr ? "rtl" : "ltr"}
       data-testid="daily-dua-adhkar-widget"
-      className={`rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/60 dark:from-emerald-950/40 dark:via-stone-900 dark:to-stone-900 p-5 sm:p-6 shadow-sm space-y-4 ${className}`}
+      className={`flex flex-col justify-between rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/60 dark:from-emerald-950/40 dark:via-stone-900 dark:to-stone-900 p-5 sm:p-6 shadow-sm space-y-4 ${className}`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="size-9 rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
             <Sparkles className="size-4" />
           </div>
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              {isAr ? "الدعاء والذكر اليومي" : "Daily Supplication & Adhkar"}
+          <div className="min-w-0">
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+              {isAr ? "الدعاء والذكر اليومي · خالص لله" : "Daily Supplication & Adhkar"}
             </span>
-            <h4 className="text-sm sm:text-base font-bold font-serif text-stone-900 dark:text-stone-100">
+            <h4 className="text-sm sm:text-base font-bold font-serif text-stone-900 dark:text-stone-100 truncate">
               {isAr ? currentItem.categoryLabelAr : currentItem.categoryLabelEn}
             </h4>
           </div>
@@ -123,10 +133,31 @@ export const DailyDuaWidget: React.FC<DailyDuaWidgetProps> = ({ lang = "ar", cla
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
+            onClick={() => {
+              setShowOnlyFavorites((v) => !v);
+              setCurrentIndex(0);
+            }}
+            data-testid="dua-favorites-filter-btn"
+            aria-pressed={showOnlyFavorites}
+            className={`min-h-[40px] px-2.5 rounded-lg inline-flex items-center gap-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+              showOnlyFavorites
+                ? "bg-emerald-600 text-white"
+                : "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:text-emerald-600"
+            }`}
+          >
+            <Bookmark className="size-3.5" />
+            <span>
+              {isAr ? `المفضلة (${favoriteIds.length})` : `Saved (${favoriteIds.length})`}
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleToggleFavorite}
             aria-label={isAr ? "حفظ في المفضلة" : "Bookmark duaa"}
             title={isAr ? "حفظ في المفضلة" : "Bookmark duaa"}
-            className={`size-8 rounded-lg flex items-center justify-center transition-colors ${
+            aria-pressed={isFavorite}
+            className={`size-10 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
               isFavorite
                 ? "bg-emerald-600 text-white"
                 : "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:text-emerald-600"
@@ -137,48 +168,86 @@ export const DailyDuaWidget: React.FC<DailyDuaWidgetProps> = ({ lang = "ar", cla
 
           <button
             type="button"
+            onClick={handlePrevDua}
+            aria-label={isAr ? "دعاء سابق" : "Previous supplication"}
+            title={isAr ? "دعاء سابق" : "Previous supplication"}
+            className="size-10 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:text-emerald-600 flex items-center justify-center transition-colors cursor-pointer"
+          >
+            <ChevronRight className={`size-4 ${isAr ? "" : "rotate-180"}`} />
+          </button>
+
+          <button
+            type="button"
             onClick={handleNextDua}
             aria-label={isAr ? "دعاء تالي" : "Next supplication"}
             title={isAr ? "دعاء تالي" : "Next supplication"}
-            className="size-8 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:text-emerald-600 flex items-center justify-center transition-colors"
+            className="size-10 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:text-emerald-600 flex items-center justify-center transition-colors cursor-pointer"
           >
-            <RefreshCw className="size-3.5" />
+            {showOnlyFavorites ? (
+              <ChevronLeft className={`size-4 ${isAr ? "" : "rotate-180"}`} />
+            ) : (
+              <RefreshCw className="size-3.5" />
+            )}
           </button>
         </div>
       </div>
 
-      {/* Main Dhikr / Duaa Text */}
-      <div className="rounded-xl border border-stone-200/80 dark:border-stone-800 bg-white/80 dark:bg-stone-950/70 p-4 sm:p-5 space-y-3">
-        <p
-          className="text-base sm:text-lg font-serif leading-loose text-stone-900 dark:text-stone-100 text-center py-1"
-          style={{ fontFamily: "'Amiri', serif" }}
-        >
-          {currentItem.textAr}
-        </p>
-
-        {currentItem.virtueExplanationAr && (
-          <p className="text-xs text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2.5 leading-relaxed">
-            <strong>{isAr ? "المنفعة والفضل:" : "Virtue / Benefit:"}</strong>{" "}
-            {isAr ? currentItem.virtueExplanationAr : currentItem.virtueExplanationEn}
-          </p>
-        )}
-
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-100 dark:border-stone-800 text-[11px] text-stone-500 font-mono">
-          <span>{currentItem.sourceReference}</span>
-          <span>
+      {/* Main Dhikr / Duaa Text or Empty Favorites State */}
+      {noFavoritesInFilter ? (
+        <div className="rounded-xl border border-stone-200/80 dark:border-stone-800 bg-white/80 dark:bg-stone-950/70 p-6 text-center space-y-3">
+          <p className="text-sm text-stone-700 dark:text-stone-300">
             {isAr
-              ? `التكرار المطلوب: ${currentItem.targetCount} مرات`
-              : `Target: ${currentItem.targetCount}x`}
-          </span>
+              ? "لا توجد أدعية محفوظة في المفضلة حالياً. اضغط على زر الحفظ لإضافة أذكارك المختارة."
+              : "No supplications saved yet. Tap the bookmark icon on any supplication to save it here."}
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowOnlyFavorites(false)}
+            className="min-h-[40px] inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 cursor-pointer"
+          >
+            {isAr ? "عرض جميع الأذكار" : "Show All Adhkar"}
+          </button>
         </div>
-      </div>
+      ) : (
+        <div className="rounded-xl border border-stone-200/80 dark:border-stone-800 bg-white/80 dark:bg-stone-950/70 p-4 sm:p-5 space-y-3">
+          <p
+            className="text-base sm:text-lg font-serif leading-loose text-stone-900 dark:text-stone-100 text-center py-1"
+            style={{ fontFamily: "'Amiri', serif" }}
+          >
+            {currentItem.textAr}
+          </p>
+
+          {!isAr && currentItem.translationEn && (
+            <p className="text-xs text-stone-600 dark:text-stone-300 text-center leading-relaxed">
+              {currentItem.translationEn}
+            </p>
+          )}
+
+          {currentItem.virtueExplanationAr && (
+            <p className="text-xs text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2.5 leading-relaxed">
+              <strong>{isAr ? "المنفعة والفضل:" : "Virtue / Benefit:"}</strong>{" "}
+              {isAr ? currentItem.virtueExplanationAr : currentItem.virtueExplanationEn}
+            </p>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-100 dark:border-stone-800 text-[11px] text-stone-500 font-mono">
+            <span>{currentItem.sourceReference}</span>
+            <span>
+              {activeList.length > 0 && `${safeIndex + 1}/${activeList.length} · `}
+              {isAr
+                ? `التكرار المطلوب: ${currentItem.targetCount} مرات`
+                : `Target: ${currentItem.targetCount}x`}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Footer Actions & Link to Islamic Center */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
         <button
           type="button"
           onClick={handleCopyDua}
-          className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-xs font-semibold text-stone-700 dark:text-stone-300 hover:border-emerald-500 transition-colors"
+          className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-xs font-semibold text-stone-700 dark:text-stone-300 hover:border-emerald-500 transition-colors cursor-pointer"
         >
           {copied ? (
             <>
@@ -196,7 +265,7 @@ export const DailyDuaWidget: React.FC<DailyDuaWidgetProps> = ({ lang = "ar", cla
         <Link
           to="/app/quran"
           search={{ islamic_tab: "adhkar" }}
-          className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
+          className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
         >
           <span>{isAr ? "فتح موسوعة الأذكار كاملة" : "Open Full Adhkar Library"}</span>
           <ArrowRight className={`size-3.5 ${isAr ? "rotate-180" : ""}`} />

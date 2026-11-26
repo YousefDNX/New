@@ -65,6 +65,7 @@ export function ListeningAcademyPanel({
 
   const [selectedId, setSelectedId] = useState(LISTENING_TRACKS[0]!.id);
   const [rate, setRate] = useState<0.75 | 1 | 1.25>(1);
+  const [accentLocale, setAccentLocale] = useState<"en-US" | "en-GB">("en-US");
   const [voices, setVoices] = useState<EnglishVoiceOption[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -79,6 +80,11 @@ export function ListeningAcademyPanel({
     setVoices(getAvailableEnglishVoices());
     return () => stopEnglishSpeech();
   }, []);
+
+  const filteredAccentVoices = useMemo(
+    () => voices.filter((v) => v.lang.toLowerCase() === accentLocale.toLowerCase()),
+    [voices, accentLocale],
+  );
 
   const track = useMemo(
     () => LISTENING_TRACKS.find((t) => t.id === selectedId) ?? LISTENING_TRACKS[0]!,
@@ -95,12 +101,20 @@ export function ListeningAcademyPanel({
     setSubmitted(false);
   };
 
+  const handleAccentChange = (nextAccent: "en-US" | "en-GB") => {
+    stopEnglishSpeech();
+    setIsPlaying(false);
+    setAccentLocale(nextAccent);
+    setSelectedVoiceURI("");
+  };
+
   const handlePlayTrack = () => {
     if (!speechReady) return;
-    const script = track.dialogue.map((d) => `${d.speaker} says: ${d.line}`).join(". ");
+    const script = track.dialogue.map((d) => `${d.speaker}: ${d.line}`).join(". ");
     setIsPlaying(true);
     const ok = speakEnglishText(script, {
       rate,
+      lang: accentLocale,
       ...(selectedVoiceURI ? { voiceURI: selectedVoiceURI } : {}),
       onEnd: () => setIsPlaying(false),
     });
@@ -156,7 +170,7 @@ export function ListeningAcademyPanel({
   return (
     <div className="grid gap-5 lg:grid-cols-12">
       {/* Track List */}
-      <div className="surface-card space-y-2.5 p-4 lg:col-span-4">
+      <div className="surface-card space-y-2.5 p-4 sm:p-5 lg:col-span-5">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <Headphones className="size-4 text-primary" />
           <span>Graded Audio Tracks ({LISTENING_TRACKS.length})</span>
@@ -170,7 +184,7 @@ export function ListeningAcademyPanel({
                 key={t.id}
                 type="button"
                 onClick={() => selectTrack(t.id)}
-                className={`flex min-h-[44px] w-full items-start justify-between gap-2 rounded-lg border px-3 py-2.5 text-start transition-colors ${
+                className={`flex min-h-[44px] w-full items-start justify-between gap-2 rounded-lg border px-3.5 py-2.5 text-start transition-colors ${
                   active
                     ? "border-primary bg-primary/10"
                     : "border-border bg-surface-2 hover:border-primary/40"
@@ -195,7 +209,7 @@ export function ListeningAcademyPanel({
       </div>
 
       {/* Audio Console + Comprehension Check */}
-      <div className="surface-card space-y-5 p-5 lg:col-span-8">
+      <div className="surface-card space-y-5 p-5 sm:p-6 lg:col-span-7">
         <div className="border-b border-border pb-3">
           <div className="text-xs font-medium text-primary">
             {track.level} · {track.topic} · ~{track.durationSecEst}s · {track.accentHint}
@@ -247,18 +261,46 @@ export function ListeningAcademyPanel({
                     </Button>
                   ))}
                 </div>
+                <div className="flex items-center gap-1" role="group" aria-label="Listening accent">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={accentLocale === "en-US" ? "default" : "outline"}
+                    onClick={() => handleAccentChange("en-US")}
+                    data-testid="listening-accent-us"
+                    className="h-9 px-2.5 text-xs"
+                  >
+                    🇺🇸 United States
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={accentLocale === "en-GB" ? "default" : "outline"}
+                    onClick={() => handleAccentChange("en-GB")}
+                    data-testid="listening-accent-uk"
+                    className="h-9 px-2.5 text-xs"
+                  >
+                    🇬🇧 United Kingdom
+                  </Button>
+                </div>
               </div>
 
-              {voices.length > 0 && (
+              {filteredAccentVoices.length > 0 && (
                 <ModernSelect
                   ariaLabel="English voice accent"
                   size="sm"
                   value={selectedVoiceURI}
                   onValueChange={setSelectedVoiceURI}
-                  className="max-w-[230px]"
+                  className="w-full sm:w-80"
                   options={[
-                    { value: "", label: "Default Browser English Voice" },
-                    ...voices.map((v) => ({
+                    {
+                      value: "",
+                      label:
+                        accentLocale === "en-US"
+                          ? "Best United States Voice (en-US)"
+                          : "Best United Kingdom Voice (en-GB)",
+                    },
+                    ...filteredAccentVoices.map((v) => ({
                       value: v.voiceURI,
                       label: `${v.name} (${v.lang})`,
                     })),
@@ -601,7 +643,7 @@ export function ReadingAcademyPanel({
       </div>
 
       <div className="grid gap-5 lg:grid-cols-12">
-        <div className="surface-card space-y-2 p-4 lg:col-span-4">
+        <div className="surface-card space-y-2 p-4 sm:p-5 lg:col-span-5">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             <BookOpen className="size-4 text-primary" />
             <span>Graded Readings ({filteredPassages.length})</span>
@@ -614,7 +656,7 @@ export function ReadingAcademyPanel({
                 key={p.id}
                 type="button"
                 onClick={() => selectPassage(p.id)}
-                className={`flex min-h-[44px] w-full flex-col rounded-lg border px-3 py-2.5 text-start transition-colors ${
+                className={`flex min-h-[44px] w-full flex-col rounded-lg border px-3.5 py-2.5 text-start transition-colors ${
                   active
                     ? "border-primary bg-primary/10"
                     : "border-border bg-surface-2 hover:border-primary/40"
@@ -632,7 +674,7 @@ export function ReadingAcademyPanel({
           })}
         </div>
 
-        <div className="surface-card space-y-5 p-5 lg:col-span-8">
+        <div className="surface-card space-y-5 p-5 sm:p-6 lg:col-span-7">
           <div className="flex flex-wrap items-start justify-between gap-2 border-b border-border pb-3">
             <div>
               <div className="text-xs font-medium text-primary">

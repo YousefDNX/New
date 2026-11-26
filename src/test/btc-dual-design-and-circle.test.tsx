@@ -3,11 +3,6 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import { FeatureGuideProvider } from "@/components/common/FeatureGuideModal";
-import {
-  KnowledgeCircleQaBoard,
-  KNOWLEDGE_CATEGORIES,
-} from "@/components/circle/KnowledgeCircleQaBoard";
-import { CircleWorkspace } from "@/components/modules/CircleWorkspace";
 import { MobileNav } from "@/components/nav/MobileNav";
 import {
   ModernFloatingDock,
@@ -128,7 +123,7 @@ function DualNavHarness() {
   );
 }
 
-describe("BTC Dual Visual Themes, Dual Navigation Layouts, Knowledge Q&A & Unified Knowledge Circle", () => {
+describe("BTC Dual Visual Themes & Dual Navigation Layouts", () => {
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.removeAttribute("data-btc-theme");
@@ -193,41 +188,5 @@ describe("BTC Dual Visual Themes, Dual Navigation Layouts, Knowledge Q&A & Unifi
     expect(screen.getByTestId("harness-theme")).toHaveTextContent("btc_alternative");
     expect(screen.getByTestId("harness-nav")).toHaveTextContent("classic");
     expect(document.querySelector('[data-app-sidebar="true"]')).toBeInTheDocument();
-  });
-
-  it("supports 10 subject categories, anti-bullying charter, PII safety, and thread posting in KnowledgeCircleQaBoard", () => {
-    expect(KNOWLEDGE_CATEGORIES).toHaveLength(10);
-
-    render(
-      <PreferencesProvider>
-        <KnowledgeCircleQaBoard authorName="Nour Student" />
-      </PreferencesProvider>,
-    );
-
-    expect(screen.getByTestId("knowledge-circle-qa")).toBeInTheDocument();
-
-    // Accept community charter
-    const charterBtn = screen.getByRole("button", { name: /Accept Charter/i });
-    fireEvent.click(charterBtn);
-    expect(localStorage.getItem("btc_circle_charter_v1")).toBe("accepted");
-
-    // Filter by Mathematics category
-    fireEvent.click(screen.getByRole("button", { name: "Mathematics" }));
-    expect(screen.getByText(/factoring quadratics/i)).toBeInTheDocument();
-  });
-
-  it("renders unified Knowledge Circle without standalone Girls' Space switcher and prompts unassigned accounts respectfully", () => {
-    render(
-      <PreferencesProvider>
-        <FeatureGuideProvider>
-          <CircleWorkspace initialSection="qa" />
-        </FeatureGuideProvider>
-      </PreferencesProvider>,
-    );
-
-    expect(screen.queryByTestId("girls-space-hub")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Girls' Space/i })).not.toBeInTheDocument();
-    expect(screen.getByTestId("knowledge-circle-qa")).toBeInTheDocument();
-    expect(screen.getByTestId("circle-community-setup")).toBeInTheDocument();
   });
 });

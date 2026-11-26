@@ -364,7 +364,13 @@ export function AiWorkspace() {
           return;
         }
 
-        if (!accumulated.trim()) {
+        const cleanedAccumulated = accumulated
+          .replace(/"""+/g, "")
+          .replace(/'''+/g, "")
+          .replace(/\*{3,}/g, "")
+          .trim();
+
+        if (!cleanedAccumulated) {
           pushErrorMessage(
             isAr
               ? "لم يرجع المساعد أي نص للرد. يرجى المحاولة مرة أخرى."
@@ -378,7 +384,7 @@ export function AiWorkspace() {
           {
             id: `ai_${Date.now()}`,
             role: "assistant",
-            content: accumulated.trim(),
+            content: cleanedAccumulated,
             timestamp: new Date().toISOString(),
             modelUsed: doneModelUsed,
             roleId: chatbotRole,

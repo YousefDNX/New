@@ -1,16 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Heart,
-  Sparkles,
-  CheckCircle2,
-  X,
-  Volume2,
-  Copy,
-  Check,
-  BookOpen,
-  Gift,
-  Share2,
-} from "lucide-react";
+import { Heart, Sparkles, X, Copy, Check, Users } from "lucide-react";
 
 interface SadaqahJariyahAndDuaaModalProps {
   trigger?: React.ReactNode;
@@ -20,6 +9,7 @@ interface SadaqahJariyahAndDuaaModalProps {
 
 const DUAA_PRAYED_COUNT_KEY = "btc_duaa_in_absentia_prayed_count_v1";
 const SINCERE_TASBIH_KEY = "btc_sincere_tasbih_counts_v1";
+const FAMILY_DEDICATION_KEY = "btc_sadaqah_family_names_v1";
 
 interface PresetDuaa {
   id: string;
@@ -32,39 +22,39 @@ interface PresetDuaa {
 const PRESET_DUAAS: PresetDuaa[] = [
   {
     id: "forgiveness",
-    titleAr: "المغفرة والرحمة والقبول",
-    titleEn: "Forgiveness, Mercy & Acceptance",
+    titleAr: "ليوسف وائل ووالديه وأهله جميعاً",
+    titleEn: "For Yousef Wael, His Parents & Whole Family",
     duaaAr:
-      "«اللَّهُمَّ اغْفِرْ لِيُوسُف وَائِل وَلِوَالِدَيْهِ وَلِكُلِّ مَنْ سَاهَمَ فِي هَذَا العَمَلِ، وَاجْعَلْهُ صَدَقَةً جَارِيَةً خَالِصَةً لِوَجْهِكَ الكَرِيمِ، وَتَقَبَّلْهُ يَا رَبَّ العَالَمِينَ»",
+      "«اللَّهُمَّ اغْفِرْ لِيُوسُف وَائِل وَلِوَالِدَيْهِ وَأَهْلِ بَيْتِهِ وَإِخْوَتِهِ وَأَجْدَادِهِ وَذُرِّيَّتِهِ وَأَقَارِبِهِ الأَحْيَاءِ مِنْهُمْ وَالأَمْوَاتِ، وَاجْعَلْ هَذَا العَمَلَ صَدَقَةً جَارِيَةً خَالِصَةً لِوَجْهِكَ الكَرِيمِ، وَبَارِكْ فِي أَهْلِنَا جَمِيعاً»",
     duaaEn:
-      "“O Allah, forgive Yousef Wael, his parents, and all who contributed to this work. Accept it as a sincere continuous charity (Sadaqah Jariyah) for Your Sake, O Lord of the Worlds.”",
+      "“O Allah, forgive Yousef Wael, his parents, his entire household, grandparents, siblings, descendants, and relatives — both living and deceased. Accept this platform as a sincere ongoing charity (Sadaqah Jariyah) for Your Countenance.”",
+  },
+  {
+    id: "parents-quranic",
+    titleAr: "دعاء القرآن للوالدين والأهل والذرية",
+    titleEn: "Quranic Prayer for Parents & Family",
+    duaaAr:
+      "«رَّبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا ۝ رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا ۝ رَبَّنَا اغْفِرْ لِي وَلِوَالِدَيَّ وَلِلْمُؤْمِنِينَ يَوْمَ يَقُومُ الْحِسَابُ»",
+    duaaEn:
+      "“My Lord, have mercy upon both parents as they raised me when I was small. Our Lord, grant us from among our families and offspring comfort to our eyes, and forgive us, our parents, and all believers on the Day of Reckoning.”",
   },
   {
     id: "firdaus",
-    titleAr: "الفردوس الأعلى والرفقة الصالحة",
-    titleEn: "Al-Firdaus Al-A'la & Righteous Companionship",
+    titleAr: "الفردوس الأعلى لأهلنا أحياءً وأمواتاً",
+    titleEn: "Al-Firdaus Al-A'la for Living & Deceased Family",
     duaaAr:
-      "«اللَّهُمَّ ارْزُقْهُ وَأَهْلَهُ الفِرْدَوْسَ الأَعْلَى مِنَ الجَنَّةِ بِغَيْرِ حِسَابٍ وَلَا سَابِقَةِ عَذَابٍ، وَاجْمَعْنَا مَعَ النَّبِيِّينَ وَالصِّدِّيقِينَ وَالشُّهَدَاءِ وَالصَّالِحِينَ»",
+      "«اللَّهُمَّ ارْزُقْ يُوسُفَ وَوَالِدَيْهِ وَأَهْلَهُ وَأَهْلَنَا جَمِيعاً الفِرْدَوْسَ الأَعْلَى مِنَ الجَنَّةِ بِغَيْرِ حِسَابٍ وَلَا سَابِقَةِ عَذَابٍ، وَارْحَمْ مَوْتَانَا وَاشْفِ مَرْضَانَا، وَاجْمَعْنَا مَعَ النَّبِيِّينَ وَالصِّدِّيقِينَ وَالشُّهَدَاءِ وَالصَّالِحِينَ»",
     duaaEn:
-      "“O Allah, grant him and his family Al-Firdaus Al-A'la in Paradise without reckoning or prior punishment, and unite us with the Prophets, the Truthful, the Martyrs, and the Righteous.”",
+      "“O Allah, grant Yousef, his parents, his family, and all of our families Al-Firdaus Al-A'la without reckoning, have mercy on our departed loved ones, heal our sick, and reunite us with the Prophets and the Righteous.”",
   },
   {
     id: "barakah",
-    titleAr: "البركة في العلم والرزق والعمل",
-    titleEn: "Barakah in Knowledge, Sustenance & Deeds",
+    titleAr: "البركة في العلم والرزق وصلاح الأسرة",
+    titleEn: "Barakah in Knowledge, Provision & Family Harmony",
     duaaAr:
-      "«اللَّهُمَّ بَارِكْ لَهُ فِي عِلْمِهِ وَعَمَلِهِ وَرِزْقِهِ وَصِحَّتِهِ، وَافْتَحْ لَهُ أَبْوَابَ الخَيْرِ وَالتَّوْفِيقِ فِي الدُّنْيَا وَالآخِرَةِ، وَاجْعَلْ حَيَاتَهُ زِيَادَةً فِي كُلِّ خَيْرٍ»",
+      "«اللَّهُمَّ بَارِكْ لَهُ وَلِأَهْلِهِ وَلِأَهْلِنَا فِي العِلْمِ وَالعَمَلِ وَالرِّزْقِ وَالصِّحَّةِ، وَأَلِّفْ بَيْنَ قُلُوبِنَا، وَافْتَحْ لَنَا أَبْوَابَ الخَيْرِ وَالتَّوْفِيقِ وَالتَّفَوُّقِ فِي الدُّنْيَا وَالآخِرَةِ»",
     duaaEn:
-      "“O Allah, bless his knowledge, righteous deeds, sustenance, and health. Open for him the doors of success in this world and the Hereafter, and make his life an abundance of every good.”",
-  },
-  {
-    id: "ease-peace",
-    titleAr: "تفريج الهم وصلاح البال",
-    titleEn: "Relief of Hardships & Peace of Heart",
-    duaaAr:
-      "«اللَّهُمَّ فَرِّجْ هَمَّهُ، وَاشْرَحْ صَدْرَهُ، وَيَسِّرْ أَمْرَهُ، وَاصْرِفْ عَنْهُ كُلَّ سُوءٍ وَمَكْرُوهٍ، وَأَسْعِدْ قَلْبَهُ بِمَا يُحِبُّ وَتَرْضَى»",
-    duaaEn:
-      "“O Allah, relieve his worries, expand his chest with peace, make all his affairs easy, avert from him every harm, and delight his heart with what You love and are pleased with.”",
+      "“O Allah, bless his family and our families with beneficial knowledge, righteous deeds, lawful sustenance, wellness, and united hearts, and open doors of excellence in this life and the Hereafter.”",
   },
 ];
 
@@ -79,8 +69,9 @@ export function SadaqahJariyahAndDuaaModal({
   const [prayedCount, setPrayedCount] = useState<number>(0);
   const [hasPrayedJustNow, setHasPrayedJustNow] = useState<boolean>(false);
   const [copiedDuaa, setCopiedDuaa] = useState<boolean>(false);
+  const [familyNames, setFamilyNames] = useState<string>("");
 
-  // Tasbih interactive counters
+  // Tasbih interactive counters (0 XP — pure remembrance)
   const [tasbihCounts, setTasbihCounts] = useState<{
     subhanAllah: number;
     alhamdulillah: number;
@@ -95,16 +86,38 @@ export function SadaqahJariyahAndDuaaModal({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      const savedCount = window.localStorage.getItem(DUAA_PRAYED_COUNT_KEY);
-      if (savedCount) setPrayedCount(Number(savedCount));
+    const syncAll = () => {
+      try {
+        const savedCount = window.localStorage.getItem(DUAA_PRAYED_COUNT_KEY);
+        if (savedCount) setPrayedCount(Number(savedCount));
 
-      const savedTasbih = window.localStorage.getItem(SINCERE_TASBIH_KEY);
-      if (savedTasbih) setTasbihCounts(JSON.parse(savedTasbih));
-    } catch {
-      // Ignore
-    }
+        const savedTasbih = window.localStorage.getItem(SINCERE_TASBIH_KEY);
+        if (savedTasbih) setTasbihCounts(JSON.parse(savedTasbih));
+
+        const savedFamily = window.localStorage.getItem(FAMILY_DEDICATION_KEY);
+        if (savedFamily !== null) setFamilyNames(savedFamily);
+      } catch {
+        // Ignore
+      }
+    };
+    syncAll();
+    window.addEventListener("btc:sadaqah-family-updated", syncAll);
+    return () => {
+      window.removeEventListener("btc:sadaqah-family-updated", syncAll);
+    };
   }, []);
+
+  const handleFamilyNamesChange = (val: string) => {
+    setFamilyNames(val);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(FAMILY_DEDICATION_KEY, val);
+        window.dispatchEvent(new CustomEvent("btc:sadaqah-family-updated"));
+      } catch {
+        // Ignore
+      }
+    }
+  };
 
   const handleRecordDuaa = () => {
     const next = prayedCount + 1;
@@ -137,13 +150,28 @@ export function SadaqahJariyahAndDuaaModal({
   };
 
   const selectedDuaa = PRESET_DUAAS.find((d) => d.id === selectedDuaaId) ?? PRESET_DUAAS[0]!;
+  const cleanFamily = familyNames.trim();
 
   const handleCopyDuaa = () => {
-    const textToCopy = `${selectedDuaa.duaaAr}\n\n${selectedDuaa.duaaEn}\n\n— دعاء بظهر الغيب لمن قام على المنصة (آمِينَ وَلَكَ بِمِثْلٍ)`;
-    void navigator.clipboard.writeText(textToCopy).then(() => {
+    const dedicationLine = cleanFamily
+      ? `\n\n🤲 اللهم واشمل بهذا الدعاء والأجر: ${cleanFamily}`
+      : "";
+    const textToCopy = `${selectedDuaa.duaaAr}${dedicationLine}\n\n${selectedDuaa.duaaEn}\n\n— صدقة جارية ودعاء بظهر الغيب ليوسف وائل وأهله ولجميع أهالينا (آمِينَ وَلَكَ بِمِثْلٍ)`;
+    if (navigator?.clipboard?.writeText) {
+      void navigator.clipboard
+        .writeText(textToCopy)
+        .then(() => {
+          setCopiedDuaa(true);
+          setTimeout(() => setCopiedDuaa(false), 2500);
+        })
+        .catch(() => {
+          setCopiedDuaa(true);
+          setTimeout(() => setCopiedDuaa(false), 2500);
+        });
+    } else {
       setCopiedDuaa(true);
       setTimeout(() => setCopiedDuaa(false), 2500);
-    });
+    }
   };
 
   return (
@@ -156,10 +184,10 @@ export function SadaqahJariyahAndDuaaModal({
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors"
+          className="inline-flex min-h-[40px] items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
         >
           <Heart className="size-3.5 fill-current" />
-          <span>{isAr ? "ادعُ للمطوّر بظهر الغيب 🤲" : "Pray for the Developer 🤲"}</span>
+          <span>{isAr ? "صدقة جارية ودعاء للأهل 🤲" : "Sadaqah Jariyah & Family Duaa 🤲"}</span>
         </button>
       )}
 
@@ -177,23 +205,23 @@ export function SadaqahJariyahAndDuaaModal({
             {/* Header */}
             <div className="flex items-start justify-between gap-3 border-b border-emerald-200/60 dark:border-emerald-900/60 pb-4">
               <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold border border-emerald-500/30">
+                <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
                   <Sparkles className="size-3.5" />
                   <span>
                     {isAr
-                      ? "صدقة جارية · دعاء بظهر الغيب مستجاب"
-                      : "Sadaqah Jariyah · Supplication in the Unseen"}
+                      ? "صدقة جارية دائمة · ليوسف وائل ووالديه وأهله وأهالينا أجمعين"
+                      : "Ongoing Charity · For Yousef Wael, Parents & All Our Families"}
                   </span>
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold font-serif text-stone-900 dark:text-stone-100">
                   {isAr
-                    ? "هدية صالحة: دَعْوَةٌ بِظَهْرِ الغَيْبِ (آمِينَ وَلَكَ بِمِثْلٍ)"
-                    : "A Blessed Gift: Supplication in the Unseen (Ameen, and unto you the same)"}
+                    ? "هدية صالحة: دَعْوَةٌ بِظَهْرِ الغَيْبِ لِلْمُطَوِّرِ وَالأَهْلِ (آمِينَ وَلَكَ بِمِثْلٍ)"
+                    : "Blessed Gift: Family & Unseen Supplication (Ameen, unto you the same)"}
                 </h3>
-                <p className="text-xs text-stone-600 dark:text-stone-300">
+                <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
                   {isAr
-                    ? "من بنى هذا الموقع (يوسف وائل) يرجو دعوة صالحة من قلبك لوالديه وله بالقبول والمغفرة، ولك بالمثل أضعافاً مضاعفة."
-                    : "The creator (Yousef Wael) hopes for a sincere prayer for him and his parents. A dedicated angel says: Ameen, and for you the same!"}
+                    ? "بنى هذه المنصة (يوسف وائل) صدقةً جارية وعِلماً يُنتفع به عن نفسه ووالديه وأهله وإخوته وأجداده وأقاربه الأحياء والأموات — ولك ولأهلك بمثل ما تدعو به أضعافاً مضاعفة."
+                    : "Built by Yousef Wael as continuous beneficial knowledge (Sadaqah Jariyah) dedicated to his parents, siblings, grandparents, and entire family — living and deceased — with multiplied blessings for your family too."}
                 </p>
               </div>
 
@@ -201,7 +229,7 @@ export function SadaqahJariyahAndDuaaModal({
                 type="button"
                 onClick={() => setIsOpen(false)}
                 aria-label={isAr ? "إغلاق النافذة" : "Close modal"}
-                className="size-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200/50 dark:hover:bg-stone-800 transition-colors"
+                className="size-9 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200/50 dark:hover:bg-stone-800 transition-colors cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -223,6 +251,33 @@ export function SadaqahJariyahAndDuaaModal({
               </div>
             </div>
 
+            {/* Optional Custom Family Dedication (Device-Only) */}
+            <div className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white/80 dark:bg-stone-900/70 p-3.5 space-y-2">
+              <label
+                htmlFor="sadaqah-family-names"
+                className="flex items-center gap-1.5 text-xs font-bold text-stone-800 dark:text-stone-200"
+              >
+                <Users className="size-3.5 text-emerald-600" />
+                <span>
+                  {isAr
+                    ? "أضف أسماء أهلك وأحبابك لتشملهم بالصدقة والدعاء (اختياري — محفوظ على جهازك):"
+                    : "Dedicate to your loved ones / family names (optional, device-only):"}
+                </span>
+              </label>
+              <input
+                id="sadaqah-family-names"
+                type="text"
+                value={familyNames}
+                onChange={(e) => handleFamilyNamesChange(e.target.value)}
+                placeholder={
+                  isAr
+                    ? "مثال: والديّ وإخوتي وأجدادي وجميع أهلي..."
+                    : "e.g., My parents, grandparents & whole family..."
+                }
+                className="w-full min-h-[40px] rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-3 py-2 text-xs text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
             {/* Preset Supplications Chooser */}
             <div className="space-y-3">
               <div className="text-xs font-bold text-stone-900 dark:text-stone-100 flex items-center justify-between">
@@ -235,13 +290,13 @@ export function SadaqahJariyahAndDuaaModal({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {PRESET_DUAAS.map((d) => (
                   <button
                     key={d.id}
                     type="button"
                     onClick={() => setSelectedDuaaId(d.id)}
-                    className={`min-h-[40px] px-3 py-2 rounded-xl text-start text-xs font-semibold border transition-all ${
+                    className={`min-h-[44px] px-3.5 py-2.5 rounded-xl text-start text-xs font-semibold border transition-all cursor-pointer ${
                       selectedDuaaId === d.id
                         ? "bg-emerald-700 text-white border-emerald-700 shadow-xs"
                         : "bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800 text-stone-700 dark:text-stone-300 hover:border-emerald-500"
@@ -258,11 +313,19 @@ export function SadaqahJariyahAndDuaaModal({
                   {isAr ? selectedDuaa.duaaAr : selectedDuaa.duaaEn}
                 </p>
 
+                {cleanFamily && (
+                  <p className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 text-center text-xs font-serif text-emerald-800 dark:text-emerald-300">
+                    {isAr
+                      ? `🤲 اللهم واشمل بهذا الدعاء والأجر: ${cleanFamily}`
+                      : `🤲 O Allah, include in this prayer and reward: ${cleanFamily}`}
+                  </p>
+                )}
+
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-100 dark:border-stone-800">
                   <button
                     type="button"
                     onClick={handleCopyDuaa}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 dark:border-stone-700 text-xs font-medium text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
+                    className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-stone-200 dark:border-stone-700 text-xs font-medium text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors cursor-pointer"
                   >
                     {copiedDuaa ? (
                       <>
@@ -272,7 +335,7 @@ export function SadaqahJariyahAndDuaaModal({
                     ) : (
                       <>
                         <Copy className="size-3.5" />
-                        <span>{isAr ? "نسخ الدعاء" : "Copy Duaa"}</span>
+                        <span>{isAr ? "نسخ الدعاء ومشاركته" : "Copy & Share Duaa"}</span>
                       </>
                     )}
                   </button>
@@ -281,13 +344,13 @@ export function SadaqahJariyahAndDuaaModal({
                     type="button"
                     data-testid="confirm-duaa-prayed-btn"
                     onClick={handleRecordDuaa}
-                    className="min-h-[42px] inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold shadow-md transition-all active:scale-98"
+                    className="min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold shadow-md transition-all active:scale-98 cursor-pointer"
                   >
                     <Heart className="size-4 fill-current text-rose-300" />
                     <span>
                       {isAr
-                        ? "دَعَوْتُ لَهُ وَلِوَالِدَيْهِ بِظَهْرِ الغَيْبِ (آمِينَ)"
-                        : "I prayed for him & parents in the unseen (Ameen)"}
+                        ? "دَعَوْتُ لَهُ وَلِوَالِدَيْهِ وَأَهْلِهِ بِظَهْرِ الغَيْبِ (آمِينَ)"
+                        : "I prayed for him, parents & family in the unseen (Ameen)"}
                     </span>
                   </button>
                 </div>
@@ -321,8 +384,8 @@ export function SadaqahJariyahAndDuaaModal({
                   <Sparkles className="size-4 text-amber-500" />
                   <span>
                     {isAr
-                      ? "الباقيات الصالحات — اكسب حسنات جارية الآن"
-                      : "The Lasting Good Deeds — Gain Continuous Hasanat Now"}
+                      ? "الباقيات الصالحات — أجر جاري لك ولأهلك (بدون نقاط)"
+                      : "The Lasting Good Deeds — Sincere Remembrance (0 Points)"}
                   </span>
                 </div>
                 <span className="text-[10px] text-stone-500">
@@ -334,7 +397,7 @@ export function SadaqahJariyahAndDuaaModal({
                 <button
                   type="button"
                   onClick={() => handleIncrementTasbih("subhanAllah")}
-                  className="p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 text-center hover:border-emerald-500 transition-all active:scale-95 space-y-1"
+                  className="min-h-[56px] p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 text-center hover:border-emerald-500 transition-all active:scale-95 space-y-1 cursor-pointer"
                 >
                   <div className="text-xs font-serif font-bold text-emerald-900 dark:text-emerald-200">
                     سُبْحَانَ اللَّهِ
@@ -347,7 +410,7 @@ export function SadaqahJariyahAndDuaaModal({
                 <button
                   type="button"
                   onClick={() => handleIncrementTasbih("alhamdulillah")}
-                  className="p-2.5 rounded-xl border border-teal-500/30 bg-teal-50/50 dark:bg-teal-950/20 text-center hover:border-teal-500 transition-all active:scale-95 space-y-1"
+                  className="min-h-[56px] p-2.5 rounded-xl border border-teal-500/30 bg-teal-50/50 dark:bg-teal-950/20 text-center hover:border-teal-500 transition-all active:scale-95 space-y-1 cursor-pointer"
                 >
                   <div className="text-xs font-serif font-bold text-teal-900 dark:text-teal-200">
                     الحَمْدُ لِلَّهِ
@@ -360,7 +423,7 @@ export function SadaqahJariyahAndDuaaModal({
                 <button
                   type="button"
                   onClick={() => handleIncrementTasbih("astaghfirullah")}
-                  className="p-2.5 rounded-xl border border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-950/20 text-center hover:border-indigo-500 transition-all active:scale-95 space-y-1"
+                  className="min-h-[56px] p-2.5 rounded-xl border border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-950/20 text-center hover:border-indigo-500 transition-all active:scale-95 space-y-1 cursor-pointer"
                 >
                   <div className="text-xs font-serif font-bold text-indigo-900 dark:text-indigo-200">
                     أَسْتَغْفِرُ اللَّهَ
@@ -373,7 +436,7 @@ export function SadaqahJariyahAndDuaaModal({
                 <button
                   type="button"
                   onClick={() => handleIncrementTasbih("salawat")}
-                  className="p-2.5 rounded-xl border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 text-center hover:border-amber-500 transition-all active:scale-95 space-y-1"
+                  className="min-h-[56px] p-2.5 rounded-xl border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 text-center hover:border-amber-500 transition-all active:scale-95 space-y-1 cursor-pointer"
                 >
                   <div className="text-xs font-serif font-bold text-amber-900 dark:text-amber-200">
                     صَلِّ عَلَى مُحَمَّدٍ

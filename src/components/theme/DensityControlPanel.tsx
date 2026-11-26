@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Columns3, Rows3, Sliders, Sparkles } from "lucide-react";
+import { Check, Rows3, Sliders } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { usePrefs } from "@/lib/preferences";
@@ -132,7 +132,7 @@ export function DensityControlPanel({
       <PopoverContent
         align="end"
         sideOffset={6}
-        className="surface-card z-50 w-72 p-3 shadow-xl border-border"
+        className="surface-card z-50 w-[22rem] p-3.5 shadow-xl border-border"
       >
         <div className="flex items-center justify-between border-b border-border/80 pb-2.5">
           <div className="flex items-center gap-2">

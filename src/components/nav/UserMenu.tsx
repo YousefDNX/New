@@ -119,7 +119,7 @@ export function UserMenu({ compact }: { compact?: boolean }) {
             </div>
           )}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-72">
           <DropdownMenuItem
             onClick={() => {
               const v = resolvedTheme === "dark" ? "light" : "dark";
@@ -136,7 +136,7 @@ export function UserMenu({ compact }: { compact?: boolean }) {
                 {t("lang.switch")}: {lang === "ar" ? "العربية" : "English"}
               </span>
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="w-40">
+            <DropdownMenuSubContent className="w-52">
               {(
                 [
                   { code: "en" as const, label: "English" },

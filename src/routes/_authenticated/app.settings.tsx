@@ -55,7 +55,16 @@ import {
   type QuizColorPalette,
   type QuizFeedbackStyle,
 } from "@/lib/settings";
-import { playCompleteSound, playCorrectSound } from "@/lib/sound-effects";
+import {
+  getSoundPreset,
+  getSoundVolume,
+  playClickSound,
+  playCompleteSound,
+  playCorrectSound,
+  setSoundPreset,
+  setSoundVolume,
+  type SoundPresetId,
+} from "@/lib/sound-effects";
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
   head: () => ({
@@ -99,6 +108,8 @@ function SettingsPage() {
   const [stagedAccent, setStagedAccent] = useState<AccentPreset>(appearance.accent);
   const [customHexDraft, setCustomHexDraft] = useState(appearance.customAccentHex);
   const [sampleQuizPicked, setSampleQuizPicked] = useState(false);
+  const [soundVol, setSoundVol] = useState<number>(() => getSoundVolume());
+  const [soundPreset, setSoundPresetState] = useState<SoundPresetId>(() => getSoundPreset());
 
   const previewHex =
     stagedAccent === "custom"
@@ -528,6 +539,65 @@ function SettingsPage() {
               <span>{isAr ? "تجربة الصوت" : "Test Sound"}</span>
             </Button>
           </div>
+        </SettingsRow>
+
+        <SettingsRow
+          label={isAr ? "مستوى صوت المؤثرات" : "Sound Effects Volume"}
+          desc={
+            isAr
+              ? "التحكم في شدة صوت النغمات والمؤثرات التفاعلية."
+              : "Adjust chime and interaction sound volume."
+          }
+        >
+          <div className="flex items-center gap-3 w-full max-w-xs">
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={soundVol}
+              disabled={!soundAndQuiz.soundEffectsEnabled}
+              aria-label={isAr ? "مستوى صوت المؤثرات" : "Sound Effects Volume"}
+              onChange={(e) => {
+                const vol = parseFloat(e.target.value);
+                setSoundVol(vol);
+                setSoundVolume(vol);
+                playClickSound();
+              }}
+              className="w-full accent-primary cursor-pointer"
+            />
+            <span className="font-mono text-xs text-muted-foreground w-10 text-end">
+              {Math.round(soundVol * 100)}%
+            </span>
+          </div>
+        </SettingsRow>
+
+        <SettingsRow
+          label={isAr ? "طابع المؤثر الصوتي" : "Sound Effect Preset"}
+          desc={
+            isAr
+              ? "اختر نغمة المؤثرات التي تفضلها للضغطات والإجابات الصحيحة والخاطئة."
+              : "Choose your preferred chime tone for taps and quiz feedback."
+          }
+        >
+          <SegmentedChoice<SoundPresetId>
+            label={isAr ? "طابع المؤثر الصوتي" : "Sound Effect Preset"}
+            value={soundPreset}
+            onChange={(val) => {
+              setSoundPresetState(val);
+              setSoundPreset(val);
+              if (soundAndQuiz.soundEffectsEnabled) {
+                playCorrectSound();
+              }
+              toast.success(t("set.saved"), { id: "set-saved", duration: 1200 });
+            }}
+            options={[
+              { v: "chime", l: isAr ? "رنين كلاسيكي" : "Classic Chime" },
+              { v: "crystal", l: isAr ? "كريستالي ناعم" : "Crystal" },
+              { v: "gentle", l: isAr ? "هادئ ومريح" : "Gentle" },
+              { v: "crisp", l: isAr ? "نقرة واضحة" : "Crisp Tap" },
+            ]}
+          />
         </SettingsRow>
 
         <SettingsRow

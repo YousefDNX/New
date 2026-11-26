@@ -6,10 +6,10 @@ import {
   CheckSquare,
   Home,
   Keyboard,
+  Languages,
   LayoutGrid,
   Search,
   Sparkles,
-  Users,
   Volume2,
 } from "lucide-react";
 import { Logo } from "@/components/app/Logo";
@@ -34,7 +34,7 @@ import { useRbac } from "@/hooks/use-rbac";
 import { usePrefs } from "@/lib/preferences";
 import { cn } from "@/lib/utils";
 
-const MODERN_PRIMARY_IDS = ["home", "study", "circle", "tasks", "quran", "ai"] as const;
+const MODERN_PRIMARY_IDS = ["home", "study", "english", "tasks", "quran", "ai"] as const;
 
 export function ModernNavHeader({
   onReadAloud,
@@ -106,7 +106,7 @@ export function ModernNavHeader({
             <PopoverContent
               side="bottom"
               align="center"
-              className="w-[min(94vw,42rem)] rounded-2xl border-border bg-popover/95 p-5 shadow-2xl backdrop-blur-xl"
+              className="w-[min(96vw,54rem)] rounded-2xl border-border bg-popover/95 p-6 shadow-2xl backdrop-blur-xl"
             >
               <div className="mb-3 flex items-center justify-between border-b border-border/70 pb-2.5">
                 <div>
@@ -115,8 +115,8 @@ export function ModernNavHeader({
                   </p>
                   <p className="text-[11px] text-muted-foreground">
                     {lang === "ar"
-                      ? "انتقل مباشرة إلى أي أداة تعليمية أو حلقة معرفة"
-                      : "Jump directly to any study module, sanctuary, or collaborative space"}
+                      ? "انتقل مباشرة إلى أي أداة أو مساحة تعليمية براحة تامة"
+                      : "Jump directly to any study module, sanctuary, or skill workspace"}
                   </p>
                 </div>
               </div>
@@ -265,9 +265,9 @@ export function ModernFloatingDock() {
       label: "BTC AI",
     },
     {
-      to: "/app/circle" as const,
-      icon: Users,
-      label: lang === "ar" ? "حلقة المعرفة" : "Circle",
+      to: "/app/english" as const,
+      icon: Languages,
+      label: lang === "ar" ? "الإنجليزية" : "English",
     },
     {
       to: "/app/tasks" as const,
@@ -335,9 +335,9 @@ export function ModernMobileNav() {
       label: "BTC AI",
     },
     {
-      to: "/app/circle" as const,
-      icon: Users,
-      label: lang === "ar" ? "المعرفة" : "Circle",
+      to: "/app/english" as const,
+      icon: Languages,
+      label: lang === "ar" ? "الإنجليزية" : "English",
     },
     {
       to: "/app/quran" as const,

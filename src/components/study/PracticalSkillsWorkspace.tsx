@@ -1160,7 +1160,7 @@ export function PracticalSkillsWorkspace() {
               onValueChange={(v) => setMatrixQuadInput(v as MatrixItem["quadrant"])}
               ariaLabel="Priority quadrant"
               size="sm"
-              className="w-64"
+              className="w-full sm:w-80"
               options={[
                 { value: "do_first", label: "Important + Urgent (Do First)" },
                 { value: "schedule", label: "Important + Not Urgent (Schedule)" },

@@ -43,7 +43,7 @@ const DOMAIN_META: Record<
   GrowthArea,
   {
     icon: typeof BookOpen;
-    route: "/app/study" | "/app/tasks" | "/app/level-up" | "/app/quran" | "/app/circle";
+    route: "/app/study" | "/app/tasks" | "/app/level-up" | "/app/quran" | "/app/skills";
     strokeClass: string;
     ringHex: string;
   }
@@ -80,7 +80,7 @@ const DOMAIN_META: Record<
   },
   community: {
     icon: Users,
-    route: "/app/circle",
+    route: "/app/skills",
     strokeClass: "text-amber-400",
     ringHex: "#fbbf24",
   },

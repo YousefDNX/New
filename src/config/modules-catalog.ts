@@ -327,6 +327,29 @@ export const CANONICAL_MODULES: CanonicalModule[] = [
     ],
   },
   {
+    id: "knowledge-collaboration",
+    number: "11",
+    name: "Knowledge Collaboration & Study Guides",
+    nameAr: "التعاون المعرفي ومشاركة الشروحات",
+    description:
+      "Collaborative study summaries, peer teaching guides, verified explanations, and shared academic resources.",
+    descriptionAr:
+      "ملخصات دراسية تشاركية، أدلة الشرح الطلابي، تفسيرات موثقة، وموارد تعليمية مفتوحة وآمنة.",
+    category: "connect_contribute",
+    to: "/app/study?tab=research",
+    icon: Users,
+    guideId: "knowledge-tools",
+    badge: "Peer Study",
+    color: "oklch(0.75 0.16 195)",
+    capabilities: [
+      "Peer Study Guides",
+      "Shared Summaries",
+      "Academic Q&A Notes",
+      "Open Library",
+      "Safe Collaboration",
+    ],
+  },
+  {
     id: "opportunity-radar",
     number: "12",
     name: "Opportunity Radar",
@@ -474,7 +497,7 @@ export const CANONICAL_MODULES: CanonicalModule[] = [
     descriptionAr:
       "معرض مشاريع العلوم والبيئة، مبادرات أهداف التنمية المستدامة (SDGs)، توثيق ساعات التطوع، ومشاريع الخدمة المجتمعية.",
     category: "connect_contribute",
-    to: "/app/circle",
+    to: "/app/support",
     icon: HeartHandshake,
     guideId: "science-fair-impact",
     badge: "Civic Impact",

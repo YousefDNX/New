@@ -21,6 +21,7 @@ import {
 import { AskYourLessonPanel } from "@/components/common/AskYourLessonPanel";
 import { gradeLessonExercise, type EnglishWorldState } from "@/lib/english-world";
 import { isSpeechSynthesisAvailable, speakEnglishText } from "@/lib/english-speech";
+import { playCorrectSound, playIncorrectSound } from "@/lib/sound-effects";
 
 export function CurriculumLessonPlayer({
   englishState,
@@ -100,6 +101,11 @@ export function CurriculumLessonPlayer({
 
   const handleSubmitExercises = () => {
     setExercisesSubmitted(true);
+    if (passedLesson) {
+      playCorrectSound();
+    } else {
+      playIncorrectSound();
+    }
     for (const r of exerciseResults) {
       if (!r.isCorrect) {
         const expected =
@@ -321,6 +327,12 @@ export function CurriculumLessonPlayer({
                     onClick={() => {
                       setGuidedIndex(idx);
                       setGuidedChecked(true);
+                      const ok = gradeLessonExercise(lesson.guidedPractice, {
+                        selectedIndex: idx,
+                        textAnswer: guidedText,
+                      });
+                      if (ok) playCorrectSound();
+                      else playIncorrectSound();
                     }}
                     className={`min-h-[44px] rounded-lg border px-3 py-2 text-start text-xs font-medium transition-colors ${
                       guidedIndex === idx
@@ -340,7 +352,19 @@ export function CurriculumLessonPlayer({
                   placeholder="Type your warm-up answer..."
                   className="text-sm"
                 />
-                <Button type="button" size="sm" onClick={() => setGuidedChecked(true)}>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    setGuidedChecked(true);
+                    const ok = gradeLessonExercise(lesson.guidedPractice, {
+                      selectedIndex: guidedIndex,
+                      textAnswer: guidedText,
+                    });
+                    if (ok) playCorrectSound();
+                    else playIncorrectSound();
+                  }}
+                >
                   Check
                 </Button>
               </div>

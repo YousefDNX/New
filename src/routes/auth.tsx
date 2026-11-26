@@ -141,13 +141,14 @@ function AuthEntryPage() {
     setBusy(true);
     setErrorMsg(null);
     try {
-      const user = await signInWithEmail({
+      const result = await signInWithEmail({
         email: cleanEmail,
         password: loginPassword,
+        rememberMe: true,
         lang,
       });
-      if (userRequiresEmailVerification(user, "password")) {
-        setPendingVerificationUser(user);
+      if (result.needsEmailVerification) {
+        setPendingVerificationUser(result.user);
         return;
       }
       await qc.invalidateQueries();
@@ -191,9 +192,9 @@ function AuthEntryPage() {
         fullName: nameCheck.cleaned,
         email: cleanEmail,
         password: signupPassword,
-        lang,
+        rememberMe: true,
       });
-      if (result.needsVerification && result.user) {
+      if (userRequiresEmailVerification(result.user, "password")) {
         setPendingVerificationUser(result.user);
         return;
       }
@@ -580,8 +581,24 @@ function AuthEntryPage() {
                         </div>
                         <p className="text-[10px] text-muted-foreground">
                           {isAr
-                            ? `قوة كلمة المرور: ${passwordStrength.labelAr}`
-                            : `Strength: ${passwordStrength.labelEn}`}
+                            ? `قوة كلمة المرور: ${
+                                passwordStrength.score >= 4
+                                  ? "قوية جداً"
+                                  : passwordStrength.score >= 3
+                                    ? "جيدة"
+                                    : passwordStrength.score === 2
+                                      ? "متوسطة"
+                                      : "ضعيفة"
+                              }`
+                            : `Strength: ${
+                                passwordStrength.score >= 4
+                                  ? "Very Strong"
+                                  : passwordStrength.score >= 3
+                                    ? "Strong"
+                                    : passwordStrength.score === 2
+                                      ? "Fair"
+                                      : "Weak"
+                              }`}
                         </p>
                       </div>
                     )}

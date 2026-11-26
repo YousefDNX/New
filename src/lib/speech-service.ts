@@ -572,13 +572,20 @@ export function normalizeTextForSpeech(text: string, detectedLang: SupportedSpee
     return normalizeArabicForSpeech(text);
   }
 
-  // Strip HTML tags, URLs, and markdown symbols while preserving natural English spelling
+  // Strip HTML tags, URLs, and decorative symbols while keeping natural sentence pauses
   return text
     .replace(/<[^>]+>/g, " ")
-    .replace(/[*_#`~[\]]/g, " ")
+    .replace(/"""+/g, " ")
+    .replace(/\*{2,}/g, " ")
+    .replace(/[*_#`~[\]"«»]/g, " ")
     .replace(/https?:\/\/\S+/g, " ")
+    .replace(/\be\.g\.\s*/gi, "for example, ")
+    .replace(/\bi\.e\.\s*/gi, "that is, ")
+    .replace(/\betc\./gi, "and so on.")
+    .replace(/\bvs\.?\s+/gi, "versus ")
     .replace(/\s*\/\s*/g, ", or ")
     .replace(/\s+[—–]\s+/g, ", ")
+    .replace(/\s*([,;:.!?])\s*/g, "$1 ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -728,6 +735,28 @@ export function selectBestNativeVoice(
         voiceName.includes("jenny"))
     ) {
       score += 30;
+    }
+
+    // Strict distinction for US (en-US) vs UK (en-GB) accents when requested
+    if (targetLang === "en" && preferredLocale) {
+      const prefLower = preferredLocale.toLowerCase();
+      if (prefLower.includes("en-us") || prefLower.includes("us")) {
+        if (voiceLang.includes("en-us")) {
+          score += 85;
+        } else if (voiceLang.includes("en-gb") || voiceLang.includes("en-uk")) {
+          score -= 50;
+        }
+      } else if (
+        prefLower.includes("en-gb") ||
+        prefLower.includes("gb") ||
+        prefLower.includes("uk")
+      ) {
+        if (voiceLang.includes("en-gb") || voiceLang.includes("en-uk")) {
+          score += 85;
+        } else if (voiceLang.includes("en-us")) {
+          score -= 50;
+        }
+      }
     }
 
     // Align native voice selection subtly with chosen TTS voice persona

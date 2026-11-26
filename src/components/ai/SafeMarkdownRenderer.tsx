@@ -212,7 +212,11 @@ function parseTableCells(line: string): string[] {
 }
 
 function renderTextSegment(text: string, segIdx: number): React.ReactNode[] {
-  const lines = text.split(/\r?\n/);
+  const cleanedText = text
+    .replace(/"""+/g, "")
+    .replace(/'''+/g, "")
+    .replace(/\*{3,}/g, "");
+  const lines = cleanedText.split(/\r?\n/);
   const out: React.ReactNode[] = [];
   let i = 0;
 

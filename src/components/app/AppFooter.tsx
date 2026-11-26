@@ -15,18 +15,18 @@ export function AppFooter() {
 
   const footerClass =
     effectiveUiExperience === "editorial_atelier"
-      ? "mt-auto border-t border-border bg-surface/60 pt-12 pb-16 px-4 md:px-8 text-xs text-muted-foreground"
+      ? "mt-auto border-t border-border bg-surface/60 pt-12 pb-24 md:pb-14 px-4 md:px-8 text-xs text-muted-foreground"
       : effectiveUiExperience === "command_os"
         ? "mt-auto border-t border-border/80 bg-surface/40 backdrop-blur-md pt-10 pb-24 px-4 md:px-8 text-xs text-muted-foreground"
         : effectiveUiExperience === "focus_deck"
-          ? "mt-auto border-t border-border/60 bg-surface/40 pt-10 pb-16 px-4 md:px-8 text-xs text-muted-foreground"
-          : "mt-auto border-t border-border/80 bg-surface/55 backdrop-blur-md pt-12 pb-16 px-4 md:px-8 text-xs text-muted-foreground";
+          ? "mt-auto border-t border-border/60 bg-surface/40 pt-10 pb-24 md:pb-14 px-4 md:px-8 text-xs text-muted-foreground"
+          : "mt-auto border-t border-border/80 bg-surface/55 backdrop-blur-md pt-12 pb-24 md:pb-14 px-4 md:px-8 text-xs text-muted-foreground";
 
   return (
     <footer className={footerClass}>
-      <div className="mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-5 gap-8">
+      <div className="mx-auto max-w-7xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8">
         {/* Brand & Mission */}
-        <div className="col-span-2 space-y-3">
+        <div className="sm:col-span-2 space-y-3">
           <Logo />
           <p className="text-xs leading-relaxed max-w-sm text-muted-foreground/90">
             {isAr ? brand.missionAr : brand.mission}
@@ -67,8 +67,8 @@ export function AppFooter() {
               </Link>
             </li>
             <li>
-              <Link to="/app/circle" className="hover:text-primary transition-colors">
-                {t("nav.circle")}
+              <Link to="/app/english" className="hover:text-primary transition-colors">
+                {t("nav.english")}
               </Link>
             </li>
           </ul>
@@ -153,7 +153,7 @@ export function AppFooter() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl mt-10 pt-6 border-t border-border/80 flex flex-col sm:flex-row flex-wrap items-center justify-between gap-4 text-[11px] text-muted-foreground">
+      <div className="mx-auto max-w-7xl mt-10 pt-6 border-t border-border/80 flex flex-col sm:flex-row flex-wrap items-center justify-between gap-4 text-[11px] text-muted-foreground">
         <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2.5 text-center sm:text-start">
           <span>{isAr ? brand.copyrightAr : brand.copyright}</span>
           <span className="hidden sm:inline text-border" aria-hidden="true">

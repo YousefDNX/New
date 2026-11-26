@@ -15,7 +15,6 @@ import {
   Settings,
   Shield,
   Sparkles,
-  Users,
   type LucideIcon,
 } from "lucide-react";
 import type { DictKey } from "@/lib/i18n-dict";

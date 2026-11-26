@@ -33,6 +33,7 @@ import { translate, useOptionalPrefs } from "@/lib/preferences";
 import { BRAND } from "@/config/brand";
 import { registerServiceWorker } from "@/lib/pwa";
 import { initFirebaseAnalytics } from "@/lib/analytics";
+import { installGlobalClickSound } from "@/lib/sound-effects";
 
 function NotFoundComponent() {
   const docLang = useOptionalPrefs()?.lang ?? "en";
@@ -170,6 +171,7 @@ function RootComponent() {
   useEffect(() => {
     registerServiceWorker();
     void initFirebaseAnalytics();
+    return installGlobalClickSound();
   }, []);
 
   useEffect(() => {

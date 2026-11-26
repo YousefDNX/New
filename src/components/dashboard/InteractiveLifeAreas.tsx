@@ -38,7 +38,7 @@ const AREA_MODULE_LINKS: Record<Area, string> = {
   growth: "/app/level-up",
   wellbeing: "/app/quran",
   career: "/app/level-up",
-  community: "/app/circle",
+  community: "/app/study",
 };
 
 export function InteractiveLifeAreas({

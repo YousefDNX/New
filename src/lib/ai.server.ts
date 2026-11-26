@@ -652,6 +652,7 @@ function buildSystemInstruction(req: AiChatServerRequest): string {
     roleInstruction,
     `LANGUAGE & DIALECT MATCHING: Always respond naturally in the exact language and regional dialect of the user's latest message across every turn (for example, if they write in Egyptian Arabic / عامية مصرية, respond warmly in natural Egyptian Arabic; if Gulf/Khaleeji Arabic, respond in Gulf Arabic; if Levantine/Shami, respond in Levantine; if Modern Standard Arabic / فصحى, respond in clean Modern Standard Arabic; if English, Spanish, French, etc., match that language naturally). Keep code snippets, formulas, and English terms accurate when replying bilingually. Fall back to language preference "${p.responseLanguage || "en"}" only if the user's message language is ambiguous.`,
     "Respond directly and authentically to casual greetings, general topics, writing/drafting, programming, and academic questions alike without refusing non-academic or casual prompts.",
+    'STYLE & CLEANLINESS RULE: Write warmly, naturally, and respectfully. NEVER wrap words, greetings, or sentences in decorative asterisks (***...***), triple quotes ("""..."""), or excessive quotation marks—for example, write "ماذا أفعل لك؟" cleanly instead of "***ماذا أفعل لك"""؟". Use simple standard Markdown only for headings, concise lists, or fenced code blocks.',
     "Format structured replies with clean Markdown (headings, concise lists, and fenced code blocks with language tags for code).",
     `Complexity level: ${p.complexity || "balanced"}.`,
     toneRule,
@@ -1179,6 +1180,28 @@ function buildGeminiChatHistory(
   return formatted;
 }
 
+/**
+ * Strips stray decorative triple-quote (""") or triple-asterisk (***) wrappers
+ * outside fenced code blocks so AI replies stay clean and readable.
+ */
+export function sanitizeAiDisplayText(raw: string): string {
+  if (!raw) return "";
+  const parts = raw.split(/(```[\s\S]*?```)/g);
+  return parts
+    .map((segment, index) => {
+      // Odd indices match captured fenced code blocks
+      if (index % 2 === 1) return segment;
+      return segment
+        .replace(/"""+/g, "")
+        .replace(/'''+/g, "")
+        .replace(/\*{3,}/g, "")
+        .replace(/^([ \t]*)["«»]+\s*/gm, "$1")
+        .replace(/\s*["«»]+(?=[؟?!.,،]*[ \t]*$)/gm, "");
+    })
+    .join("")
+    .trim();
+}
+
 export async function generateStudyAssistantReply(
   req: AiChatServerRequest,
   env?: unknown,
@@ -1304,7 +1327,7 @@ export async function generateStudyAssistantReply(
         );
 
     const grounding = extractGroundingMetadata(response.candidates?.[0]);
-    let replyText = (response.text ?? "").trim();
+    let replyText = sanitizeAiDisplayText(response.text ?? "");
 
     if (!replyText && proposedActions.length > 0) {
       replyText = proposedActions
@@ -1460,7 +1483,11 @@ export async function* streamStudyAssistantReply(
     stream: Awaited<ReturnType<typeof openStream>>,
   ): AsyncGenerator<AiStreamEvent> {
     for await (const chunk of stream) {
-      const text = chunk.text ?? "";
+      const rawChunk = chunk.text ?? "";
+      const text = rawChunk
+        .replace(/"""+/g, "")
+        .replace(/'''+/g, "")
+        .replace(/\*{3,}/g, "");
       if (text) {
         emittedAny = true;
         yield { type: "delta", text };
@@ -2281,13 +2308,18 @@ export async function synthesizeSpeechWithGemini(
           ? "Speak in a bright, engaging, conversational tone."
           : "";
 
+  const isGbAccent = accent.toLowerCase().includes("gb") || accent.toLowerCase().includes("uk");
+  const isUsAccent = accent.toLowerCase().includes("us");
+
   const baseStylePrompt = isMixed
     ? "Fluent bilingual educator switching naturally between crisp Modern Standard Arabic pronunciation and accurate native English pronunciation with zero cross-language accent distortion."
     : requestedLang === "ar"
       ? "Clear, natural Modern Standard Arabic (Fusha) pronunciation with native Arabic phonology, faithfully honoring every Arabic diacritic (tashkeel) and vowel ending."
-      : accent.toLowerCase().includes("gb")
-        ? "Clear, standard British English (RP) pronunciation with natural syllable stress and crisp articulation."
-        : "Clear, natural English pronunciation with accurate word stress, smooth diction, and authentic articulation for academic and everyday vocabulary.";
+      : isGbAccent
+        ? "Authentic Standard British English (Received Pronunciation / UK) with crisp non-rhotic articulation, clear British vowel shapes, well-paced syllable boundaries, and crystal-clear diction for words and paragraphs."
+        : isUsAccent
+          ? "Authentic General American English (United States) with natural rhotic /r/, American vowel quality, clear stress patterns, and crisp, distinct articulation for words and paragraphs."
+          : "Clear, natural English pronunciation with accurate word stress, clean syllable boundaries, and crisp articulation for academic words and paragraphs.";
 
   const stylePrompt = personaHint ? `${baseStylePrompt} ${personaHint}` : baseStylePrompt;
 

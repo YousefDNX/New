@@ -115,7 +115,52 @@ export const PRAYER_CALCULATION_METHODS: Record<
   },
 };
 
+export interface PrayerCountryGroup {
+  countryCode: string;
+  nameAr: string;
+  nameEn: string;
+  flag: string;
+  defaultCityId: string;
+  defaultMethod: PrayerCalculationMethodKey;
+}
+
+export const PRAYER_COUNTRIES: readonly PrayerCountryGroup[] = [
+  {
+    countryCode: "KW",
+    nameAr: "الكويت",
+    nameEn: "Kuwait",
+    flag: "🇰🇼",
+    defaultCityId: "kw_kuwait",
+    defaultMethod: "kuwait",
+  },
+  {
+    countryCode: "EG",
+    nameAr: "مصر",
+    nameEn: "Egypt",
+    flag: "🇪🇬",
+    defaultCityId: "eg_cairo",
+    defaultMethod: "egypt",
+  },
+  {
+    countryCode: "SA",
+    nameAr: "المملكة العربية السعودية",
+    nameEn: "Saudi Arabia",
+    flag: "🇸🇦",
+    defaultCityId: "sa_makkah",
+    defaultMethod: "makkah",
+  },
+  {
+    countryCode: "ALL",
+    nameAr: "سائر الدول والعواصم",
+    nameEn: "Other International Cities",
+    flag: "🌍",
+    defaultCityId: "kw_kuwait",
+    defaultMethod: "kuwait",
+  },
+] as const;
+
 export const VERIFIED_PRAYER_CITIES: PrayerTimeCity[] = [
+  // --- KUWAIT 🇰🇼 (وزارة الأوقاف والشؤون الإسلامية بدولة الكويت) ---
   {
     id: "kw_kuwait",
     nameEn: "Kuwait City",
@@ -128,6 +173,346 @@ export const VERIFIED_PRAYER_CITIES: PrayerTimeCity[] = [
     timezone: 3,
     defaultMethod: "kuwait",
   },
+  {
+    id: "kw_hawalli",
+    nameEn: "Hawalli",
+    nameAr: "حولي",
+    countryEn: "Kuwait",
+    countryAr: "الكويت",
+    countryCode: "KW",
+    latitude: 29.3328,
+    longitude: 48.0289,
+    timezone: 3,
+    defaultMethod: "kuwait",
+  },
+  {
+    id: "kw_ahmadi",
+    nameEn: "Al Ahmadi",
+    nameAr: "الأحمدي",
+    countryEn: "Kuwait",
+    countryAr: "الكويت",
+    countryCode: "KW",
+    latitude: 29.0769,
+    longitude: 48.0839,
+    timezone: 3,
+    defaultMethod: "kuwait",
+  },
+  {
+    id: "kw_farwaniya",
+    nameEn: "Al Farwaniyah",
+    nameAr: "الفروانية",
+    countryEn: "Kuwait",
+    countryAr: "الكويت",
+    countryCode: "KW",
+    latitude: 29.2778,
+    longitude: 47.9589,
+    timezone: 3,
+    defaultMethod: "kuwait",
+  },
+  {
+    id: "kw_jahra",
+    nameEn: "Al Jahra",
+    nameAr: "الجهراء",
+    countryEn: "Kuwait",
+    countryAr: "الكويت",
+    countryCode: "KW",
+    latitude: 29.3375,
+    longitude: 47.6581,
+    timezone: 3,
+    defaultMethod: "kuwait",
+  },
+  {
+    id: "kw_mubarak",
+    nameEn: "Mubarak Al-Kabeer",
+    nameAr: "مبارك الكبير",
+    countryEn: "Kuwait",
+    countryAr: "الكويت",
+    countryCode: "KW",
+    latitude: 29.2081,
+    longitude: 48.0772,
+    timezone: 3,
+    defaultMethod: "kuwait",
+  },
+
+  // --- EGYPT 🇪🇬 (الهيئة المصرية العامة للمساحة) ---
+  {
+    id: "eg_cairo",
+    nameEn: "Cairo",
+    nameAr: "القاهرة",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 30.0444,
+    longitude: 31.2357,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_giza",
+    nameEn: "Giza",
+    nameAr: "الجيزة",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 30.0131,
+    longitude: 31.2089,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_alexandria",
+    nameEn: "Alexandria",
+    nameAr: "الإسكندرية",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 31.2001,
+    longitude: 29.9187,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_mansoura",
+    nameEn: "Mansoura (Dakahlia)",
+    nameAr: "المنصورة (الدقهلية)",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 31.0409,
+    longitude: 31.3785,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_tanta",
+    nameEn: "Tanta (Gharbia)",
+    nameAr: "طنطا (الغربية)",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 30.7865,
+    longitude: 31.0004,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_portsaid",
+    nameEn: "Port Said",
+    nameAr: "بورسعيد",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 31.2653,
+    longitude: 32.3019,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_ismailia",
+    nameEn: "Ismailia",
+    nameAr: "الإسماعيلية",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 30.5965,
+    longitude: 32.2715,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_suez",
+    nameEn: "Suez",
+    nameAr: "السويس",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 29.9668,
+    longitude: 32.5498,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_aswan",
+    nameEn: "Aswan",
+    nameAr: "أسوان",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 24.0889,
+    longitude: 32.8998,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_luxor",
+    nameEn: "Luxor",
+    nameAr: "الأقصر",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 25.6872,
+    longitude: 32.6396,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_asyut",
+    nameEn: "Asyut",
+    nameAr: "أسيوط",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 27.1801,
+    longitude: 31.1837,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_sohag",
+    nameEn: "Sohag",
+    nameAr: "سوهاج",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 26.5569,
+    longitude: 31.6948,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_qena",
+    nameEn: "Qena",
+    nameAr: "قنا",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 26.1551,
+    longitude: 32.716,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_faiyum",
+    nameEn: "Faiyum",
+    nameAr: "الفيوم",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 29.3084,
+    longitude: 30.8428,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_zagazig",
+    nameEn: "Zagazig (Sharqia)",
+    nameAr: "الزقازيق (الشرقية)",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 30.5765,
+    longitude: 31.5041,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_shibin",
+    nameEn: "Shibin El Kom (Monufia)",
+    nameAr: "شبين الكوم (المنوفية)",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 30.5568,
+    longitude: 31.0089,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_banha",
+    nameEn: "Banha (Qalyubia)",
+    nameAr: "بنها (القليوبية)",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 30.466,
+    longitude: 31.1856,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_kafr_elsheikh",
+    nameEn: "Kafr El Sheikh",
+    nameAr: "كفر الشيخ",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 31.1107,
+    longitude: 30.9388,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_damanhur",
+    nameEn: "Damanhur (Beheira)",
+    nameAr: "دمنهور (البحيرة)",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 31.0425,
+    longitude: 30.4689,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_hurghada",
+    nameEn: "Hurghada (Red Sea)",
+    nameAr: "الغردقة (البحر الأحمر)",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 27.2579,
+    longitude: 33.8116,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_sharm",
+    nameEn: "Sharm El Sheikh (South Sinai)",
+    nameAr: "شرم الشيخ (جنوب سيناء)",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 27.9158,
+    longitude: 34.3299,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_matruh",
+    nameEn: "Marsa Matruh",
+    nameAr: "مرسى مطروح",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 31.3543,
+    longitude: 27.2373,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+  {
+    id: "eg_arish",
+    nameEn: "Arish (North Sinai)",
+    nameAr: "العريش (شمال سيناء)",
+    countryEn: "Egypt",
+    countryAr: "مصر",
+    countryCode: "EG",
+    latitude: 31.1316,
+    longitude: 33.8034,
+    timezone: 2,
+    defaultMethod: "egypt",
+  },
+
+  // --- SAUDI ARABIA 🇸🇦 (جامعة أم القرى بمكة المكرمة) ---
   {
     id: "sa_makkah",
     nameEn: "Mecca",
@@ -165,29 +550,31 @@ export const VERIFIED_PRAYER_CITIES: PrayerTimeCity[] = [
     defaultMethod: "makkah",
   },
   {
-    id: "eg_cairo",
-    nameEn: "Cairo",
-    nameAr: "القاهرة",
-    countryEn: "Egypt",
-    countryAr: "مصر",
-    countryCode: "EG",
-    latitude: 30.0444,
-    longitude: 31.2357,
-    timezone: 2,
-    defaultMethod: "egypt",
+    id: "sa_jeddah",
+    nameEn: "Jeddah",
+    nameAr: "جدة",
+    countryEn: "Saudi Arabia",
+    countryAr: "المملكة العربية السعودية",
+    countryCode: "SA",
+    latitude: 21.5433,
+    longitude: 39.1728,
+    timezone: 3,
+    defaultMethod: "makkah",
   },
   {
-    id: "eg_alexandria",
-    nameEn: "Alexandria",
-    nameAr: "الإسكندرية",
-    countryEn: "Egypt",
-    countryAr: "مصر",
-    countryCode: "EG",
-    latitude: 31.2001,
-    longitude: 29.9187,
-    timezone: 2,
-    defaultMethod: "egypt",
+    id: "sa_dammam",
+    nameEn: "Dammam",
+    nameAr: "الدمام",
+    countryEn: "Saudi Arabia",
+    countryAr: "المملكة العربية السعودية",
+    countryCode: "SA",
+    latitude: 26.4207,
+    longitude: 50.0888,
+    timezone: 3,
+    defaultMethod: "makkah",
   },
+
+  // --- OTHER GULF & INTERNATIONAL CITIES 🌍 ---
   {
     id: "ae_dubai",
     nameEn: "Dubai",
@@ -376,6 +763,52 @@ function formatHoursToTimeString(decimalHours: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
+export function resolveEffectiveTimezone(city: PrayerTimeCity, date: Date = new Date()): number {
+  if (
+    city.countryCode === "KW" ||
+    city.countryCode === "SA" ||
+    city.countryCode === "QA" ||
+    city.countryCode === "BH"
+  ) {
+    return 3;
+  }
+  if (city.countryCode === "AE" || city.countryCode === "OM") {
+    return 4;
+  }
+  if (city.countryCode === "EG") {
+    try {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Africa/Cairo",
+        timeZoneName: "shortOffset",
+      }).formatToParts(date);
+      const tzPart = parts.find((p) => p.type === "timeZoneName")?.value;
+      const match = tzPart?.match(/GMT([+-]\d+)/);
+      if (match && match[1]) {
+        return parseInt(match[1], 10);
+      }
+    } catch {
+      // Fallback below
+    }
+    const m = date.getMonth(); // 0-indexed
+    // In Egypt, daylight saving time (UTC+3) typically runs from last Friday of April to last Thursday of October
+    if (m >= 4 && m <= 8) return 3;
+    if (m === 3) {
+      const lastDayOfApril = new Date(date.getFullYear(), 3, 30);
+      const dayOfWeek = lastDayOfApril.getDay();
+      const lastFriday = 30 - ((dayOfWeek + 2) % 7);
+      if (date.getDate() >= lastFriday) return 3;
+    }
+    if (m === 9) {
+      const lastDayOfOct = new Date(date.getFullYear(), 9, 31);
+      const dayOfWeek = lastDayOfOct.getDay();
+      const lastThursday = 31 - ((dayOfWeek + 3) % 7);
+      if (date.getDate() <= lastThursday) return 3;
+    }
+    return 2;
+  }
+  return city.timezone;
+}
+
 export function calculateDailyPrayerTimes(
   date: Date,
   city: PrayerTimeCity,
@@ -392,8 +825,10 @@ export function calculateDailyPrayerTimes(
   const jd = julianDay(year, month, day);
   const { declination, equationOfTime } = sunPosition(jd);
 
+  const effectiveTimezone = resolveEffectiveTimezone(city, date);
+
   // Solar noon (Dhuhr)
-  const dhuhrBase = 12 + city.timezone - city.longitude / 15.0 - equationOfTime;
+  const dhuhrBase = 12 + effectiveTimezone - city.longitude / 15.0 - equationOfTime;
 
   // Sunrise and Sunset (zenith 0.833° for atmospheric refraction)
   const sunRiseSetHa = computeHourAngle(0.833, city.latitude, declination) / 15.0;
@@ -437,21 +872,26 @@ export function calculateDailyPrayerTimes(
     { key: "isha", nameEn: "Isha", nameAr: "العشاء", dec: ishaDec },
   ];
 
-  // Determine next prayer relative to current local time
+  // Determine next prayer relative to city's current local time
   const now = new Date();
-  const currentHours = now.getHours() + now.getMinutes() / 60.0 + now.getSeconds() / 3600.0;
+  const utcHours = now.getUTCHours() + now.getUTCMinutes() / 60.0 + now.getUTCSeconds() / 3600.0;
+  const cityNowTz = resolveEffectiveTimezone(city, now);
+  const cityCurrentHours = fixHour(utcHours + cityNowTz);
 
-  let nextPrayerItem = timesMap.find((p) => p.dec > currentHours);
+  let nextPrayerItem = timesMap.find((p) => p.dec > cityCurrentHours);
   let nextRemainingMs = 0;
 
   if (nextPrayerItem) {
-    nextRemainingMs = Math.max(0, Math.round((nextPrayerItem.dec - currentHours) * 3600 * 1000));
+    nextRemainingMs = Math.max(
+      0,
+      Math.round((nextPrayerItem.dec - cityCurrentHours) * 3600 * 1000),
+    );
   } else {
     // Past Isha -> Next is Tomorrow's Fajr
     nextPrayerItem = timesMap[0]!;
     nextRemainingMs = Math.max(
       0,
-      Math.round((nextPrayerItem.dec + 24 - currentHours) * 3600 * 1000),
+      Math.round((nextPrayerItem.dec + 24 - cityCurrentHours) * 3600 * 1000),
     );
   }
 

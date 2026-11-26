@@ -286,7 +286,7 @@ export function ModernSelect({
           dir={dir}
           onKeyDown={handleListKeyDown}
           className={cn(
-            "w-auto min-w-[max(16rem,var(--radix-popover-trigger-width))] max-w-[min(28rem,calc(100vw-1.5rem))] overflow-hidden p-0",
+            "w-auto min-w-[max(20rem,var(--radix-popover-trigger-width))] max-w-[min(36rem,calc(100vw-1.5rem))] overflow-hidden p-0",
             contentClassName,
           )}
         >
@@ -332,7 +332,7 @@ export function ModernSelect({
                     : `${filteredOptions.length} of ${safeOptions.length} options`}
                 </span>
                 {selectedOption ? (
-                  <span className="truncate font-medium text-primary max-w-[12rem]">
+                  <span className="truncate font-medium text-primary max-w-[16rem]">
                     {selectedOption.label}
                   </span>
                 ) : null}

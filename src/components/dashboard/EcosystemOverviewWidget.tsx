@@ -47,10 +47,10 @@ export function EcosystemOverviewWidget() {
           </p>
         </div>
         <Link
-          to="/app/circle"
+          to="/app/skills"
           className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
         >
-          <span>{isAr ? "حلقة المعرفة والمجتمع" : "Knowledge Circle"}</span>
+          <span>{isAr ? "أكاديمية المهارات والمجتمع" : "Skills & Collaboration"}</span>
           <ArrowRight className="size-3.5 rtl-flip" />
         </Link>
       </div>
@@ -141,13 +141,13 @@ export function EcosystemOverviewWidget() {
         </Link>
 
         <Link
-          to="/app/circle"
+          to="/app/skills"
           className="group flex flex-col justify-between rounded-xl border border-border bg-surface-2 p-3.5 transition-colors hover:border-primary/50"
         >
           <div className="space-y-1">
             <div className="flex items-center justify-between text-emerald-400">
               <span className="font-semibold">
-                {isAr ? "الأنشطة والمجتمع" : "Community & Projects"}
+                {isAr ? "المهارات والمبادرات" : "Skills & Projects"}
               </span>
               <HeartHandshake className="size-4 shrink-0" />
             </div>
@@ -161,7 +161,7 @@ export function EcosystemOverviewWidget() {
             </p>
           </div>
           <span className="mt-2 inline-flex items-center gap-1 font-semibold text-emerald-400">
-            {isAr ? "استكشف حلقة المعرفة" : "Explore Knowledge Circle"}{" "}
+            {isAr ? "استكشف أكاديمية المهارات" : "Explore Skills Academy"}{" "}
             <ArrowRight className="size-3 rtl-flip transition-transform group-hover:translate-x-0.5" />
           </span>
         </Link>

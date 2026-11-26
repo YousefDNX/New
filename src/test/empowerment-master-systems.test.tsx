@@ -121,7 +121,6 @@ import {
 } from "@/lib/student-ecosystem";
 import { SkillAcademyWorkspace } from "@/components/study/SkillAcademyWorkspace";
 import { PracticalSkillsWorkspace } from "@/components/study/PracticalSkillsWorkspace";
-import { CircleWorkspace } from "@/components/modules/CircleWorkspace";
 
 describe("NEXORA Master Empowerment Expansion: Pure Engines, Privacy & UI Workspaces", () => {
   beforeEach(() => {
@@ -453,35 +452,5 @@ describe("NEXORA Master Empowerment Expansion: Pure Engines, Privacy & UI Worksp
 
     expect(screen.getByText(/Science Lab Notebook/)).toBeInTheDocument();
     expect(updateStudentEcosystem).toBeTypeOf("function");
-  });
-
-  it("blocks email PII and queues clean guides in CircleWorkspace Community Library (#48 & #50)", () => {
-    render(
-      <PreferencesProvider>
-        <CircleWorkspace />
-      </PreferencesProvider>,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /Notes & Knowledge Library/i }));
-    expect(screen.getByTestId("community-knowledge-library")).toBeInTheDocument();
-
-    const titleInput = screen.getByPlaceholderText(/Guide Title/i);
-    const summaryInput = screen.getByPlaceholderText(/Plain-language explanation/i);
-
-    fireEvent.change(titleInput, { target: { value: "Unsafe Contact Guide" } });
-    fireEvent.change(summaryInput, {
-      target: { value: "Message student@school.edu for notes" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /Submit for Moderation Review/i }));
-    expect(screen.queryByText("Unsafe Contact Guide")).not.toBeInTheDocument();
-
-    fireEvent.change(titleInput, { target: { value: "Active Recall 3-Pass Rule" } });
-    fireEvent.change(summaryInput, {
-      target: { value: "Close your notebook and write three key formulas from memory." },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /Submit for Moderation Review/i }));
-
-    expect(screen.getByText("Active Recall 3-Pass Rule")).toBeInTheDocument();
-    expect(screen.getByText("Pending Staff Review")).toBeInTheDocument();
   });
 });

@@ -66,6 +66,7 @@ export interface QuranAudioContextValue {
   audioError: QuranAudioErrorState | null;
   userState: DirectoryFavoriteAndHistoryState;
   mediaSessionSupported: boolean;
+  backgroundPlaybackActive: boolean;
   loadTrack: (params: {
     reciterId: string;
     surahId?: number;
@@ -198,13 +199,57 @@ export const QuranAudioProvider: React.FC<{
     }
     if (!audioRef.current) {
       const el = new Audio();
-      el.preload = "none";
+      el.preload = "auto";
       el.playbackRate = 1.0;
       el.volume = isMuted ? 0 : volume;
+      if (typeof el.setAttribute === "function") {
+        el.setAttribute("playsinline", "true");
+        el.setAttribute("webkit-playsinline", "true");
+        el.setAttribute("x-webkit-airplay", "allow");
+      }
+      el.id = "btc-persistent-quran-audio";
+      if (
+        typeof document !== "undefined" &&
+        document.body &&
+        typeof HTMLElement !== "undefined" &&
+        el instanceof HTMLElement &&
+        !document.getElementById("btc-persistent-quran-audio")
+      ) {
+        if (el.style) {
+          el.style.position = "fixed";
+          el.style.width = "0px";
+          el.style.height = "0px";
+          el.style.opacity = "0";
+          el.style.pointerEvents = "none";
+          el.style.bottom = "0";
+          el.style.left = "0";
+        }
+        try {
+          document.body.appendChild(el);
+        } catch {
+          // Non-fatal
+        }
+      }
       audioRef.current = el;
     }
     return audioRef.current;
   }, [isMuted, volume]);
+
+  // Keep background audio active when leaving tab or switching apps
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const handleVisibilityChange = () => {
+      if (isPlayingRef.current && audioRef.current) {
+        if (audioRef.current.paused && audioRef.current.readyState >= 2) {
+          audioRef.current.play().catch(() => {});
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   const recordTrackHistory = useCallback((t: ActiveQuranTrack, positionSeconds: number) => {
     const key = `${t.reciterId}:${t.recordingId}:${t.surahId}`;
@@ -666,6 +711,7 @@ export const QuranAudioProvider: React.FC<{
       audioError,
       userState,
       mediaSessionSupported,
+      backgroundPlaybackActive: true,
       loadTrack,
       playCustomAudio,
       selectRecordingId,

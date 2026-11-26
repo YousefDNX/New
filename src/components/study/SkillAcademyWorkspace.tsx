@@ -23,6 +23,7 @@ import { ADAPTIVE_LEARNING_PATHS } from "@/data/skill-academy";
 import { LITERACY_ACCESS_LESSONS } from "@/lib/empowerment-engines";
 import { computeLearningPathState } from "@/lib/skill-academy";
 import { speakEnglishText } from "@/lib/english-speech";
+import { playCorrectSound, playIncorrectSound } from "@/lib/sound-effects";
 import { useStudentEcosystem } from "@/lib/student-ecosystem";
 
 type SkillDirectoryCategory =
@@ -219,10 +220,12 @@ export function SkillAcademyWorkspace({
       };
     });
     if (passed) {
+      playCorrectSound();
       toast.success("Mastery check passed! Next unlocked stage ready.");
       setActiveCheckStepId(null);
       setStepCheckChoice(null);
     } else {
+      playIncorrectSound();
       toast.error(
         `Scored 40% (below ${minMasteryScore}% threshold). Review the summary and retry!`,
       );
@@ -325,7 +328,7 @@ export function SkillAcademyWorkspace({
                 </Button>
               ))}
             </div>
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-80 lg:w-96">
               <Search className="pointer-events-none absolute start-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={directoryQuery}

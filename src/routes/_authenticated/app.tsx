@@ -27,6 +27,7 @@ import { AppFooter } from "@/components/app/AppFooter";
 import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
 import { Logo } from "@/components/app/Logo";
 import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
+import { AccessibilityQuickDialog } from "@/components/common/AccessibilityQuickDialog";
 import { QuranMiniPlayer } from "@/components/islamic/QuranMiniPlayer";
 import { MobileNav } from "@/components/nav/MobileNav";
 import { Sidebar } from "@/components/nav/Sidebar";
@@ -196,6 +197,7 @@ function AppLayoutInner() {
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+            <AccessibilityQuickDialog />
             {a11y.readAloud && speechSupported && (
               <Button
                 type="button"
@@ -219,6 +221,7 @@ function AppLayoutInner() {
         <header className="sticky top-0 z-30 flex h-14 w-full max-w-full items-center justify-between gap-2 border-b border-border/80 bg-surface/95 px-3 backdrop-blur-md md:hidden">
           <Logo size="sm" showSubtitle={false} />
           <div className="flex shrink-0 items-center gap-1">
+            <AccessibilityQuickDialog />
             {a11y.readAloud && speechSupported && (
               <Button
                 type="button"
@@ -246,7 +249,7 @@ function AppLayoutInner() {
             data-testid="profile-sync-retry-banner"
             className="border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-xs text-foreground md:px-8"
           >
-            <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2">
+            <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <AlertCircle className="size-3.5 shrink-0 text-destructive" />
                 <span>{t("common.error.desc")}</span>
@@ -282,7 +285,7 @@ function AppLayoutInner() {
         <main
           id="main-content"
           tabIndex={-1}
-          className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-6 focus:outline-none md:px-8 md:pb-10 md:pt-8"
+          className="mx-auto w-full max-w-7xl flex-1 px-4 pb-28 pt-6 focus:outline-none md:px-8 md:pb-12 md:pt-8"
         >
           {isNestedRoute && routeSegmentLabel && (
             <nav

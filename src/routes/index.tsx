@@ -13,13 +13,15 @@ import {
   Languages,
   ShieldCheck,
   Sparkles,
-  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
+import { AccessibilityQuickDialog } from "@/components/common/AccessibilityQuickDialog";
 import { Logo } from "@/components/app/Logo";
 import { usePrefs } from "@/lib/preferences";
 import { AppFooter } from "@/components/app/AppFooter";
+import { DailyDuaWidget } from "@/components/dashboard/DailyDuaWidget";
+import { SadaqahJariyahWidget } from "@/components/dashboard/SadaqahJariyahWidget";
 import btcHeroShowcaseUrl from "@/assets/images/btc_flagship_hero_1794845536894.jpg";
 import { BRAND } from "@/config/brand";
 
@@ -85,12 +87,12 @@ const CORE_WORKSPACES = [
     arDesc: "استكشاف المهن، التخصصات، المسارات التعليمية، وخطط المستقبل.",
   },
   {
-    icon: Users,
-    to: "/app/circle" as const,
-    enTitle: "Knowledge Circle",
-    arTitle: "حلقة المعرفة",
-    enDesc: "Shared student community to ask questions, explain lessons, and save posts.",
-    arDesc: "مجتمع طلابي مشترك لطرح الأسئلة وتبادل الشروحات وحفظ المنشورات.",
+    icon: Sparkles,
+    to: "/app/ai" as const,
+    enTitle: "BTC AI Assistant",
+    arTitle: "مساعد BTC الذكي",
+    enDesc: "Socratic step-by-step tutor, audio transcription, and clear lesson explanations.",
+    arDesc: "معلم ذكي سقراطي خطوة بخطوة، تفريغ صوتي، وشرح مبسط وموثق للدروس.",
   },
   {
     icon: Globe,
@@ -152,6 +154,7 @@ function Landing() {
             </Link>
           </nav>
           <div className="flex items-center gap-2.5 shrink-0">
+            <AccessibilityQuickDialog />
             <LanguageSwitcher compact />
             <Button asChild size="sm" className="whitespace-nowrap shrink-0">
               <Link to="/app">
@@ -181,8 +184,8 @@ function Landing() {
 
               <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
                 {isAr
-                  ? "منصة BTC للطلاب: الدراسة، المهارات، التركيز، النمو الشخصي، المستقبل، حلقة المعرفة، الفرص، الإنجليزية، والقرآن الكريم — بدون تعقيد أو تسجيل حساب."
-                  : "BTC brings Study & Academics, Skills, Focus, Personal Growth, Careers, Knowledge Circle, Opportunities, English World, and Quran together — directly as a guest."}
+                  ? "منصة BTC للطلاب: الدراسة، المهارات، التركيز، النمو الشخصي، المستقبل، مساعد BTC الذكي، الفرص، الإنجليزية، والقرآن الكريم — بدون تعقيد أو تسجيل حساب."
+                  : "BTC brings Study & Academics, Skills, Focus, Personal Growth, Careers, AI Study Mentor, Opportunities, English World, and Quran together — directly as a guest."}
               </p>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -293,6 +296,37 @@ function Landing() {
                 </div>
               </Link>
             ))}
+          </div>
+        </section>
+
+        {/* Sadaqah Jariyah & Daily Supplication Featured Section */}
+        <section className="mx-auto max-w-6xl px-5 pb-20">
+          <div className="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                <Sparkles className="size-3.5" />
+                <span>
+                  {isAr ? "الصدقة الجارية والعمل الصالح" : "Ongoing Charity & Positive Impact"}
+                </span>
+              </div>
+              <h2 className="mt-1 font-display text-2xl font-bold tracking-tight text-foreground">
+                {isAr ? "أثر مبارك جارٍ لك ولأهلك" : "Continuous Benefit for You & Your Family"}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {isAr
+                  ? "سجّل أعمالك الصالحة، حدد أهداف الاستمرارية، وشارك النية الصادقة عنك وعن والديك وأهلك."
+                  : "Track good deeds, establish long-term consistency goals, and dedicate the sincere reward to your family."}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+            <div className="lg:col-span-6 flex flex-col">
+              <DailyDuaWidget lang={lang} className="h-full" />
+            </div>
+            <div className="lg:col-span-6 flex flex-col">
+              <SadaqahJariyahWidget lang={lang} className="h-full" />
+            </div>
           </div>
         </section>
       </main>

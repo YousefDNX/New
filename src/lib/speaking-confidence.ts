@@ -161,7 +161,7 @@ export interface SpeakingConfidenceTracker {
   pushPcmFrame: (samples: Float32Array, sampleRate?: number) => SpeakingConfidenceSnapshot;
   pushAnalyser: (
     analyser: AnalyserNode,
-    timeBuffer: Float32Array,
+    timeBuffer: Float32Array<ArrayBuffer>,
     sampleRate: number,
   ) => SpeakingConfidenceSnapshot;
   noteTranscriptWords: (wordCount: number) => SpeakingConfidenceSnapshot;

@@ -15,6 +15,7 @@ import { LEVEL_MASTERY_EXAMS, type LevelMasteryExam } from "@/data/english-curri
 import { PLACEMENT_ASSESSMENT_QUESTIONS } from "@/data/skill-academy";
 import { computeEnglishRecommendations, type EnglishWorldState } from "@/lib/english-world";
 import { isSpeechSynthesisAvailable, speakEnglishText } from "@/lib/english-speech";
+import { playCorrectSound, playIncorrectSound } from "@/lib/sound-effects";
 import { BRAND } from "@/config/brand";
 
 export function PlacementAndAssessmentsView({
@@ -498,6 +499,8 @@ export function PlacementAndAssessmentsView({
                 variant="glow"
                 onClick={() => {
                   setExamSubmitted(true);
+                  if (examPassed) playCorrectSound();
+                  else playIncorrectSound();
                   onSubmitLevelExam(activeExam, examScorePct, examPassed);
                 }}
                 className="min-h-[44px]"

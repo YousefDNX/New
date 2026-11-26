@@ -6,13 +6,13 @@ import {
   BookOpenCheck,
   CheckCircle2,
   CheckSquare,
+  Compass,
   Flame,
   Languages,
   LifeBuoy,
   Map as MapIcon,
   Sparkles,
   Trophy,
-  Users,
 } from "lucide-react";
 import { usePrefs } from "@/lib/preferences";
 import { useProfile, useStats, useTasks, useUser } from "@/hooks/use-nexora";
@@ -20,6 +20,7 @@ import { GrowthMapExperience } from "@/components/growth/GrowthMapExperience";
 import { GlossyBadgesDisplay, type StudentBadge } from "@/components/growth/GlossyBadgesDisplay";
 import { TasksWidget } from "@/components/dashboard/TasksWidget";
 import { DailyDuaWidget } from "@/components/dashboard/DailyDuaWidget";
+import { SadaqahJariyahWidget } from "@/components/dashboard/SadaqahJariyahWidget";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { Button } from "@/components/ui/button";
 import { BRAND } from "@/config/brand";
@@ -91,13 +92,13 @@ export function AlternativeHomeDashboard() {
     },
     {
       index: "05",
-      to: "/app/circle" as const,
-      icon: Users,
-      title: isAr ? "حلقة المعرفة" : "Knowledge Circle",
-      meta: isAr ? "أسئلة وإجابات · فرق دراسة" : "Peer Q&A · Study cohorts",
+      to: "/app/skills" as const,
+      icon: Compass,
+      title: isAr ? "أكاديمية المهارات" : "Skills Academy",
+      meta: isAr ? "٨ مهارات أساسية · تطبيقات" : "8 Core Skills · Practical Drills",
       desc: isAr
-        ? "اطرح الأسئلة العلمية وتعاون مع أقرانك في بيئة آمنة خالية من التنمر."
-        : "Collaborate across 10 subject tracks inside a zero-bullying academic community.",
+        ? "طوّر مهارات التواصل، التفكير الناقد، حل المشكلات، والسلامة الرقمية."
+        : "Master communication, critical thinking, digital literacy, and real-world problem solving.",
     },
     {
       index: "06",
@@ -159,28 +160,30 @@ export function AlternativeHomeDashboard() {
   ];
 
   return (
-    <div data-testid="btc-alternative-home" className="space-y-10 pb-10">
+    <div data-testid="btc-alternative-home" className="space-y-10 pb-12">
       {/* Editorial Asymmetric Hero Masthead */}
       <section className="border-b border-border/80 pb-8">
-        <div className="grid gap-8 lg:grid-cols-12 lg:items-end">
-          <div className="space-y-4 lg:col-span-8">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
-              <span className="font-semibold text-primary">
-                {isAr ? BRAND.competitionBadgeAr : BRAND.competitionBadge}
-              </span>
-              <span aria-hidden="true">·</span>
-              <span>{isAr ? "استوديو الطالب المتكامل" : "Atelier Indigo Student Workspace"}</span>
+        <div className="grid gap-8 lg:grid-cols-12 lg:items-stretch">
+          <div className="flex flex-col justify-between space-y-4 lg:col-span-8">
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+                <span className="font-semibold text-primary">
+                  {isAr ? BRAND.competitionBadgeAr : BRAND.competitionBadge}
+                </span>
+                <span aria-hidden="true">·</span>
+                <span>{isAr ? "استوديو الطالب المتكامل" : "Atelier Indigo Student Workspace"}</span>
+              </div>
+
+              <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-[2.65rem] lg:leading-[1.12] [text-wrap:balance]">
+                {isAr ? `أهلاً بعودتك، ${name}` : `Study with clarity, ${name}.`}
+              </h1>
+
+              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                {isAr
+                  ? "ركز على وحدة اليوم الدراسية، راجع تقدمك الأسبوعي، وانتقل بسلاسة بين مساحات الدراسة والذكاء الاصطناعي والقرآن وأكاديمية المهارات."
+                  : "Follow your current academic milestone, review live XP velocity, and move cleanly between study drills, AI mentorship, Quran sanctuary, and core skills."}
+              </p>
             </div>
-
-            <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-[2.65rem] lg:leading-[1.12] [text-wrap:balance]">
-              {isAr ? `أهلاً بعودتك، ${name}` : `Study with clarity, ${name}.`}
-            </h1>
-
-            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              {isAr
-                ? "ركز على وحدة اليوم الدراسية، راجع تقدمك الأسبوعي، وانتقل بسلاسة بين مساحات الدراسة والذكاء الاصطناعي والقرآن وحلقة المعرفة."
-                : "Follow your current academic milestone, review live XP velocity, and move cleanly between study drills, AI mentorship, and peer circles."}
-            </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Button
@@ -195,9 +198,9 @@ export function AlternativeHomeDashboard() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="min-h-[46px] gap-2 px-5">
-                <Link to="/app/circle">
-                  <Users className="size-4 text-primary" />
-                  <span>{isAr ? "حلقة المعرفة" : "Knowledge Circle"}</span>
+                <Link to="/app/ai">
+                  <Sparkles className="size-4 text-primary" />
+                  <span>{isAr ? "مساعد BTC الذكي" : "Ask BTC AI"}</span>
                 </Link>
               </Button>
               <FeatureGuideTrigger featureId="dashboard-overview" />
@@ -205,33 +208,35 @@ export function AlternativeHomeDashboard() {
           </div>
 
           {/* Right Mastery Progress Readout */}
-          <div className="rounded-2xl border border-border bg-surface p-5 lg:col-span-4">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span className="font-semibold uppercase tracking-wider text-primary">
-                {isAr ? "تقدم المستوى" : "Mastery Trajectory"}
-              </span>
-              <span className="font-mono tabular-nums">{formatNumber(progressPct, lang)}%</span>
-            </div>
-            <div className="mt-3 flex items-baseline justify-between">
-              <div className="flex items-baseline gap-2">
-                <span className="font-display text-3xl font-bold text-foreground tabular-nums">
-                  {isAr
-                    ? `المستوى ${formatNumber(level, lang)}`
-                    : `Level ${formatNumber(level, lang)}`}
+          <div className="flex flex-col justify-between rounded-2xl border border-border bg-surface p-5 lg:col-span-4">
+            <div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="font-semibold text-primary">
+                  {isAr ? "تقدم المستوى" : "Mastery Trajectory"}
+                </span>
+                <span className="font-mono tabular-nums">{formatNumber(progressPct, lang)}%</span>
+              </div>
+              <div className="mt-3 flex items-baseline justify-between">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-display text-3xl font-bold text-foreground tabular-nums">
+                    {isAr
+                      ? `المستوى ${formatNumber(level, lang)}`
+                      : `Level ${formatNumber(level, lang)}`}
+                  </span>
+                </div>
+                <span className="font-mono text-xs font-semibold text-xp tabular-nums">
+                  {formatNumber(xp, lang)} / {formatNumber(nextLevelXp, lang)} XP
                 </span>
               </div>
-              <span className="font-mono text-xs font-semibold text-xp tabular-nums">
-                {formatNumber(xp, lang)} / {formatNumber(nextLevelXp, lang)} XP
-              </span>
-            </div>
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-surface-2">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${Math.max(5, progressPct)}%`,
-                  background: "var(--gradient-xp)",
-                }}
-              />
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-surface-2">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.max(5, progressPct)}%`,
+                    background: "var(--gradient-xp)",
+                  }}
+                />
+              </div>
             </div>
             <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
@@ -296,16 +301,24 @@ export function AlternativeHomeDashboard() {
         </div>
       </section>
 
-      {/* Daily Dua & Adhkar Rotating Widget */}
-      <section aria-label={isAr ? "الدعاء والذكر اليومي" : "Daily Dua & Adhkar"}>
-        <DailyDuaWidget lang={lang} />
+      {/* Paired Reflection Row: Daily Dua & Sadaqah Jariyah */}
+      <section
+        aria-label={isAr ? "الدعاء والصدقة الجارية" : "Daily Dua & Sadaqah Jariyah"}
+        className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch"
+      >
+        <div className="lg:col-span-6">
+          <DailyDuaWidget lang={lang} className="h-full" />
+        </div>
+        <div className="lg:col-span-6">
+          <SadaqahJariyahWidget lang={lang} className="h-full" />
+        </div>
       </section>
 
       {/* Curated Workspace Atlas Grid */}
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+            <p className="text-[11px] font-semibold text-primary">
               {isAr ? "مساحات التعلم" : "Academic Atlas"}
             </p>
             <h2 className="font-display text-xl font-bold text-foreground">
@@ -321,7 +334,7 @@ export function AlternativeHomeDashboard() {
           </Link>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-stretch">
           {atlasModules.map((mod) => {
             const Icon = mod.icon;
             return (
@@ -329,7 +342,7 @@ export function AlternativeHomeDashboard() {
                 key={mod.to}
                 to={mod.to}
                 {...(mod.search ? { search: mod.search as never } : {})}
-                className="group flex flex-col justify-between rounded-2xl border border-border/80 bg-surface p-5 transition-all hover:border-primary/60 hover:bg-surface-2/60"
+                className="group flex h-full flex-col justify-between rounded-2xl border border-border/80 bg-surface p-5 transition-all hover:border-primary/60 hover:bg-surface-2/60"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2">
@@ -355,47 +368,49 @@ export function AlternativeHomeDashboard() {
       </section>
 
       {/* Split Lower Deck: Active Tasks + Interactive Growth Map */}
-      <section className="grid gap-6 lg:grid-cols-12">
-        <div className="space-y-4 lg:col-span-5">
-          <div className="rounded-2xl border border-border bg-surface p-5">
+      <section className="grid gap-6 lg:grid-cols-12 items-stretch">
+        <div className="lg:col-span-5">
+          <div className="h-full rounded-2xl border border-border bg-surface p-5">
             <TasksWidget />
           </div>
         </div>
 
-        <div className="space-y-4 lg:col-span-7">
-          <div className="rounded-2xl border border-border bg-surface p-5 space-y-5">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
-              <div>
-                <h2 className="font-display text-base font-bold text-foreground">
-                  {isAr ? "الأوسمة ومعالم الإنجاز" : "Milestone Badges & Growth"}
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  {isAr
-                    ? "توثيق تقدمك الفعلي عبر الدراسة والاستمرارية"
-                    : "Earned recognition across lessons, streaks, and focus blocks"}
-                </p>
+        <div className="lg:col-span-7">
+          <div className="flex h-full flex-col justify-between rounded-2xl border border-border bg-surface p-5 space-y-5">
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
+                <div>
+                  <h2 className="font-display text-base font-bold text-foreground">
+                    {isAr ? "الأوسمة ومعالم الإنجاز" : "Milestone Badges & Growth"}
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    {isAr
+                      ? "توثيق تقدمك الفعلي عبر الدراسة والاستمرارية"
+                      : "Earned recognition across lessons, streaks, and focus blocks"}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMapExpanded((v) => !v)}
+                  className="gap-1.5 text-xs"
+                >
+                  <MapIcon className="size-3.5 text-primary" />
+                  <span>
+                    {mapExpanded
+                      ? isAr
+                        ? "إخفاء الخريطة"
+                        : "Hide Detailed Map"
+                      : isAr
+                        ? "استعراض الخريطة الكاملة"
+                        : "Expand Full Map"}
+                  </span>
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setMapExpanded((v) => !v)}
-                className="gap-1.5 text-xs"
-              >
-                <MapIcon className="size-3.5 text-primary" />
-                <span>
-                  {mapExpanded
-                    ? isAr
-                      ? "إخفاء الخريطة"
-                      : "Hide Detailed Map"
-                    : isAr
-                      ? "استعراض الخريطة الكاملة"
-                      : "Expand Full Map"}
-                </span>
-              </Button>
-            </div>
 
-            <GlossyBadgesDisplay badges={badges} />
+              <GlossyBadgesDisplay badges={badges} />
+            </div>
 
             {mapExpanded && (
               <div className="border-t border-border/60 pt-4">

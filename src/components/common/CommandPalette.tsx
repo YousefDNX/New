@@ -196,11 +196,11 @@ export function CommandPalette() {
               <span>{t("nav.quran")}</span>
             </CommandItem>
             <CommandItem
-              onSelect={() => handleNavigate("/app/circle")}
+              onSelect={() => handleNavigate("/app/english")}
               className="flex items-center gap-2 cursor-pointer"
             >
               <Users className="size-4 text-amber-400" />
-              <span>{isArabic ? "حلقة المعرفة" : "Knowledge Circle"}</span>
+              <span>{t("nav.english")}</span>
             </CommandItem>
             <CommandItem
               onSelect={() => handleNavigate("/app/level-up")}
@@ -237,12 +237,12 @@ export function CommandPalette() {
               </span>
             </CommandItem>
             <CommandItem
-              onSelect={() => handleNavigate("/app/circle", { tab: "mun" })}
+              onSelect={() => handleNavigate("/app/study", { tab: "research" })}
               className="flex items-center gap-2 cursor-pointer"
             >
               <Compass className="size-4 text-purple-400" />
               <span>
-                {isArabic ? "محاكي نموذج الأمم المتحدة (#37)" : "Model United Nations (MUN #37)"}
+                {isArabic ? "مختبر البحث ومشاريع الطلاب (#37)" : "Research & MUN Diplomacy (#37)"}
               </span>
             </CommandItem>
             <CommandItem

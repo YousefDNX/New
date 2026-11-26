@@ -19,6 +19,8 @@ import { RecentActivityWidget } from "./RecentActivityWidget";
 import { ModuleHub } from "./ModuleHub";
 import { UnifiedSearchPanel } from "./UnifiedSearchPanel";
 import { DashboardCustomizerBar } from "./DashboardCustomizerBar";
+import { DailyDuaWidget } from "./DailyDuaWidget";
+import { SadaqahJariyahWidget } from "./SadaqahJariyahWidget";
 import { useExperienceMode } from "@/lib/experience-mode";
 import { usePrefs } from "@/lib/preferences";
 import type { Area } from "@/lib/growth";
@@ -90,7 +92,7 @@ export function DashboardUxView({
         )}
 
         {/* Two-Column Study Briefing */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
           <div className="space-y-6 lg:col-span-7">
             <div className="border-b border-border pb-2 text-xs font-semibold text-muted-foreground">
               {isAr ? "02 · أولويات اليوم والأهداف" : "02 · Today's Tasks & Goals"}
@@ -118,10 +120,27 @@ export function DashboardUxView({
           </div>
         </div>
 
+        {/* Paired Charity & Reflection Column */}
+        <section className="space-y-3 border-t border-border pt-6">
+          <div className="text-xs font-semibold text-muted-foreground">
+            {isAr
+              ? "04 · الصدقة الجارية والأذكار اليومية"
+              : "04 · Sadaqah Jariyah & Daily Reflection"}
+          </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+            <div className="lg:col-span-6">
+              <DailyDuaWidget lang={lang} className="h-full" />
+            </div>
+            <div className="lg:col-span-6">
+              <SadaqahJariyahWidget lang={lang} className="h-full" />
+            </div>
+          </div>
+        </section>
+
         {show("hub") && (
           <section className="space-y-4 border-t border-border pt-6">
             <div className="text-xs font-semibold text-muted-foreground">
-              {isAr ? "04 · دليل الاستوديوهات الكامل" : "04 · Full Studio Directory"}
+              {isAr ? "05 · دليل الاستوديوهات الكامل" : "05 · Full Studio Directory"}
             </div>
             <ModuleHub />
           </section>
@@ -135,7 +154,7 @@ export function DashboardUxView({
    * ========================================================================== */
   if (experience === "command_os") {
     return (
-      <div data-testid="dashboard-ux-command_os" className="space-y-4">
+      <div data-testid="dashboard-ux-command_os" className="space-y-5">
         {/* OS Command Action Bar */}
         <div className="surface-card flex flex-col gap-3 p-3.5 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0 flex-1">
@@ -145,7 +164,7 @@ export function DashboardUxView({
             <button
               type="button"
               onClick={() => window.dispatchEvent(new CustomEvent("nexora:open-command-palette"))}
-              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
+              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/20 whitespace-nowrap shrink-0"
             >
               <span>{isAr ? "لوحة الأوامر" : "Command Palette"}</span>
               <kbd className="rounded border border-primary/30 bg-surface px-1 font-mono text-[10px]">
@@ -154,14 +173,14 @@ export function DashboardUxView({
             </button>
             <Link
               to="/app/ai"
-              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-3 text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary"
+              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-3 text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary whitespace-nowrap shrink-0"
             >
               <Sparkles className="size-3.5 text-primary" />
               <span>{t("dash.qa.ai")}</span>
             </Link>
             <Link
               to="/app/study"
-              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-3 text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary"
+              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-3 text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary whitespace-nowrap shrink-0"
             >
               <BookOpen className="size-3.5 text-primary" />
               <span>{t("dash.qa.study")}</span>
@@ -173,7 +192,7 @@ export function DashboardUxView({
         {/* True Bento-Box Workspace Grid */}
         <div
           data-testid="command-bento-grid"
-          className="grid grid-cols-1 gap-4 md:grid-cols-12 auto-rows-min"
+          className="grid grid-cols-1 gap-5 md:grid-cols-12 items-stretch"
         >
           {show("welcome") && (
             <div className="md:col-span-7">
@@ -182,7 +201,7 @@ export function DashboardUxView({
           )}
           {show("pomodoro") && (
             <div className="md:col-span-5">
-              <PomodoroTimerWidget />
+              <PomodoroTimerWidget className="h-full" />
             </div>
           )}
 
@@ -205,6 +224,13 @@ export function DashboardUxView({
             {show("goals") && <ThisWeekGoalsCard />}
           </div>
 
+          <div className="md:col-span-6">
+            <DailyDuaWidget lang={lang} className="h-full" />
+          </div>
+          <div className="md:col-span-6">
+            <SadaqahJariyahWidget lang={lang} className="h-full" />
+          </div>
+
           {show("areas") && (
             <div className="md:col-span-6 md:max-h-[420px] md:overflow-y-auto">
               <InteractiveLifeAreas selectedArea={selectedArea} onSelectArea={onSelectArea} />
@@ -220,7 +246,7 @@ export function DashboardUxView({
 
         {show("hub") && (
           <section className="space-y-3 pt-1">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
               <Layers className="size-3.5 text-primary" />
               <span>{isAr ? "تطبيقات المنصة المثبتة" : "Installed Workspace Apps"}</span>
             </div>
@@ -315,11 +341,19 @@ export function DashboardUxView({
             <TasksWidget filterArea={selectedArea} onClearArea={() => onSelectArea(null)} />
           )}
           {show("goals") && (
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 items-stretch">
               <DailyGoalsWidget />
               <ThisWeekGoalsCard />
             </div>
           )}
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+          <div className="lg:col-span-6">
+            <DailyDuaWidget lang={lang} className="h-full" />
+          </div>
+          <div className="lg:col-span-6">
+            <SadaqahJariyahWidget lang={lang} className="h-full" />
+          </div>
         </div>
         {show("areas") && (
           <InteractiveLifeAreas selectedArea={selectedArea} onSelectArea={onSelectArea} />

@@ -52,7 +52,7 @@ export function AlternativeEnglishWorld({
         </div>
       </header>
 
-      <div className="rounded-2xl border border-border/80 bg-surface/65 p-3 sm:p-5">
+      <div className="rounded-2xl border border-border/80 bg-surface/65 p-5 sm:p-6">
         <EnglishAdventureWorld onNavigateStudyTab={onNavigateStudyTab} />
       </div>
     </div>

@@ -64,7 +64,7 @@ export function EditorialMasthead({
       data-testid="editorial-masthead"
       className="sticky top-0 z-30 hidden border-b border-border bg-background/95 backdrop-blur-sm md:block"
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-8 py-3">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-8 py-3">
         <div className="flex items-center gap-5 min-w-0">
           <Logo />
           <div className="hidden h-5 w-px bg-border lg:block" aria-hidden="true" />
@@ -95,7 +95,7 @@ export function EditorialMasthead({
                     <ChevronDown className="size-3 opacity-60" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent align="start" className="w-60 p-2">
+                <PopoverContent align="start" className="w-80 p-2.5">
                   <div className="mb-1 border-b border-border/70 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     {t(group.label)}
                   </div>
@@ -185,7 +185,7 @@ export function EditorialMasthead({
 
       {/* Subtle Editorial Sub-Strip */}
       <div className="border-t border-border/60 bg-surface-2/40">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-8 py-1.5 text-[11px] text-muted-foreground">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-8 py-1.5 text-[11px] text-muted-foreground">
           <span>
             {isAr ? "طبعة الدراسة والتحرير" : "Editorial Study Edition"}
             {routeLabel ? ` · ${routeLabel}` : ""}
@@ -218,7 +218,7 @@ export function CommandOsSidebar({ allModulesTrigger }: { allModulesTrigger?: Re
       data-collapsed={sidebarCollapsed ? "true" : "false"}
       className={cn(
         "hidden shrink-0 flex-col border-e border-border/80 bg-surface/95 backdrop-blur-md transition-[width] duration-200 md:flex md:h-dvh",
-        sidebarCollapsed ? "w-16" : "w-60",
+        sidebarCollapsed ? "w-16" : "w-72",
       )}
     >
       <div className="flex h-12 items-center justify-between border-b border-border/70 px-3">
@@ -636,7 +636,7 @@ export function FocusDeckCornerRail() {
 }
 
 const SPATIAL_DOCK_IDS = ["home", "ai", "study", "english", "tasks", "quran", "settings"];
-const RADIAL_QUICK_IDS = ["ai", "study", "tasks", "levelup", "quran", "circle"];
+const RADIAL_QUICK_IDS = ["ai", "study", "tasks", "levelup", "quran", "english"];
 
 export function SpatialFloatingDock({ allModulesTrigger }: { allModulesTrigger?: ReactNode }) {
   const { t, lang } = usePrefs();

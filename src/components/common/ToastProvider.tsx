@@ -50,6 +50,16 @@ const TOAST_STRINGS: Record<
     streakDays: (d) => `${d} أيام متتالية`,
     achievementUnlocked: "إنجاز جديد!",
   },
+  es: {
+    goalCompleted: "¡Meta completada!",
+    congratsHeading: "¡Felicidades!",
+    milestoneSub: "Nuevo hito desbloqueado en tu Mapa de Crecimiento",
+    taskSaved: "Tarea guardada",
+    settingsUpdated: "Ajustes actualizados",
+    streakActive: "¡Racha activa!",
+    streakDays: (d) => `Racha de ${d} días`,
+    achievementUnlocked: "¡Logro desbloqueado!",
+  },
   ja: {
     goalCompleted: "目標達成！",
     congratsHeading: "おめでとうございます！",

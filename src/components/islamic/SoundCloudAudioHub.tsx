@@ -151,6 +151,7 @@ export const SoundCloudAudioHub: React.FC<SoundCloudAudioHubProps> = ({ isAr }) 
   };
 
   const handlePlayTrackItem = (item: QuranMediaTrackItem) => {
+    const audioFormat: "mp3" | "m4a" = item.kind === "m4a" ? "m4a" : "mp3";
     audioCtx.playCustomAudio(
       {
         id: item.id,
@@ -158,7 +159,7 @@ export const SoundCloudAudioHub: React.FC<SoundCloudAudioHubProps> = ({ isAr }) 
         titleEn: item.titleEn,
         reciterNameAr: item.reciterAr,
         reciterNameEn: item.reciterEn,
-        format: item.kind,
+        format: audioFormat,
         audioUrl: item.url,
         ...(item.surahId !== undefined ? { surahId: item.surahId } : {}),
         sourceLabel: item.sourceLabel,

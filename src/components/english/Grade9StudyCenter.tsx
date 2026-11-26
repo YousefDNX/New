@@ -779,7 +779,7 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
             ))}
           </div>
 
-          <div className="relative w-full sm:w-64">
+          <div className="relative w-full sm:w-80 lg:w-96">
             <Search className="pointer-events-none absolute start-2.5 top-2.5 size-3.5 text-muted-foreground" />
             <Input
               value={vocabSearch}

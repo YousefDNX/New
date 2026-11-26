@@ -1,12 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import {
-  NAV_ADMIN,
-  NAV_PRIMARY_ITEMS,
-  NAV_SECONDARY_ITEMS,
-  NAV_UTILITIES,
-} from "@/config/navigation";
+import { NAV_ADMIN, NAV_FOOTER, NAV_PRIMARY_ITEMS, NAV_UTILITIES } from "@/config/navigation";
 import { NavItemLink } from "./NavItemLink";
 import { Logo } from "@/components/app/Logo";
 import { UserMenu } from "./UserMenu";
@@ -64,7 +59,7 @@ export function Sidebar() {
       </nav>
 
       <div className="space-y-1 border-t border-border/80 p-2.5">
-        {NAV_SECONDARY_ITEMS.map((item) => (
+        {[...NAV_UTILITIES, ...NAV_FOOTER].map((item) => (
           <NavItemLink key={item.id} item={item} collapsed={collapsed} />
         ))}
         {rbac.isStaff && (

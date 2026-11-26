@@ -142,9 +142,7 @@ function GuestOnboardingPage() {
         handleFirestoreError(err, OperationType.UPDATE, `profiles/${user.uid}`);
       }
 
-      await saveProfile({ display_name: cleanedName, language: lang, onboarded: true }).catch(
-        () => undefined,
-      );
+      await saveProfile({ display_name: cleanedName, language: lang }).catch(() => undefined);
       await saveSettings({
         font_scale: a11y.fontScale,
         dyslexia_font: a11y.dyslexia,
