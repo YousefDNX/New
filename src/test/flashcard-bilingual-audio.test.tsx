@@ -225,7 +225,7 @@ describe("Vocabulary Flashcards — Conditional 'استمع بالعربية' Ar
     expect(screen.getByText("reflect")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /استمع بالعربية/ })).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: /Listen \(British English\)/i }));
+    fireEvent.click(screen.getByRole("button", { name: /British Accent \(UK\)/i }));
     expect(spokenUtterances).toHaveLength(1);
     expect(spokenUtterances[0]!.text).toBe("reflect");
     expect(spokenUtterances[0]!.lang).toBe("en-GB");

@@ -8,15 +8,15 @@ import { BRAND } from "@/config/brand";
 export const Route = createFileRoute("/_authenticated/app/quran")({
   head: () => ({
     meta: [
-      { title: `Quran Kareem — ${BRAND.name}` },
+      { title: `Islamic Center — ${BRAND.name}` },
       {
         name: "description",
-        content: `Listen to authentic Quran recitations with exact Uthmani Arabic text on ${BRAND.name}.`,
+        content: `Complete Islamic Center with authentic Quran Mushaf, verified recitations, prayer times, Hadith, and Azkar on ${BRAND.name}.`,
       },
-      { property: "og:title", content: `Quran Kareem — ${BRAND.name}` },
+      { property: "og:title", content: `Islamic Center — ${BRAND.name}` },
       {
         property: "og:description",
-        content: `Listen to authentic Quran recitations with exact Uthmani Arabic text on ${BRAND.name}.`,
+        content: `Complete Islamic Center with authentic Quran Mushaf, verified recitations, prayer times, Hadith, and Azkar on ${BRAND.name}.`,
       },
     ],
   }),
@@ -28,8 +28,8 @@ function QuranRouteComponent() {
   useEffect(() => {
     recordLastVisitedModule(auth?.user?.uid, {
       path: "/app/quran",
-      labelEn: "Quran & Islamic Center",
-      labelAr: "القرآن الكريم والمركز الإسلامي",
+      labelEn: "Islamic Center",
+      labelAr: "المركز الإسلامي",
     });
   }, [auth?.user?.uid]);
 

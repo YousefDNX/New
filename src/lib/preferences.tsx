@@ -48,10 +48,12 @@ import {
   normalizeHiddenWidgets,
   normalizeInteractionStyle,
   normalizeLayoutWorkspace,
+  normalizeMenuStyle,
   normalizeQuizButtonStyle,
   normalizeQuizColorPalette,
   normalizeQuizFeedbackStyle,
   normalizeReadabilityPreset,
+  normalizeEnglishAccent,
   normalizeTtsEngine,
   normalizeTtsVoice,
   normalizeUiTheme,
@@ -61,11 +63,13 @@ import {
   type AiPrefs,
   type AppearancePrefs,
   type EcosystemPrefs,
+  type EnglishAccent,
   type BtcNavLayout,
   type BtcVisualTheme,
   type FontFamilyPref,
   type LayoutPrefs,
   type LocalePrefs,
+  type MenuStylePref,
   type NotificationPrefs,
   type PrivacyPrefs,
   type SoundAndQuizPrefs,
@@ -89,7 +93,9 @@ export type {
   A11y,
   BtcNavLayout,
   BtcVisualTheme,
+  EnglishAccent,
   LayoutMode,
+  MenuStylePref,
   Theme,
   ThemeCatalogPreset,
   ThemeMode,
@@ -101,6 +107,7 @@ export interface PreferencePreviewDraft {
   theme?: ThemeMode;
   btcVisualTheme?: BtcVisualTheme;
   btcNavLayout?: BtcNavLayout;
+  menuStyle?: MenuStylePref;
   appearance?: Partial<AppearancePrefs>;
   typography?: Partial<TypographyPrefs>;
   layout?: Partial<LayoutPrefs>;
@@ -150,8 +157,11 @@ interface Prefs {
   setBtcVisualTheme: (theme: BtcVisualTheme) => void;
   btcNavLayout: BtcNavLayout;
   setBtcNavLayout: (layout: BtcNavLayout) => void;
+  menuStyle: MenuStylePref;
+  setMenuStyle: (style: MenuStylePref) => void;
   effectiveBtcVisualTheme: BtcVisualTheme;
   effectiveBtcNavLayout: BtcNavLayout;
+  effectiveMenuStyle: MenuStylePref;
   previewDraft: PreferencePreviewDraft | null;
   isPreviewing: boolean;
   startPreview: (draft: PreferencePreviewDraft) => void;
@@ -256,23 +266,39 @@ export function PreferencesProvider({
   const [themePresetId, setThemePresetIdState] = useState<string | null>("btc_classic");
   const [layoutMode, setLayoutModeState] = useState<LayoutMode>("classic");
   const [uiExperience, setUiExperienceState] = useState<UiExperienceId>("classic");
-  const [btcVisualTheme, setBtcVisualThemeState] = useState<BtcVisualTheme>("btc_original");
-  const [btcNavLayout, setBtcNavLayoutState] = useState<BtcNavLayout>("classic");
-
-  useEffect(() => {
-    try {
-      const storedTheme = localStorage.getItem("btc-visual-theme");
-      if (storedTheme === "btc_original" || storedTheme === "btc_alternative") {
-        setBtcVisualThemeState(storedTheme);
+  const [btcVisualTheme, setBtcVisualThemeState] = useState<BtcVisualTheme>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("btc-visual-theme");
+        if (stored === "btc_original" || stored === "btc_alternative") return stored;
+      } catch {
+        // Ignore storage read error
       }
-      const storedLayout = localStorage.getItem("btc-nav-layout");
-      if (storedLayout === "classic" || storedLayout === "modern") {
-        setBtcNavLayoutState(storedLayout);
-      }
-    } catch {
-      // Ignore storage read error
     }
-  }, []);
+    return "btc_original";
+  });
+  const [btcNavLayout, setBtcNavLayoutState] = useState<BtcNavLayout>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("btc-nav-layout");
+        if (stored === "classic" || stored === "modern") return stored;
+      } catch {
+        // Ignore storage read error
+      }
+    }
+    return "classic";
+  });
+  const [menuStyle, setMenuStyleState] = useState<MenuStylePref>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("btc-menu-style");
+        if (stored) return normalizeMenuStyle(stored);
+      } catch {
+        // Ignore storage read error
+      }
+    }
+    return "classic_rail";
+  });
   const [previewDraft, setPreviewDraft] = useState<PreferencePreviewDraft | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
   const [activeUid, setActiveUid] = useState<string | null>(null);
@@ -296,12 +322,14 @@ export function PreferencesProvider({
             ttsVoice: persistedTts.voicePreset,
             ttsSpeed: persistedTts.rate,
             voiceSpeed: clampVoiceSpeed(persistedTts.rate),
+            englishAccent: persistedTts.accent,
           });
           setActiveTtsConfig(
             {
               engine: persistedTts.engine,
               voicePreset: persistedTts.voicePreset,
               rate: persistedTts.rate,
+              accent: persistedTts.accent,
             },
             { persist: false },
           );
@@ -387,6 +415,10 @@ export function PreferencesProvider({
           preferDedicatedTts && persistedTts
             ? persistedTts.rate
             : clampTtsSpeed(Number(sEco.ttsSpeed ?? sEco.voiceSpeed ?? 1) || 1);
+        const resolvedEnglishAccent =
+          preferDedicatedTts && persistedTts
+            ? persistedTts.accent
+            : normalizeEnglishAccent(sEco.englishAccent ?? persistedTts?.accent);
 
         setEcosystemState({
           ...defaultEcosystemPrefs,
@@ -395,6 +427,7 @@ export function PreferencesProvider({
           ttsEngine: resolvedTtsEngine,
           ttsVoice: resolvedTtsVoice,
           ttsSpeed: resolvedTtsSpeed,
+          englishAccent: resolvedEnglishAccent,
           lowBandwidth: Boolean(sEco.lowBandwidth),
           distractionFree: Boolean(sEco.distractionFree),
         });
@@ -403,6 +436,7 @@ export function PreferencesProvider({
             engine: resolvedTtsEngine,
             voicePreset: resolvedTtsVoice,
             rate: resolvedTtsSpeed,
+            accent: resolvedEnglishAccent,
           },
           { persist: false },
         );
@@ -468,6 +502,18 @@ export function PreferencesProvider({
           // Ignore storage read error
         }
       }
+      if (s.menuStyle !== undefined) {
+        setMenuStyleState(normalizeMenuStyle(s.menuStyle));
+      } else {
+        try {
+          const directMenu = localStorage.getItem("btc-menu-style");
+          if (directMenu) {
+            setMenuStyleState(normalizeMenuStyle(directMenu));
+          }
+        } catch {
+          // Ignore storage read error
+        }
+      }
       return true;
     } catch {
       return false;
@@ -499,6 +545,7 @@ export function PreferencesProvider({
 
   const effectiveBtcVisualTheme: BtcVisualTheme = previewDraft?.btcVisualTheme ?? btcVisualTheme;
   const effectiveBtcNavLayout: BtcNavLayout = previewDraft?.btcNavLayout ?? btcNavLayout;
+  const effectiveMenuStyle: MenuStylePref = previewDraft?.menuStyle ?? menuStyle;
 
   const effectiveAppearance: AppearancePrefs = useMemo(
     () =>
@@ -542,7 +589,8 @@ export function PreferencesProvider({
   const effectiveThemePresetId: string | null =
     previewDraft?.themePresetId !== undefined ? previewDraft.themePresetId : themePresetId;
   const effectiveLayoutMode: LayoutMode =
-    effectiveBtcNavLayout === "modern" ? "top_nav" : (previewDraft?.layoutMode ?? layoutMode);
+    previewDraft?.layoutMode ??
+    (effectiveBtcNavLayout === "modern" && layoutMode === "classic" ? "top_nav" : layoutMode);
   const effectiveUiExperience: UiExperienceId = previewDraft?.uiExperience ?? uiExperience;
 
   const dir: "ltr" | "rtl" = LANG_META[lang]?.dir ?? "ltr";
@@ -577,6 +625,8 @@ export function PreferencesProvider({
     }
     el.dataset["btcNavLayout"] = effectiveBtcNavLayout;
     el.setAttribute("data-btc-nav-layout", effectiveBtcNavLayout);
+    el.dataset["menuStyle"] = effectiveMenuStyle;
+    el.setAttribute("data-menu-style", effectiveMenuStyle);
     if (effectiveThemePresetId) {
       el.dataset["themePreset"] = effectiveThemePresetId;
     } else {
@@ -744,6 +794,7 @@ export function PreferencesProvider({
     effectiveUiExperience,
     effectiveBtcVisualTheme,
     effectiveBtcNavLayout,
+    effectiveMenuStyle,
     uiMode,
     previewDraft,
     ecosystem.lowBandwidth,
@@ -776,11 +827,13 @@ export function PreferencesProvider({
           uiExperience,
           btcVisualTheme,
           btcNavLayout,
+          menuStyle,
           updatedAt: new Date().toISOString(),
         }),
       );
       localStorage.setItem("btc-visual-theme", btcVisualTheme);
       localStorage.setItem("btc-nav-layout", btcNavLayout);
+      localStorage.setItem("btc-menu-style", menuStyle);
       setSoundEffectsEnabled(soundAndQuiz.soundEffectsEnabled);
     } catch {
       /* ignore storage quota */
@@ -807,6 +860,7 @@ export function PreferencesProvider({
     uiExperience,
     btcVisualTheme,
     btcNavLayout,
+    menuStyle,
   ]);
 
   const setLang = useCallback((l: Lang) => setLangState(normalizeLang(l)), []);
@@ -925,6 +979,10 @@ export function PreferencesProvider({
           e.ttsEngine !== undefined ? normalizeTtsEngine(e.ttsEngine) : prev.ttsEngine;
         const nextTtsVoice =
           e.ttsVoice !== undefined ? normalizeTtsVoice(e.ttsVoice) : prev.ttsVoice;
+        const nextEnglishAccent =
+          e.englishAccent !== undefined
+            ? normalizeEnglishAccent(e.englishAccent)
+            : prev.englishAccent;
         const nextEcosystem = {
           ...prev,
           ...e,
@@ -932,13 +990,21 @@ export function PreferencesProvider({
           ttsSpeed: nextTtsSpeed,
           ttsEngine: nextTtsEngine,
           ttsVoice: nextTtsVoice,
+          englishAccent: nextEnglishAccent,
         };
-        if (e.ttsEngine !== undefined || e.ttsVoice !== undefined || e.ttsSpeed !== undefined) {
+        if (
+          e.ttsEngine !== undefined ||
+          e.ttsVoice !== undefined ||
+          e.ttsSpeed !== undefined ||
+          e.voiceSpeed !== undefined ||
+          e.englishAccent !== undefined
+        ) {
           savePersistedTtsConfig(
             {
               engine: nextTtsEngine,
               voicePreset: nextTtsVoice,
               rate: nextTtsSpeed,
+              accent: nextEnglishAccent,
             },
             activeUid,
           );
@@ -994,7 +1060,14 @@ export function PreferencesProvider({
   const setLayoutMode = useCallback((m: LayoutMode) => {
     const safeMode = normalizeLayoutMode(m);
     setLayoutModeState(safeMode);
-    if (safeMode === "compact") {
+    const nextNav: BtcNavLayout = safeMode === "top_nav" ? "modern" : "classic";
+    setBtcNavLayoutState(nextNav);
+    try {
+      localStorage.setItem("btc-nav-layout", nextNav);
+    } catch {
+      // Ignore storage write error
+    }
+    if (safeMode === "compact" || safeMode === "split_study") {
       setLayoutState((prev) => ({ ...prev, sidebarMode: "compact" }));
     } else if (safeMode === "classic" || safeMode === "floating" || safeMode === "bento") {
       setLayoutState((prev) => ({ ...prev, sidebarMode: "expanded" }));
@@ -1045,6 +1118,16 @@ export function PreferencesProvider({
     setBtcNavLayoutState(layout);
     try {
       localStorage.setItem("btc-nav-layout", layout);
+    } catch {
+      // Ignore storage write error
+    }
+  }, []);
+
+  const setMenuStyle = useCallback((style: MenuStylePref) => {
+    const safeStyle = normalizeMenuStyle(style);
+    setMenuStyleState(safeStyle);
+    try {
+      localStorage.setItem("btc-menu-style", safeStyle);
     } catch {
       // Ignore storage write error
     }
@@ -1109,9 +1192,11 @@ export function PreferencesProvider({
     setUiExperienceState("classic");
     setBtcVisualThemeState("btc_original");
     setBtcNavLayoutState("classic");
+    setMenuStyleState("classic_rail");
     try {
       localStorage.removeItem("btc-visual-theme");
       localStorage.removeItem("btc-nav-layout");
+      localStorage.removeItem("btc-menu-style");
     } catch {
       // Ignore storage remove error
     }
@@ -1131,6 +1216,7 @@ export function PreferencesProvider({
         engine: defaultEcosystemPrefs.ttsEngine,
         voicePreset: defaultEcosystemPrefs.ttsVoice,
         rate: defaultEcosystemPrefs.ttsSpeed,
+        accent: defaultEcosystemPrefs.englishAccent,
       },
       { persist: false },
     );
@@ -1187,6 +1273,7 @@ export function PreferencesProvider({
         engine: ecosystem.ttsEngine,
         voicePreset: ecosystem.ttsVoice,
         rate: ecosystem.ttsSpeed || a11y.readAloudRate || 1,
+        accent: ecosystem.englishAccent ?? "en-US",
       },
       { persist: true, uid: activeUid },
     );
@@ -1196,6 +1283,7 @@ export function PreferencesProvider({
     ecosystem.ttsEngine,
     ecosystem.ttsVoice,
     ecosystem.ttsSpeed,
+    ecosystem.englishAccent,
     a11y.readAloudRate,
   ]);
 
@@ -1205,6 +1293,7 @@ export function PreferencesProvider({
         rate: clampTtsSpeed(ecosystem.ttsSpeed || a11y.readAloudRate || 1),
         engine: ecosystem.ttsEngine,
         voicePreset: ecosystem.ttsVoice,
+        preferredLocale: ecosystem.englishAccent ?? "en-US",
         onStart: () => setSpeechState("playing"),
         onEnd: () => setSpeechState("idle"),
         onError: () => setSpeechState("idle"),
@@ -1216,7 +1305,13 @@ export function PreferencesProvider({
       }
       return ok;
     },
-    [a11y.readAloudRate, ecosystem.ttsEngine, ecosystem.ttsVoice, ecosystem.ttsSpeed],
+    [
+      a11y.readAloudRate,
+      ecosystem.ttsEngine,
+      ecosystem.ttsVoice,
+      ecosystem.ttsSpeed,
+      ecosystem.englishAccent,
+    ],
   );
 
   const announce = useCallback((message: string) => {
@@ -1281,8 +1376,11 @@ export function PreferencesProvider({
       setBtcVisualTheme,
       btcNavLayout,
       setBtcNavLayout,
+      menuStyle,
+      setMenuStyle,
       effectiveBtcVisualTheme,
       effectiveBtcNavLayout,
+      effectiveMenuStyle,
       previewDraft,
       isPreviewing: previewDraft !== null,
       startPreview,
@@ -1352,8 +1450,11 @@ export function PreferencesProvider({
       setBtcVisualTheme,
       btcNavLayout,
       setBtcNavLayout,
+      menuStyle,
+      setMenuStyle,
       effectiveBtcVisualTheme,
       effectiveBtcNavLayout,
+      effectiveMenuStyle,
       previewDraft,
       startPreview,
       cancelPreview,

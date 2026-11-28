@@ -6,6 +6,8 @@ import { fr } from "./i18n/fr";
 import { de } from "./i18n/de";
 import { zhCN } from "./i18n/zh-cn";
 import { ko } from "./i18n/ko";
+import { tr } from "./i18n/tr";
+import { ur } from "./i18n/ur";
 import {
   SUPPORTED_LANGS,
   LANG_META,
@@ -24,6 +26,8 @@ export const dict: Record<Lang, TranslationMap> = {
   de,
   "zh-CN": zhCN,
   ko,
+  tr,
+  ur,
 };
 
 export {

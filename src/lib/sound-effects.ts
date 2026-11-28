@@ -166,18 +166,58 @@ export function playIncorrectSound(): void {
   }
 }
 
-export function playCompleteSound(): void {
+let lastTaskSoundAt = 0;
+let lastMilestoneSoundAt = 0;
+
+export function playTaskCompleteSound(): void {
   if (!isSoundEffectsEnabled()) return;
+  const now = Date.now();
+  if (now - lastTaskSoundAt < 60) return;
+  lastTaskSoundAt = now;
+
   const preset = getSoundPreset();
   if (preset === "crystal") {
-    playTone(587.33, 0, 0.11, 0.075, "sine");
-    playTone(739.99, 0.09, 0.11, 0.08, "sine");
-    playTone(880, 0.18, 0.22, 0.09, "sine");
+    playTone(587.33, 0, 0.1, 0.075, "sine");
+    playTone(739.99, 0.075, 0.11, 0.08, "sine");
+    playTone(880, 0.15, 0.19, 0.09, "sine");
+  } else if (preset === "gentle") {
+    playTone(440, 0, 0.11, 0.065, "sine");
+    playTone(554.37, 0.08, 0.12, 0.07, "sine");
+    playTone(659.25, 0.16, 0.18, 0.075, "sine");
   } else {
-    playTone(523.25, 0, 0.11, 0.075, "triangle");
-    playTone(659.25, 0.09, 0.11, 0.08, "triangle");
-    playTone(783.99, 0.18, 0.22, 0.09, "triangle");
+    playTone(523.25, 0, 0.095, 0.075, "triangle");
+    playTone(659.25, 0.075, 0.105, 0.08, "triangle");
+    playTone(783.99, 0.15, 0.19, 0.09, "triangle");
   }
+}
+
+export function playMilestoneSound(): void {
+  if (!isSoundEffectsEnabled()) return;
+  const now = Date.now();
+  if (now - lastMilestoneSoundAt < 60) return;
+  lastMilestoneSoundAt = now;
+
+  const preset = getSoundPreset();
+  if (preset === "crystal") {
+    playTone(587.33, 0, 0.09, 0.075, "sine");
+    playTone(739.99, 0.07, 0.09, 0.08, "sine");
+    playTone(880, 0.14, 0.11, 0.085, "sine");
+    playTone(1174.66, 0.22, 0.28, 0.095, "sine");
+  } else if (preset === "gentle") {
+    playTone(392, 0, 0.1, 0.065, "sine");
+    playTone(493.88, 0.08, 0.1, 0.07, "sine");
+    playTone(587.33, 0.16, 0.12, 0.075, "sine");
+    playTone(783.99, 0.25, 0.26, 0.085, "sine");
+  } else {
+    playTone(523.25, 0, 0.09, 0.075, "triangle");
+    playTone(659.25, 0.07, 0.09, 0.08, "triangle");
+    playTone(783.99, 0.14, 0.11, 0.085, "triangle");
+    playTone(1046.5, 0.22, 0.28, 0.095, "triangle");
+  }
+}
+
+export function playCompleteSound(): void {
+  playTaskCompleteSound();
 }
 
 /**

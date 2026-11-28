@@ -24,31 +24,40 @@ export const DailyDuaWidget: React.FC<DailyDuaWidgetProps> = ({ lang = "ar", cla
   const isAr = lang === "ar";
 
   // Pick a rotating duaa daily or allow cycling
-  const [currentIndex, setCurrentIndex] = useState<number>(() => {
-    if (typeof window === "undefined") return 0;
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([
+    "adhkar_morn_kursi",
+    "adhkar_morn_sayyid_istighfar",
+  ]);
+
+  const [copied, setCopied] = useState<boolean>(false);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState<boolean>(false);
+  const isFirstMount = React.useRef(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
     const now = new Date();
     const start = new Date(now.getFullYear(), 0, 0);
     const diff = now.getTime() - start.getTime();
     const oneDay = 1000 * 60 * 60 * 24;
     const dayOfYear = Math.floor(diff / oneDay);
-    return dayOfYear % VERIFIED_DAILY_ADHKAR.length;
-  });
+    setCurrentIndex(dayOfYear % VERIFIED_DAILY_ADHKAR.length);
 
-  const [favoriteIds, setFavoriteIds] = useState<string[]>(() => {
-    if (typeof window === "undefined") return [];
     try {
       const saved = window.localStorage.getItem(FAVORITE_DUAS_STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        setFavoriteIds(JSON.parse(saved));
+      }
     } catch {
       // Ignore
     }
-    return ["adhkar_morn_kursi", "adhkar_morn_sayyid_istighfar"];
-  });
-
-  const [copied, setCopied] = useState<boolean>(false);
-  const [showOnlyFavorites, setShowOnlyFavorites] = useState<boolean>(false);
+  }, []);
 
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     if (typeof window === "undefined") return;
     try {
       window.localStorage.setItem(FAVORITE_DUAS_STORAGE_KEY, JSON.stringify(favoriteIds));
@@ -122,7 +131,7 @@ export const DailyDuaWidget: React.FC<DailyDuaWidgetProps> = ({ lang = "ar", cla
           </div>
           <div className="min-w-0">
             <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              {isAr ? "الدعاء والذكر اليومي · خالص لله" : "Daily Supplication & Adhkar"}
+              {isAr ? "الدعاء والذكر اليومي · خالص لله" : "Daily Supplication & Azkar"}
             </span>
             <h4 className="text-sm sm:text-base font-bold font-serif text-stone-900 dark:text-stone-100 truncate">
               {isAr ? currentItem.categoryLabelAr : currentItem.categoryLabelEn}
@@ -205,7 +214,7 @@ export const DailyDuaWidget: React.FC<DailyDuaWidgetProps> = ({ lang = "ar", cla
             onClick={() => setShowOnlyFavorites(false)}
             className="min-h-[40px] inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 cursor-pointer"
           >
-            {isAr ? "عرض جميع الأذكار" : "Show All Adhkar"}
+            {isAr ? "عرض جميع الأذكار" : "Show All Azkar"}
           </button>
         </div>
       ) : (
@@ -267,7 +276,7 @@ export const DailyDuaWidget: React.FC<DailyDuaWidgetProps> = ({ lang = "ar", cla
           search={{ islamic_tab: "adhkar" }}
           className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
         >
-          <span>{isAr ? "فتح موسوعة الأذكار كاملة" : "Open Full Adhkar Library"}</span>
+          <span>{isAr ? "فتح موسوعة الأذكار كاملة" : "Open Full Azkar Library"}</span>
           <ArrowRight className={`size-3.5 ${isAr ? "rotate-180" : ""}`} />
         </Link>
       </div>

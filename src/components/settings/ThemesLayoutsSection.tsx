@@ -1,4 +1,13 @@
-import { ArrowDown, ArrowUp, Check, Eye, EyeOff, LayoutGrid, Sparkles } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  Eye,
+  EyeOff,
+  LayoutGrid,
+  PanelTop,
+  Sparkles,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { UserSettingsRow } from "@/lib/firestore-data";
@@ -10,12 +19,14 @@ import {
   INTERFACE_THEME_SPECS,
   INTERFACE_THEMES,
   LAYOUT_WORKSPACES,
+  MENU_STYLES,
   normalizeWidgetOrder,
   type AppearancePrefs,
   type DashboardWidgetId,
   type InterfaceTheme,
   type LayoutPrefs,
   type LayoutWorkspaceId,
+  type MenuStylePref,
 } from "@/lib/settings";
 import {
   AdvancedDisclosure,
@@ -29,7 +40,12 @@ import { ThemeStudioDialog } from "./ThemeStudioDialog";
 import { UiExperienceSwitcher } from "./UiExperienceSwitcher";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { useExperienceMode } from "@/lib/experience-mode";
-import { getLayoutModeById, getThemePresetById, THEME_CATALOG } from "@/lib/theme-catalog";
+import {
+  getLayoutModeById,
+  getThemePresetById,
+  THEME_CATALOG,
+  type LayoutMode,
+} from "@/lib/theme-catalog";
 import { getUiExperienceById, type ThemeUxPreset, type UiExperienceId } from "@/lib/ui-experiences";
 
 type SettingsPatch = Partial<Omit<UserSettingsRow, "user_id" | "theme">> & { theme?: string };
@@ -62,6 +78,7 @@ export function ThemesLayoutsSection({
     setLayout,
     layoutMode,
     setLayoutMode,
+    effectiveLayoutMode,
     uiExperience,
     setUiExperience,
     theme,
@@ -76,14 +93,116 @@ export function ThemesLayoutsSection({
     setBtcVisualTheme,
     btcNavLayout,
     setBtcNavLayout,
+    menuStyle,
+    setMenuStyle,
     effectiveBtcVisualTheme,
     effectiveBtcNavLayout,
+    effectiveMenuStyle,
     isPreviewing,
     previewDraft,
     startPreview,
     cancelPreview,
   } = usePrefs();
   const { applyThemeUxPreset } = useExperienceMode();
+
+  const signatureLayouts: ReadonlyArray<{
+    id: LayoutMode;
+    nameEn: string;
+    nameAr: string;
+    descEn: string;
+    descAr: string;
+    badgeEn: string;
+    badgeAr: string;
+  }> = [
+    {
+      id: "classic",
+      nameEn: "1. Classic Sidebar",
+      nameAr: "١. الشريط الجانبي الكلاسيكي",
+      descEn: "Fixed side navigation rail with balanced spacious workspace",
+      descAr: "قائمة جانبية ثابتة واضحة مع مساحة عرض متوازنة",
+      badgeEn: "Balanced",
+      badgeAr: "متوازن",
+    },
+    {
+      id: "top_nav",
+      nameEn: "2. Modern Top Bar",
+      nameAr: "٢. الشريط العلوي العصري",
+      descEn: "Wide canvas with sleek top bar, Spaces mega-menu & bottom dock",
+      descAr: "عرض كامل مع شريط علوي أنيق وقائمة مساحات ومنصة سفلية",
+      badgeEn: "Modern",
+      badgeAr: "عصري",
+    },
+    {
+      id: "floating",
+      nameEn: "3. Floating Glass Shell",
+      nameAr: "٣. القوائم الزجاجية العائمة",
+      descEn: "Elevated detached sidebar panel with breathing margins",
+      descAr: "شريط جانبي عائم بحواف دائرية وإطار زجاجي أنيق",
+      badgeEn: "Glass",
+      badgeAr: "زجاجي",
+    },
+    {
+      id: "double_header",
+      nameEn: "4. Dual Header Strip",
+      nameAr: "٤. الشريط المزدوج والأفقي",
+      descEn: "Top utility bar paired with a quick horizontal module ribbon",
+      descAr: "رأس علوي مع شريط أفقي ثانٍ للتنقل السريع بين الأقسام",
+      badgeEn: "Dual",
+      badgeAr: "مزدوج",
+    },
+    {
+      id: "bento",
+      nameEn: "5. Bento Modular Grid",
+      nameAr: "٥. شبكة البينتو المعيارية",
+      descEn: "Crisp modular rounded cards with structured visual rhythm",
+      descAr: "بطاقات منظمة بإيقاع بصري عصري واضح ومريح للعين",
+      badgeEn: "Modular",
+      badgeAr: "منظم",
+    },
+    {
+      id: "bottom_dock",
+      nameEn: "6. Floating Bottom Dock",
+      nameAr: "٦. المنصة السفلية العائمة",
+      descEn: "Clean top focus bar with spatial floating launcher at the bottom",
+      descAr: "شريط علوي هادئ مع منصة تنقل سفلية عائمة وقائمة شعاعية",
+      badgeEn: "Focus",
+      badgeAr: "تركيز",
+    },
+  ];
+
+  function selectSignatureLayout(targetMode: LayoutMode) {
+    const spec = getLayoutModeById(targetMode);
+    const prevMode = layoutMode;
+    const prevSidebar = layout.sidebarMode;
+    const prevNav = btcNavLayout;
+    const nextNav = targetMode === "top_nav" ? "modern" : "classic";
+    runSave(
+      () => {
+        cancelPreview();
+        setLayoutMode(targetMode);
+        setBtcNavLayout(nextNav);
+        setLayout({ sidebarMode: spec.sidebarMode });
+      },
+      () => {
+        setLayoutMode(prevMode);
+        setBtcNavLayout(prevNav);
+        setLayout({ sidebarMode: prevSidebar });
+      },
+      { layout_mode: targetMode, sidebar_mode: spec.sidebarMode },
+    );
+  }
+
+  function selectMenuStyle(nextStyle: MenuStylePref) {
+    const prevStyle = menuStyle;
+    runSave(
+      () => {
+        cancelPreview();
+        setMenuStyle(nextStyle);
+      },
+      () => setMenuStyle(prevStyle),
+      {},
+    );
+  }
 
   function applyUiExperience(nextId: UiExperienceId) {
     const prevExp = uiExperience;
@@ -377,6 +496,200 @@ export function ThemesLayoutsSection({
             >
               {lang === "ar" ? "العصري" : "Modern Nav"}
             </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick 6 Signature Layouts & 5 Menu Shape Switchers */}
+      <div className="mb-5 space-y-5 rounded-2xl border border-border bg-surface-2/35 p-4">
+        {/* 6 Signature Layouts */}
+        <div data-testid="signature-6-layouts" className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <LayoutGrid className="size-4 text-primary" />
+              <div>
+                <h3 className="font-display text-sm font-bold text-foreground">
+                  {lang === "ar"
+                    ? "٦ تخطيطات مميزة للواجهة (6 Layouts)"
+                    : "6 Signature Workspace Layouts"}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {lang === "ar"
+                    ? "غيّر شكل ترتيب الشاشة والقوائم فوراً حسب ذوقك ودراستك"
+                    : "Instantly rearrange navigation bars, docks, and grid proportions across the app"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+            {signatureLayouts.map((item) => {
+              const active = effectiveLayoutMode === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  data-testid={`signature-layout-${item.id}`}
+                  onClick={() => selectSignatureLayout(item.id)}
+                  className={`group flex flex-col justify-between rounded-xl border p-3 text-start transition-all ${
+                    active
+                      ? "border-primary bg-primary/10 ring-1 ring-primary/35"
+                      : "border-border bg-surface/75 hover:border-primary/45 hover:bg-surface"
+                  }`}
+                >
+                  {/* Mini schematic wireframe */}
+                  <div
+                    className="mb-2.5 flex h-14 w-full overflow-hidden rounded-lg border border-border/70 bg-background/80 p-1.5"
+                    aria-hidden="true"
+                  >
+                    {item.id === "classic" && (
+                      <div className="flex h-full w-full gap-1.5">
+                        <div className="w-5 rounded bg-primary/25 p-1 space-y-1">
+                          <span className="block h-1 w-full rounded bg-primary" />
+                          <span className="block h-1 w-3/4 rounded bg-muted-foreground/40" />
+                        </div>
+                        <div className="flex-1 rounded bg-surface-2/80" />
+                      </div>
+                    )}
+                    {item.id === "top_nav" && (
+                      <div className="flex h-full w-full flex-col gap-1.5">
+                        <div className="h-2.5 w-full rounded bg-primary/25" />
+                        <div className="flex-1 rounded bg-surface-2/80" />
+                      </div>
+                    )}
+                    {item.id === "floating" && (
+                      <div className="flex h-full w-full gap-2 p-0.5">
+                        <div className="w-5 rounded-md border border-primary/50 bg-primary/20" />
+                        <div className="flex-1 rounded-md border border-border/60 bg-surface-2/75" />
+                      </div>
+                    )}
+                    {item.id === "double_header" && (
+                      <div className="flex h-full w-full flex-col gap-1">
+                        <div className="h-2 w-full rounded bg-primary/30" />
+                        <div className="h-1.5 w-full rounded bg-primary/15" />
+                        <div className="flex-1 rounded bg-surface-2/80" />
+                      </div>
+                    )}
+                    {item.id === "bento" && (
+                      <div className="flex h-full w-full gap-1.5">
+                        <div className="w-4 rounded bg-primary/25" />
+                        <div className="grid flex-1 grid-cols-3 grid-rows-2 gap-1">
+                          <div className="col-span-2 rounded bg-surface-2/90" />
+                          <div className="rounded bg-surface-2/70" />
+                          <div className="rounded bg-surface-2/70" />
+                          <div className="col-span-2 rounded bg-surface-2/90" />
+                        </div>
+                      </div>
+                    )}
+                    {item.id === "bottom_dock" && (
+                      <div className="flex h-full w-full flex-col justify-between gap-1">
+                        <div className="h-1.5 w-full rounded bg-surface-2/80" />
+                        <div className="flex-1 rounded bg-surface-2/50" />
+                        <div className="mx-auto h-2.5 w-3/4 rounded-full bg-primary/35" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-xs font-bold text-foreground">
+                      {lang === "ar" ? item.nameAr : item.nameEn}
+                    </span>
+                    <span
+                      className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-surface-2 text-muted-foreground"
+                      }`}
+                    >
+                      {active
+                        ? lang === "ar"
+                          ? "نشط"
+                          : "Active"
+                        : lang === "ar"
+                          ? item.badgeAr
+                          : item.badgeEn}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                    {lang === "ar" ? item.descAr : item.descEn}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Menu Shapes & Navigation Styling */}
+        <div data-testid="menu-style-switcher" className="space-y-3 border-t border-border/60 pt-4">
+          <div className="flex items-center gap-2">
+            <PanelTop className="size-4 text-primary" />
+            <div>
+              <h3 className="font-display text-sm font-bold text-foreground">
+                {lang === "ar" ? "شكل القوائم وتنسيق الأزرار" : "Menu Shape & Navigation Styling"}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                {lang === "ar"
+                  ? "خصّص شكل عناصر القائمة الجانبية والشريط العلوي"
+                  : "Customize how menu links, capsules, and active highlights look"}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+            {MENU_STYLES.map((shape) => {
+              const active = effectiveMenuStyle === shape.id;
+              return (
+                <button
+                  key={shape.id}
+                  type="button"
+                  data-testid={`menu-style-${shape.id}`}
+                  onClick={() => selectMenuStyle(shape.id)}
+                  className={`flex flex-col justify-between rounded-xl border p-2.5 text-start transition-all ${
+                    active
+                      ? "border-primary bg-primary/10 ring-1 ring-primary/35"
+                      : "border-border bg-surface/75 hover:border-primary/45 hover:bg-surface"
+                  }`}
+                >
+                  {/* Visual preview of the menu item style */}
+                  <div
+                    className="mb-2 flex flex-col gap-1 rounded-lg bg-background/70 p-1.5"
+                    aria-hidden="true"
+                  >
+                    <div
+                      className={`flex h-4 items-center gap-1.5 px-1.5 ${
+                        shape.id === "glass_pills"
+                          ? "rounded-full bg-primary/20 border border-primary/35"
+                          : shape.id === "minimal_underline"
+                            ? "border-b-2 border-primary bg-transparent rounded-none"
+                            : shape.id === "editorial_tab"
+                              ? "rounded-md border border-primary/50 bg-primary/10"
+                              : shape.id === "floating_cards"
+                                ? "rounded-lg bg-surface shadow-sm border border-primary/40"
+                                : "rounded-md bg-primary/15"
+                      }`}
+                    >
+                      <span className="size-1.5 rounded-full bg-primary" />
+                      <span className="h-1 w-8 rounded-full bg-foreground/70" />
+                    </div>
+                    <div className="flex h-3 items-center gap-1.5 px-1.5 opacity-55">
+                      <span className="size-1.5 rounded-full bg-muted-foreground" />
+                      <span className="h-1 w-7 rounded-full bg-muted-foreground/60" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between gap-1">
+                      <p className="text-xs font-semibold text-foreground">
+                        {lang === "ar" ? shape.nameAr : shape.nameEn}
+                      </p>
+                      {active && <Check className="size-3.5 shrink-0 text-primary" />}
+                    </div>
+                    <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
+                      {lang === "ar" ? shape.descAr : shape.descEn}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

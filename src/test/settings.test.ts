@@ -130,13 +130,26 @@ describe("settings rules", () => {
   });
 });
 
-describe("8-language multilingual coverage and locale formatting", () => {
-  it("supports all 8 languages with matching complete dictionaries and directionality", () => {
-    expect(SUPPORTED_LANGS).toEqual(["en", "ar", "es", "ja", "fr", "de", "zh-CN", "ko"]);
+describe("10-language multilingual coverage and locale formatting", () => {
+  it("supports all 10 languages with matching complete dictionaries and directionality", () => {
+    expect(SUPPORTED_LANGS).toEqual([
+      "en",
+      "ar",
+      "es",
+      "ja",
+      "fr",
+      "de",
+      "zh-CN",
+      "ko",
+      "tr",
+      "ur",
+    ]);
     expect(LANG_META.ar.dir).toBe("rtl");
+    expect(LANG_META.ur.dir).toBe("rtl");
     expect(LANG_META.en.dir).toBe("ltr");
     expect(LANG_META.es.dir).toBe("ltr");
     expect(LANG_META.ja.dir).toBe("ltr");
+    expect(LANG_META.tr.dir).toBe("ltr");
     expect(LANG_META["zh-CN"].dir).toBe("ltr");
     expect(LANG_META.ko.dir).toBe("ltr");
 

@@ -252,8 +252,8 @@ export function StudyWorkspace() {
           </div>
           <p className="text-sm text-foreground leading-relaxed">
             {isAr
-              ? "انتقل مركز مفردات الصف التاسع واختباراته التفاعلية إلى قسم عالم الإنجليزية لسهولة الوصول."
-              : "The Grade 9 vocabulary units, summaries, and interactive tests now live inside English World → Grade 9 — Vocabulary."}
+              ? "انتقل مركز مفردات الصف التاسع (الوحدات ١–٤) واختباراته التفاعلية إلى قسم عالم الإنجليزية لسهولة الوصول، مع قسم مستقل للمفردات المهمة والأساسية."
+              : "The Grade 9 Units 1–4 vocabulary, summaries, and interactive tests live inside English World, alongside a dedicated Important & Essential Vocab section."}
           </p>
         </div>
 
@@ -261,7 +261,7 @@ export function StudyWorkspace() {
           href="/app/english?tab=grade9"
           className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
         >
-          <span>{isAr ? "افتح مفردات الصف التاسع" : "Open Grade 9 — Vocabulary"}</span>
+          <span>{isAr ? "افتح الصف التاسع (الوحدات ١–٤)" : "Open Grade 9 — Units 1–4"}</span>
           <ArrowRight className="size-4 rtl-flip" />
         </a>
       </div>

@@ -145,6 +145,7 @@ async function runFirebaseUserBootstrap(
 
   let profile: ProfileRow | null = null;
   const writes: Promise<unknown>[] = [];
+  const pendingGender = getPendingRegistrationGender();
 
   if (!existingSnap.exists()) {
     const newProfile: ProfileRow = {
@@ -153,6 +154,8 @@ async function runFirebaseUserBootstrap(
       avatar_url: metaAvatar,
       language: normalizeLang(preferredLang),
       region: "kuwait",
+      gender: pendingGender ?? null,
+      community_group: pendingGender ? resolveCommunityGroup(pendingGender) : null,
       date_of_birth: null,
       age_band: null,
       show_gender_on_profile: false,
@@ -178,6 +181,11 @@ async function runFirebaseUserBootstrap(
   } else {
     const existing = existingSnap.data() as ProfileRow;
     const patch: Partial<ProfileRow> = {};
+
+    if (!existing.gender && pendingGender) {
+      patch.gender = pendingGender;
+      patch.community_group = resolveCommunityGroup(pendingGender);
+    }
 
     if (!existing.display_name && metaName) {
       patch.display_name = metaName;

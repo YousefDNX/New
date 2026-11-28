@@ -67,7 +67,7 @@ export function DashboardUxView({
         <div className="border-b border-border pb-5">
           <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-medium text-muted-foreground">
             <span>{isAr ? "العدد اليومي للدراسة والتقدم" : "Daily Study Briefing"}</span>
-            <span>{todayFormatted}</span>
+            <span suppressHydrationWarning>{todayFormatted}</span>
           </div>
           <div className="mt-4">{show("welcome") && <WelcomeBanner />}</div>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

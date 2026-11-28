@@ -72,7 +72,7 @@ export function TtsEngineSettingsPanel({
         : "Hello! Clear pronunciation and balanced pacing help you master new vocabulary.";
     const ok = speakEnhancedText(text, {
       forcedLang: sampleLang,
-      preferredLocale: sampleLang === "ar" ? "ar-SA" : "en-GB",
+      preferredLocale: sampleLang === "ar" ? "ar-SA" : (ecosystem.englishAccent ?? "en-US"),
       engine: ecosystem.ttsEngine,
       voicePreset: ecosystem.ttsVoice,
       rate: activeSpeed,

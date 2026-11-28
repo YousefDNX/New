@@ -15,9 +15,11 @@
 
 import {
   clampTtsSpeed,
+  normalizeEnglishAccent,
   normalizeTtsEngine,
   normalizeTtsVoice,
   resolveGeminiVoiceName,
+  type EnglishAccent,
   type TtsEngineMode,
   type TtsVoicePresetId,
 } from "./settings";
@@ -38,9 +40,11 @@ export interface GlobalTtsConfig {
   engine: TtsEngineMode;
   voicePreset: TtsVoicePresetId;
   rate: number;
+  accent?: EnglishAccent;
 }
 
 export interface PersistedTtsConfig extends GlobalTtsConfig {
+  accent: EnglishAccent;
   updatedAt?: string;
 }
 
@@ -56,11 +60,12 @@ const DEFAULT_TTS_CONFIG: GlobalTtsConfig = {
   rate: 1.0,
 };
 
-function sanitizeTtsConfig(raw: Partial<GlobalTtsConfig> | null | undefined): GlobalTtsConfig {
+function sanitizeTtsConfig(raw: Partial<GlobalTtsConfig> | null | undefined): PersistedTtsConfig {
   return {
     engine: normalizeTtsEngine(raw?.engine),
     voicePreset: normalizeTtsVoice(raw?.voicePreset),
     rate: clampTtsSpeed(Number(raw?.rate ?? DEFAULT_TTS_CONFIG.rate) || DEFAULT_TTS_CONFIG.rate),
+    accent: normalizeEnglishAccent(raw?.accent),
   };
 }
 
@@ -88,17 +93,22 @@ export function loadPersistedTtsConfig(uid?: string | null): PersistedTtsConfig 
           ttsEngine?: unknown;
           ttsVoice?: unknown;
           ttsSpeed?: unknown;
+          englishAccent?: unknown;
         };
       } | null;
       const eco = parsedPrefs?.ecosystem;
       if (
         eco &&
-        (eco.ttsEngine !== undefined || eco.ttsVoice !== undefined || eco.ttsSpeed !== undefined)
+        (eco.ttsEngine !== undefined ||
+          eco.ttsVoice !== undefined ||
+          eco.ttsSpeed !== undefined ||
+          eco.englishAccent !== undefined)
       ) {
         const sanitized = sanitizeTtsConfig({
           engine: eco.ttsEngine as TtsEngineMode,
           voicePreset: eco.ttsVoice as TtsVoicePresetId,
           rate: Number(eco.ttsSpeed ?? 1),
+          accent: normalizeEnglishAccent(eco.englishAccent),
         });
         return typeof parsedPrefs?.updatedAt === "string"
           ? { ...sanitized, updatedAt: parsedPrefs.updatedAt }
@@ -134,9 +144,17 @@ export function clearPersistedTtsConfig(uid?: string | null): void {
   }
 }
 
-let activeTtsConfig: GlobalTtsConfig = (typeof window !== "undefined"
-  ? loadPersistedTtsConfig()
-  : null) ?? { ...DEFAULT_TTS_CONFIG };
+const initialPersistedTts = typeof window !== "undefined" ? loadPersistedTtsConfig() : null;
+
+let activeTtsConfig: GlobalTtsConfig = initialPersistedTts
+  ? {
+      engine: initialPersistedTts.engine,
+      voicePreset: initialPersistedTts.voicePreset,
+      rate: initialPersistedTts.rate,
+    }
+  : { ...DEFAULT_TTS_CONFIG };
+
+let activeTtsAccent: EnglishAccent = initialPersistedTts?.accent ?? "en-US";
 
 export function setActiveTtsConfig(
   next: Partial<GlobalTtsConfig>,
@@ -150,13 +168,20 @@ export function setActiveTtsConfig(
         : activeTtsConfig.voicePreset,
     rate: next.rate !== undefined ? clampTtsSpeed(next.rate) : activeTtsConfig.rate,
   };
+  if (next.accent !== undefined) {
+    activeTtsAccent = normalizeEnglishAccent(next.accent);
+  }
   if (options?.persist !== false) {
-    savePersistedTtsConfig(activeTtsConfig, options?.uid);
+    savePersistedTtsConfig({ ...activeTtsConfig, accent: activeTtsAccent }, options?.uid);
   }
 }
 
 export function getActiveTtsConfig(): GlobalTtsConfig {
   return { ...activeTtsConfig };
+}
+
+export function getActiveTtsAccent(): EnglishAccent {
+  return activeTtsAccent;
 }
 
 /**
@@ -906,6 +931,7 @@ export function resetSpeechEngineStateForTests(): void {
     voicePreset: "Zephyr",
     rate: 1.0,
   };
+  activeTtsAccent = "en-US";
 }
 
 /**
@@ -1117,7 +1143,9 @@ function speakSegmentsViaWebSpeech(
     queueIdx++;
 
     const utterance = new SpeechSynthesisUtterance(item.text);
-    const targetBcp = getBcp47Locale(item.lang, options?.preferredLocale);
+    const effectivePreferredLocale =
+      options?.preferredLocale ?? (item.lang === "en" ? activeTtsAccent : undefined);
+    const targetBcp = getBcp47Locale(item.lang, effectivePreferredLocale);
     utterance.lang = targetBcp;
 
     // Respect explicit voiceURI if its language matches the segment's language
@@ -1129,7 +1157,7 @@ function speakSegmentsViaWebSpeech(
       }
     }
     if (!chosenVoice) {
-      chosenVoice = selectBestNativeVoice(item.lang, allVoices, options?.preferredLocale);
+      chosenVoice = selectBestNativeVoice(item.lang, allVoices, effectivePreferredLocale);
     }
 
     // Never fall back to a cross-language voice when voices are loaded and no matching voice exists
@@ -1209,7 +1237,9 @@ export function speakEnhancedText(text: string, options?: EnhancedSpeechOptions)
   }
 
   const detectedLang = options?.forcedLang ?? detectTextLanguage(text);
-  const accent = options?.preferredLocale ?? getBcp47Locale(detectedLang);
+  const accent =
+    options?.preferredLocale ??
+    (detectedLang === "en" ? activeTtsAccent : getBcp47Locale(detectedLang));
   const cleanForServer =
     detectedLang === "ar"
       ? normalizeArabicForSpeech(text)

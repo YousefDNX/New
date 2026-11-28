@@ -1,4 +1,15 @@
-export const SUPPORTED_LANGS = ["en", "ar", "es", "ja", "fr", "de", "zh-CN", "ko"] as const;
+export const SUPPORTED_LANGS = [
+  "en",
+  "ar",
+  "es",
+  "ja",
+  "fr",
+  "de",
+  "zh-CN",
+  "ko",
+  "tr",
+  "ur",
+] as const;
 export type Lang = (typeof SUPPORTED_LANGS)[number];
 
 export const PILOT_LANGS = ["en", "ar"] as const;
@@ -78,6 +89,22 @@ export const LANG_META: Record<Lang, LangMeta> = {
     dir: "ltr",
     shortCode: "KO",
   },
+  tr: {
+    code: "tr",
+    bcp47: "tr-TR",
+    nativeName: "Türkçe",
+    englishName: "Turkish",
+    dir: "ltr",
+    shortCode: "TR",
+  },
+  ur: {
+    code: "ur",
+    bcp47: "ur-PK",
+    nativeName: "اردو",
+    englishName: "Urdu",
+    dir: "rtl",
+    shortCode: "UR",
+  },
 };
 
 export function isSupportedLang(value: unknown): value is Lang {
@@ -95,6 +122,8 @@ export function normalizeLang(value: unknown): Lang {
     if (lower.startsWith("de")) return "de";
     if (lower.startsWith("zh")) return "zh-CN";
     if (lower.startsWith("ko")) return "ko";
+    if (lower.startsWith("tr")) return "tr";
+    if (lower.startsWith("ur")) return "ur";
   }
   return "en";
 }

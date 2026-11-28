@@ -1,4 +1,10 @@
-import { getCachedSpeechVoices, speakEnhancedText, stopEnhancedSpeech } from "./speech-service";
+import {
+  getCachedSpeechVoices,
+  getActiveTtsAccent,
+  speakEnhancedText,
+  stopEnhancedSpeech,
+} from "./speech-service";
+import type { EnglishAccent } from "./settings";
 
 export interface EnglishVoiceOption {
   voiceURI: string;
@@ -54,14 +60,27 @@ export function speakEnglishText(
     rate?: number;
     voiceURI?: string;
     lang?: string;
+    accent?: EnglishAccent | string;
     preferNativeOnly?: boolean;
     onEnd?: () => void;
     onError?: (error: Error) => void;
   },
 ): boolean {
+  const activeAccent = getActiveTtsAccent();
+  // Determine locale: explicit accent takes top priority; if explicit regional lang ('en-US' or 'en-GB') given, use it; else fallback to user's active accent
+  let preferredLocale = options?.accent;
+  if (!preferredLocale && options?.lang) {
+    const l = options.lang.toLowerCase();
+    if (l.includes("us") || l.includes("en-us")) preferredLocale = "en-US";
+    else if (l.includes("gb") || l.includes("uk") || l.includes("en-gb")) preferredLocale = "en-GB";
+  }
+  if (!preferredLocale) {
+    preferredLocale = activeAccent;
+  }
+
   return speakEnhancedText(text, {
     forcedLang: "en",
-    preferredLocale: options?.lang ?? "en-GB",
+    preferredLocale,
     voiceURI: options?.voiceURI,
     rate: options?.rate,
     preferNativeOnly: options?.preferNativeOnly,
@@ -70,6 +89,19 @@ export function speakEnglishText(
       options?.onError?.(err);
       options?.onEnd?.();
     },
+  });
+}
+
+export function speakEnglishWordInAccent(
+  word: string,
+  accent: EnglishAccent,
+  options?: { rate?: number; onEnd?: () => void },
+): boolean {
+  return speakEnglishText(word, {
+    accent,
+    lang: accent,
+    rate: options?.rate ?? 0.9,
+    onEnd: options?.onEnd,
   });
 }
 

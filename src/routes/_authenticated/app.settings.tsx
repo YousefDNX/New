@@ -23,6 +23,7 @@ import {
   SettingsRow,
   SettingsSectionCard,
 } from "@/components/settings/SettingsPrimitives";
+import { VoiceConversationSettingsPanel } from "@/components/ai/VoiceConversationSettingsPanel";
 import { TtsEngineSettingsPanel } from "@/components/settings/TtsEngineSettingsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -684,6 +685,9 @@ function SettingsPage() {
             void saveSettings({ read_aloud_rate: clampSpeechRate(rate) }).catch(() => undefined);
           }}
         />
+
+        {/* Dedicated AI Conversation Voice Accent (US/UK) & Speaking Rate */}
+        <VoiceConversationSettingsPanel />
 
         {/* Interactive Sample Quiz Button Preview */}
         <div className="rounded-xl border border-border/80 bg-surface-2/40 p-4 space-y-2.5">

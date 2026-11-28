@@ -40,31 +40,29 @@ export const PrayerTimesCard: React.FC<PrayerTimesCardProps> = ({
 }) => {
   const isAr = lang === "ar";
 
-  const [selectedCountryCode, setSelectedCountryCode] = useState<string>(() => {
-    if (typeof window === "undefined") return "KW";
-    try {
-      const saved = window.localStorage.getItem(STORAGE_COUNTRY_KEY);
-      if (saved && (saved === "KW" || saved === "EG" || saved === "SA" || saved === "ALL")) {
-        return saved;
-      }
-    } catch {
-      // Ignore
-    }
-    return "KW";
-  });
+  const [selectedCountryCode, setSelectedCountryCode] = useState<string>("KW");
+  const [selectedCityId, setSelectedCityId] = useState<string>("kw_kuwait");
 
-  const [selectedCityId, setSelectedCityId] = useState<string>(() => {
-    if (typeof window === "undefined") return "kw_kuwait";
+  useEffect(() => {
     try {
-      const saved = window.localStorage.getItem(STORAGE_CITY_KEY);
-      if (saved && VERIFIED_PRAYER_CITIES.some((c) => c.id === saved)) {
-        return saved;
+      const savedCountry = window.localStorage.getItem(STORAGE_COUNTRY_KEY);
+      if (
+        savedCountry &&
+        (savedCountry === "KW" ||
+          savedCountry === "EG" ||
+          savedCountry === "SA" ||
+          savedCountry === "ALL")
+      ) {
+        setSelectedCountryCode(savedCountry);
+      }
+      const savedCity = window.localStorage.getItem(STORAGE_CITY_KEY);
+      if (savedCity && VERIFIED_PRAYER_CITIES.some((c) => c.id === savedCity)) {
+        setSelectedCityId(savedCity);
       }
     } catch {
       // Ignore
     }
-    return "kw_kuwait";
-  });
+  }, []);
 
   const [selectedMethod, setSelectedMethod] = useState<PrayerCalculationMethodKey>(() => {
     return selectedCountryCode === "EG"

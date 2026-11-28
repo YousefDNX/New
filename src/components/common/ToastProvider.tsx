@@ -3,6 +3,7 @@ import { toast as sonnerToast } from "sonner";
 import { Check, CheckCircle2, Flame, Sparkles, Trophy } from "lucide-react";
 import { LANG_META, normalizeLang, type Lang } from "@/lib/i18n/types";
 import { useOptionalPrefs } from "@/lib/preferences";
+import { playMilestoneSound, playTaskCompleteSound } from "@/lib/sound-effects";
 
 export interface CustomToastApi {
   goalCompleted: (title: string, xp?: number) => void;
@@ -126,6 +127,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const goalCompleted = useCallback(
     (title: string, xp = 50) => {
+      playTaskCompleteSound();
       sonnerToast.custom(
         () => (
           <div
@@ -155,6 +157,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const milestoneAchieved = useCallback(
     (title: string, xp = 100, subtitle?: string) => {
+      playMilestoneSound();
       sonnerToast.custom(
         () => (
           <div
@@ -241,6 +244,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const streakExtended = useCallback(
     (days: number) => {
+      playTaskCompleteSound();
       sonnerToast.custom(
         () => (
           <div
@@ -268,6 +272,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const achievementUnlocked = useCallback(
     (name: string, xp = 100) => {
+      playMilestoneSound();
       sonnerToast.custom(
         () => (
           <div

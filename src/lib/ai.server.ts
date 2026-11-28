@@ -18,9 +18,17 @@ export { detectUnsafeDojoRequest };
 
 export type AiModelTier = "balanced" | "fast" | "complex" | "stem" | "deep" | "deep_research";
 
+export interface AiChatAttachment {
+  name?: string;
+  mimeType: string;
+  dataBase64: string;
+}
+
 export interface AiChatServerRequest {
   message: string;
   history?: Array<{ role: "user" | "assistant"; content: string }>;
+  attachments?: AiChatAttachment[];
+  customSystemPrompt?: string;
   modelTier?: AiModelTier;
   chatbotRole?: ChatbotRoleId;
   useSearchGrounding?: boolean;
@@ -121,6 +129,8 @@ export interface AiLiveTurnRequest {
   audioBase64?: string;
   textPrompt?: string;
   language?: string;
+  accent?: string;
+  speakingRate?: number;
   contextSummary?: string;
   voiceName?: string;
 }
@@ -360,20 +370,25 @@ function isPlaceholderSecretValue(val: string | undefined | null): boolean {
 }
 
 export function resolveGeminiApiKey(env?: unknown): string | null {
-  const p = typeof process !== "undefined" ? process.env : undefined;
   const fromProcess =
-    p?.["GEMINI_API_KEY"]?.trim() || p?.["API_KEY"]?.trim() || p?.["GOOGLE_API_KEY"]?.trim();
+    typeof process !== "undefined"
+      ? process.env?.["GEMINI_API_KEY"]?.trim() || process.env?.["VITE_GEMINI_API_KEY"]?.trim()
+      : undefined;
   if (fromProcess && !isPlaceholderSecretValue(fromProcess)) return fromProcess;
+
+  const metaEnv =
+    typeof import.meta !== "undefined"
+      ? (import.meta as unknown as { env?: Record<string, string | undefined> }).env
+      : undefined;
+  const fromMeta = metaEnv
+    ? metaEnv["GEMINI_API_KEY"]?.trim() || metaEnv["VITE_GEMINI_API_KEY"]?.trim()
+    : undefined;
+  if (fromMeta && !isPlaceholderSecretValue(fromMeta)) return fromMeta;
+
   if (env && typeof env === "object") {
-    const envObj = env as Record<string, unknown>;
-    const val = String(
-      envObj["GEMINI_API_KEY"] ?? envObj["API_KEY"] ?? envObj["GOOGLE_API_KEY"] ?? "",
-    ).trim();
+    const rec = env as Record<string, unknown>;
+    const val = String(rec["GEMINI_API_KEY"] ?? rec["VITE_GEMINI_API_KEY"] ?? "").trim();
     if (val && !isPlaceholderSecretValue(val)) return val;
-  }
-  // In AI Studio preview/runtime, if GEMINI_API_KEY isn't explicitly set in process.env, check if there's any non-empty fallback or let's accept any available key
-  if (p?.["GEMINI_API_KEY"]) {
-    return p["GEMINI_API_KEY"].trim();
   }
   return null;
 }
@@ -453,7 +468,7 @@ export function resolveChatModelConfig(tier?: AiModelTier): ModelRouteConfig {
         model: "gemini-3.1-flash-lite",
         thinkingLevel: ThinkingLevel.MINIMAL,
         isPaidTier: false,
-        label: "Fast Mode",
+        label: "Super Fast",
       };
     case "complex":
       return {
@@ -461,7 +476,7 @@ export function resolveChatModelConfig(tier?: AiModelTier): ModelRouteConfig {
         model: "gemini-4-neon",
         thinkingLevel: ThinkingLevel.HIGH,
         isPaidTier: true,
-        label: "Pro Mode",
+        label: "Pro",
       };
     case "stem":
       return {
@@ -469,7 +484,7 @@ export function resolveChatModelConfig(tier?: AiModelTier): ModelRouteConfig {
         model: "gemini-4-argon",
         thinkingLevel: ThinkingLevel.HIGH,
         isPaidTier: true,
-        label: "Pro STEM Mode",
+        label: "Pro",
       };
     case "deep":
       return {
@@ -477,7 +492,7 @@ export function resolveChatModelConfig(tier?: AiModelTier): ModelRouteConfig {
         model: "gemini-4-carbon",
         thinkingLevel: ThinkingLevel.HIGH,
         isPaidTier: true,
-        label: "Research Mode",
+        label: "Pro Research",
       };
     case "deep_research":
       return {
@@ -485,7 +500,7 @@ export function resolveChatModelConfig(tier?: AiModelTier): ModelRouteConfig {
         model: "gemini-4-hydrogen",
         thinkingLevel: ThinkingLevel.XHIGH,
         isPaidTier: false,
-        label: "Research Mode (Deep Study)",
+        label: "Pro Research",
       };
     case "balanced":
     default:
@@ -494,7 +509,7 @@ export function resolveChatModelConfig(tier?: AiModelTier): ModelRouteConfig {
         model: "gemini-4-hydrogen",
         thinkingLevel: ThinkingLevel.LOW,
         isPaidTier: false,
-        label: "Normal Mode",
+        label: "Normal",
       };
   }
 }
@@ -653,15 +668,16 @@ function buildSystemInstruction(req: AiChatServerRequest): string {
         ? "CHATBOT ROLE — STEM, CODING & REASONING MENTOR: Help with software engineering, debugging, mathematics, physics, chemistry, and structured problem-solving step by step."
         : req.chatbotRole === "exam"
           ? "CHATBOT ROLE — EXAM & QUIZ PREP COACH: Help prepare for quizzes and exams using active recall questions, immediate constructive feedback, concise revision summaries, and test-taking strategies."
-          : "CHATBOT ROLE — GENERAL INTELLIGENT COMPANION & TUTOR: Answer naturally and helpfully across everyday greetings and conversation, general knowledge, coding, writing and summarization, critical thinking, productivity, and all school subjects.";
+          : "CHATBOT ROLE — ALL-AROUND COMPANION, MENTOR & FRIEND: You are a true intellectual partner and close companion. You can talk about literally anything the user wants—friendship, daily banter, feelings, advice, storytelling, humor and jokes, packing clothes and luggage (polo shirts, athletic wear, shoes, etc.), science, mathematics, coding in Python/JS/HTML/C++, languages, history, Islamic insights, and study tutoring. Answer like a warm, witty, reliable best friend who is deeply knowledgeable and supportive.";
 
   const lines = [
-    `You are ${BRAND.shortName} AI, an intelligent, natural, and helpful general AI assistant and study companion.`,
+    `You are ${BRAND.shortName} AI, an advanced, highly intelligent, accurate, and versatile AI assistant and mentor.`,
     roleInstruction,
-    `LANGUAGE & DIALECT MATCHING: Always respond naturally in the exact language and regional dialect of the user's latest message across every turn (for example, if they write in Egyptian Arabic / عامية مصرية, respond warmly in natural Egyptian Arabic; if Gulf/Khaleeji Arabic, respond in Gulf Arabic; if Levantine/Shami, respond in Levantine; if Modern Standard Arabic / فصحى, respond in clean Modern Standard Arabic; if English, Spanish, French, etc., match that language naturally). Keep code snippets, formulas, and English terms accurate when replying bilingually. Fall back to language preference "${p.responseLanguage || "en"}" only if the user's message language is ambiguous.`,
-    "Respond directly and authentically to casual greetings, general topics, writing/drafting, programming, and academic questions alike without refusing non-academic or casual prompts.",
-    'STYLE & CLEANLINESS RULE: Write warmly, naturally, and respectfully. NEVER wrap words, greetings, or sentences in decorative asterisks (***...***), triple quotes ("""..."""), or excessive quotation marks—for example, write "ماذا أفعل لك؟" cleanly instead of "***ماذا أفعل لك"""؟". Use simple standard Markdown only for headings, concise lists, or fenced code blocks.',
-    "Format structured replies with clean Markdown (headings, concise lists, and fenced code blocks with language tags for code).",
+    `ZERO HALLUCINATION & STRICT ACCURACY: Never guess, fabricate facts, invent citations, or give vague filler answers. When explaining a rule (such as English grammar like countable/uncountable nouns, math equations, coding, or science), provide a complete, 100% accurate breakdown.`,
+    `STRUCTURED & CLEAR EXPLANATIONS: Whenever teaching a rule, concept, or technical topic, organize clearly with: (1) a direct simple definition, (2) bullet points for rules/steps, and (3) practical examples plus key exceptions if any.`,
+    `NATURAL LANGUAGE & DIALECT FLUENCY: Always understand and respond fluently in the exact language AND regional dialect of the user's latest message (Egyptian Arabic / عامية مصرية, Gulf Arabic, Levantine Arabic, Maghrebi Arabic, Modern Standard Arabic / فصحى, English, Chinese / 中文, French, Spanish, German, etc.). Match casual or formal tone naturally.`,
+    'STYLE & CLEANLINESS RULE: Write cleanly and respectfully. NEVER wrap words, greetings, or sentences in decorative asterisks (***...***), triple quotes ("""..."""), or excessive quotation marks. Use standard Markdown headings, bullet lists, tables, and fenced code blocks when helpful.',
+    "Do not start ordinary replies with robotic canned intros—get straight to a natural, human-sounding, intelligent answer.",
     `Complexity level: ${p.complexity || "balanced"}.`,
     toneRule,
     lengthRule,
@@ -676,13 +692,16 @@ function buildSystemInstruction(req: AiChatServerRequest): string {
     req.teachingStyle
       ? `TEACHING APPROACH REQUESTED: ${req.teachingStyle.slice(0, 240)}. Match this pedagogical format directly.`
       : "",
+    req.customSystemPrompt?.trim()
+      ? `USER CUSTOM PROMPT INSTRUCTIONS (honor faithfully unless violating safety): ${req.customSystemPrompt.trim().slice(0, 1500)}`
+      : "",
     req.lessonContext?.excerpt
       ? `ASK YOUR LESSON GROUNDING ("${req.lessonContext.title.slice(0, 120)}"): Answer primarily from the provided lesson excerpt below, quote short phrases when citing the lesson, and clearly state if asked about details outside this loaded excerpt—never fabricate textbook page numbers or syllabus claims.\nLesson Excerpt:\n${req.lessonContext.excerpt.slice(0, 2500)}`
       : "",
     req.useSearchGrounding
-      ? "Use Google Search grounding for current events, scholarships, university admissions, and factual verification; cite verified details cleanly without inventing URLs."
-      : "Never invent deadlines, test dates, scholarships, citations, or fake medical diagnoses. If you are uncertain of a factual date or threshold, state clearly that it depends or needs official verification.",
-    "When the user explicitly asks to create a study task, flashcard, or revision schedule, call the matching proposal tool (propose_study_task, propose_flashcard, or propose_revision_plan) so they can review and confirm before saving.",
+      ? "Use Search grounding for current events, scholarships, university admissions, and factual verification; cite verified details cleanly without inventing URLs."
+      : "Never invent deadlines, test dates, scholarships, citations, or fake medical diagnoses. If you genuinely lack real-time private data or are uncertain of a threshold, state so clearly and honestly.",
+    "Only call proposal tools (propose_study_task, propose_flashcard, propose_revision_plan) when the user explicitly asks to add or create a study task, flashcard, or revision schedule in their planner.",
     "Care mood/wellbeing journals and private reflections are strictly confidential and never accessed here.",
     req.domainMode === "dojo_mentor"
       ? "DOJO MENTOR AI MODE (NEXORA MARTIAL ARTS FOR GOOD): Guide exclusively on martial arts history, ethics, discipline, character building, respect, self-control, bullying prevention, safe training principles, and non-violent situational awareness/de-escalation. Strictly refuse any request to teach strikes, kicks, chokes, joint locks, fighting tactics, weapons combat, retaliation, extreme weight cutting, or medical diagnoses—calmly redirect to ethics, certified instructors, trusted adults, and healthcare professionals."
@@ -1154,7 +1173,7 @@ export async function generateStructuredStudyAid(
 
 // Intentionally no static fake-fallback reply in production chat: missing keys & upstream errors surface honestly.
 
-function buildGeminiChatHistory(
+export function buildGeminiChatHistory(
   history: AiChatServerRequest["history"],
   currentUserMessage: string,
 ): Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> {
@@ -1185,6 +1204,9 @@ function buildGeminiChatHistory(
       formatted.push({ role, parts: [{ text }] });
     }
   }
+  while (formatted.length > 0 && formatted[formatted.length - 1]?.role !== "model") {
+    formatted.pop();
+  }
   return formatted;
 }
 
@@ -1200,17 +1222,50 @@ export function sanitizeAiDisplayText(raw: string): string {
       // Odd indices match captured fenced code blocks
       if (index % 2 === 1) return segment;
       return segment
-        .replace(/\*{3,}/g, "")
         .replace(/"""+/g, "")
         .replace(/'''+/g, "")
-        .replace(/^([ \t]*)(?:\*+|["«»‘’“„]+)\s*/gm, "$1")
-        .replace(/\s*(?:\*+|["«»‘’“„]+)(?=[؟?!.,،]*[ \t]*$)/gm, "")
-        .replace(/\s*\*{3,}\s*/g, " ")
-        .replace(/\s*"""+\s*/g, " ")
-        .trim();
+        .replace(/\*{3,}/g, "")
+        .replace(/^([ \t]*)["«»]+\s*/gm, "$1")
+        .replace(/\s*["«»]+(?=[؟?!.,،]*[ \t]*$)/gm, "");
     })
     .join("")
     .trim();
+}
+
+const ALLOWED_CHAT_IMAGE_MIMES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/gif",
+]);
+
+function sanitizeChatAttachments(
+  attachments?: AiChatAttachment[],
+): Array<{ inlineData: { mimeType: string; data: string } }> {
+  if (!Array.isArray(attachments) || attachments.length === 0) return [];
+  const validParts: Array<{ inlineData: { mimeType: string; data: string } }> = [];
+  for (const att of attachments.slice(0, 4)) {
+    if (!att || typeof att !== "object") continue;
+    const rawMime =
+      String(att.mimeType ?? "")
+        .split(";")[0]
+        ?.trim()
+        .toLowerCase() ?? "";
+    const normalizedMime = rawMime === "image/jpg" ? "image/jpeg" : rawMime;
+    if (!ALLOWED_CHAT_IMAGE_MIMES.has(rawMime)) continue;
+    const rawB64 = String(att.dataBase64 ?? "")
+      .trim()
+      .replace(/^data:[^;]+;base64,/, "");
+    if (!rawB64 || rawB64.length > 8_500_000) continue;
+    validParts.push({
+      inlineData: {
+        mimeType: normalizedMime,
+        data: rawB64,
+      },
+    });
+  }
+  return validParts;
 }
 
 export async function generateStudyAssistantReply(
@@ -1235,7 +1290,10 @@ export async function generateStudyAssistantReply(
       isPaidModelError?: boolean;
     }
 > {
-  const userMessage = (req.message ?? "").trim().slice(0, 4000);
+  const imageParts = sanitizeChatAttachments(req.attachments);
+  const rawUserMessage = (req.message ?? "").trim().slice(0, 4000);
+  const userMessage =
+    rawUserMessage || (imageParts.length > 0 ? "Analyze the attached image(s) clearly." : "");
   if (!userMessage) {
     return {
       ok: false,
@@ -1277,25 +1335,27 @@ export async function generateStudyAssistantReply(
   }
 
   const apiKey = resolveGeminiApiKey(env);
-  const route = resolveChatModelConfig(req.modelTier);
   if (!apiKey) {
     const fallbackText = generateCurriculumAwareReply({
       message: userMessage,
       history: req.history,
       role: req.chatbotRole,
       langHint: req.prefs?.responseLanguage,
+      attachmentNames: req.attachments?.map((a) => a.name || "image"),
     });
     return {
       ok: true,
       text: fallbackText,
-      modelUsed: "btc-intelligent-fallback",
-      tierUsed: route.tier,
+      modelUsed: "btc-smart-fallback",
+      tierUsed: req.modelTier ?? "balanced",
       isGrounded: false,
       sources: [],
       searchQueries: [],
       proposedActions: [],
     };
   }
+
+  const route = resolveChatModelConfig(req.modelTier);
   const ai = createGenAiClient(apiKey);
   const chatHistory = buildGeminiChatHistory(req.history, userMessage);
   const systemInstruction = buildSystemInstruction(req);
@@ -1303,24 +1363,38 @@ export async function generateStudyAssistantReply(
   const effectiveModel = useSearch && route.isPaidTier ? "gemini-4-hydrogen" : route.model;
   const effectiveThinking = useSearch && route.isPaidTier ? ThinkingLevel.LOW : route.thinkingLevel;
 
+  const wantsProposalTools =
+    req.enableActionProposals === true ||
+    (req.enableActionProposals !== false &&
+      /\b(create|add|make|generate|propose|schedule)\s+(a\s+|an\s+)?(study\s+task|task|flashcard|revision\s+plan|study\s+plan)\b|(أضف|أنشئ|اعمل|جهز)\s*(لي\s*)?(مهمة|بطاقة|خطة\s*مراجعة|جدول\s*مذاكرة)/i.test(
+        userMessage,
+      ));
+
   const tools = useSearch
     ? [{ googleSearch: {} }]
-    : req.enableActionProposals !== false
+    : wantsProposalTools
       ? [{ functionDeclarations: NEXORA_FUNCTION_DECLARATIONS }]
       : undefined;
 
-  const runChatTurn = async (modelName: string, thinkingLevel: ThinkingLevel) => {
+  const messagePayload =
+    imageParts.length > 0 ? [...imageParts, { text: userMessage }] : userMessage;
+
+  const runChatTurn = async (
+    modelName: string,
+    thinkingLevel: ThinkingLevel,
+    includeTools = true,
+  ) => {
     const chat = ai.chats.create({
       model: modelName,
       config: {
         systemInstruction,
         thinkingConfig: { thinkingLevel },
-        ...(tools ? { tools } : {}),
+        ...(includeTools && tools ? { tools } : {}),
       },
       ...(chatHistory.length > 0 ? { history: chatHistory } : {}),
     });
     return withTransientRetry(() =>
-      withTimeout(chat.sendMessage({ message: userMessage }), 28_000, "AI assistant request"),
+      withTimeout(chat.sendMessage({ message: messagePayload }), 28_000, "AI assistant request"),
     );
   };
 
@@ -1328,13 +1402,32 @@ export async function generateStudyAssistantReply(
     let modelUsed = effectiveModel;
     let response;
     try {
-      response = await runChatTurn(effectiveModel, effectiveThinking);
+      response = await runChatTurn(effectiveModel, effectiveThinking, true);
     } catch (primaryErr) {
       const formattedPrimary = formatGeminiError(primaryErr, route.isPaidTier);
-      // Only fall back from paid tier to standard free-tier model when a billing/permission gate is hit
-      if (effectiveModel !== "gemini-4-hydrogen" && formattedPrimary.isPaidModelError) {
+      const isInvalidKey = formattedPrimary.message.includes("API key was rejected");
+      if (isInvalidKey) throw primaryErr;
+
+      const fallbackThinking =
+        route.tier === "deep"
+          ? ThinkingLevel.XHIGH
+          : route.tier === "complex"
+            ? ThinkingLevel.HIGH
+            : ThinkingLevel.LOW;
+
+      if (effectiveModel !== "gemini-4-hydrogen") {
         modelUsed = "gemini-4-hydrogen";
-        response = await runChatTurn("gemini-4-hydrogen", ThinkingLevel.LOW);
+        try {
+          response = await runChatTurn("gemini-4-hydrogen", fallbackThinking, true);
+        } catch (fallbackErr) {
+          if (tools) {
+            response = await runChatTurn("gemini-4-hydrogen", fallbackThinking, false);
+          } else {
+            throw fallbackErr;
+          }
+        }
+      } else if (tools) {
+        response = await runChatTurn("gemini-4-hydrogen", effectiveThinking, false);
       } else {
         throw primaryErr;
       }
@@ -1383,26 +1476,7 @@ export async function generateStudyAssistantReply(
       proposedActions,
     };
   } catch (err) {
-    const formatted = formatGeminiError(err, route.isPaidTier);
-    if (formatted.isPaidModelError) {
-      return formatted;
-    }
-    const fallbackText = generateCurriculumAwareReply({
-      message: userMessage,
-      history: req.history,
-      role: req.chatbotRole,
-      langHint: req.prefs?.responseLanguage,
-    });
-    return {
-      ok: true,
-      text: fallbackText,
-      modelUsed: "btc-intelligent-fallback",
-      tierUsed: route.tier,
-      isGrounded: false,
-      sources: [],
-      searchQueries: [],
-      proposedActions: [],
-    };
+    return formatGeminiError(err, route.isPaidTier);
   }
 }
 
@@ -1429,7 +1503,10 @@ export async function* streamStudyAssistantReply(
   req: AiChatServerRequest,
   env?: unknown,
 ): AsyncGenerator<AiStreamEvent> {
-  const userMessage = (req.message ?? "").trim().slice(0, 4000);
+  const imageParts = sanitizeChatAttachments(req.attachments);
+  const rawUserMessage = (req.message ?? "").trim().slice(0, 4000);
+  const userMessage =
+    rawUserMessage || (imageParts.length > 0 ? "Analyze the attached image(s) clearly." : "");
   if (!userMessage) {
     yield {
       type: "error",
@@ -1472,26 +1549,17 @@ export async function* streamStudyAssistantReply(
   }
 
   const apiKey = resolveGeminiApiKey(env);
-  const route = resolveChatModelConfig(req.modelTier);
   if (!apiKey) {
-    const fallbackText = generateCurriculumAwareReply({
-      message: userMessage,
-      history: req.history,
-      role: req.chatbotRole,
-      langHint: req.prefs?.responseLanguage,
-    });
-    yield { type: "delta", text: fallbackText };
     yield {
-      type: "done",
-      modelUsed: "btc-intelligent-fallback",
-      tierUsed: route.tier,
-      isGrounded: false,
-      sources: [],
-      searchQueries: [],
-      proposedActions: [],
+      type: "error",
+      status: 503,
+      code: "NOT_CONFIGURED",
+      message: "GEMINI_API_KEY is not configured on the server.",
     };
     return;
   }
+
+  const route = resolveChatModelConfig(req.modelTier);
   const ai = createGenAiClient(apiKey);
   const chatHistory = buildGeminiChatHistory(req.history, userMessage);
   const systemInstruction = buildSystemInstruction(req);
@@ -1499,24 +1567,38 @@ export async function* streamStudyAssistantReply(
   const effectiveModel = useSearch && route.isPaidTier ? "gemini-4-hydrogen" : route.model;
   const effectiveThinking = useSearch && route.isPaidTier ? ThinkingLevel.LOW : route.thinkingLevel;
 
+  const wantsProposalTools =
+    req.enableActionProposals === true ||
+    (req.enableActionProposals !== false &&
+      /\b(create|add|make|generate|propose|schedule)\s+(a\s+|an\s+)?(study\s+task|task|flashcard|revision\s+plan|study\s+plan)\b|(أضف|أنشئ|اعمل|جهز)\s*(لي\s*)?(مهمة|بطاقة|خطة\s*مراجعة|جدول\s*مذاكرة)/i.test(
+        userMessage,
+      ));
+
   const tools = useSearch
     ? [{ googleSearch: {} }]
-    : req.enableActionProposals !== false
+    : wantsProposalTools
       ? [{ functionDeclarations: NEXORA_FUNCTION_DECLARATIONS }]
       : undefined;
 
-  const openStream = async (modelName: string, thinkingLevel: ThinkingLevel) => {
+  const messagePayload =
+    imageParts.length > 0 ? [...imageParts, { text: userMessage }] : userMessage;
+
+  const openStream = async (
+    modelName: string,
+    thinkingLevel: ThinkingLevel,
+    includeTools = true,
+  ) => {
     const chat = ai.chats.create({
       model: modelName,
       config: {
         systemInstruction,
         thinkingConfig: { thinkingLevel },
-        ...(tools ? { tools } : {}),
+        ...(includeTools && tools ? { tools } : {}),
       },
       ...(chatHistory.length > 0 ? { history: chatHistory } : {}),
     });
     return withTimeout(
-      chat.sendMessageStream({ message: userMessage }),
+      chat.sendMessageStream({ message: messagePayload }),
       28_000,
       "AI assistant stream request",
     );
@@ -1553,18 +1635,38 @@ export async function* streamStudyAssistantReply(
 
   try {
     try {
-      const stream = await openStream(effectiveModel, effectiveThinking);
+      const stream = await openStream(effectiveModel, effectiveThinking, true);
       yield* consumeStream(stream);
     } catch (primaryErr) {
       const formattedPrimary = formatGeminiError(primaryErr, route.isPaidTier);
-      if (
-        !emittedAny &&
-        effectiveModel !== "gemini-4-hydrogen" &&
-        formattedPrimary.isPaidModelError
-      ) {
+      const isInvalidKey = formattedPrimary.message.includes("API key was rejected");
+      if (emittedAny || isInvalidKey) {
+        throw primaryErr;
+      }
+
+      const fallbackThinking =
+        route.tier === "deep"
+          ? ThinkingLevel.XHIGH
+          : route.tier === "complex"
+            ? ThinkingLevel.HIGH
+            : ThinkingLevel.LOW;
+
+      if (effectiveModel !== "gemini-4-hydrogen") {
         modelUsed = "gemini-4-hydrogen";
-        const fallbackStream = await openStream("gemini-4-hydrogen", ThinkingLevel.LOW);
-        yield* consumeStream(fallbackStream);
+        try {
+          const fallbackStream = await openStream("gemini-4-hydrogen", fallbackThinking, true);
+          yield* consumeStream(fallbackStream);
+        } catch (fallbackErr) {
+          if (!emittedAny && tools) {
+            const safeStream = await openStream("gemini-4-hydrogen", fallbackThinking, false);
+            yield* consumeStream(safeStream);
+          } else {
+            throw fallbackErr;
+          }
+        }
+      } else if (tools) {
+        const safeStream = await openStream("gemini-4-hydrogen", effectiveThinking, false);
+        yield* consumeStream(safeStream);
       } else {
         throw primaryErr;
       }
@@ -1612,31 +1714,12 @@ export async function* streamStudyAssistantReply(
     };
   } catch (err) {
     const formatted = formatGeminiError(err, route.isPaidTier);
-    if (formatted.isPaidModelError) {
-      yield {
-        type: "error",
-        status: formatted.status,
-        code: formatted.code,
-        message: formatted.message,
-        isPaidModelError: formatted.isPaidModelError,
-      };
-      return;
-    }
-    const fallbackText = generateCurriculumAwareReply({
-      message: userMessage,
-      history: req.history,
-      role: req.chatbotRole,
-      langHint: req.prefs?.responseLanguage,
-    });
-    yield { type: "delta", text: fallbackText };
     yield {
-      type: "done",
-      modelUsed: "btc-intelligent-fallback",
-      tierUsed: route.tier,
-      isGrounded: false,
-      sources: [],
-      searchQueries: [],
-      proposedActions: [],
+      type: "error",
+      status: formatted.status,
+      code: formatted.code,
+      message: formatted.message,
+      isPaidModelError: formatted.isPaidModelError,
     };
   }
 }
@@ -2176,9 +2259,27 @@ export async function runLiveVoiceTurn(
 
   const ai = createGenAiClient(apiKey);
   const lang = req.language || "en";
+  const accentLower = String(req.accent ?? "")
+    .trim()
+    .toLowerCase();
+  const accentInstruction =
+    accentLower === "en-gb" || accentLower === "gb" || accentLower === "uk"
+      ? "When speaking English, use authentic Standard British English (en-GB / Received Pronunciation) pronunciation, cadence, and British vocabulary."
+      : accentLower === "en-us" || accentLower === "us"
+        ? "When speaking English, use authentic General American English (en-US) pronunciation, natural rhotic /r/, and clear American cadence."
+        : "";
+  const rateNum = typeof req.speakingRate === "number" ? req.speakingRate : 1;
+  const speedInstruction =
+    rateNum < 0.9
+      ? "Speak at a slower, unhurried pace with clear pauses between phrases for maximum student clarity."
+      : rateNum > 1.15
+        ? "Speak at a crisp, fluent, slightly faster pace while keeping every word clear."
+        : "Speak at a clear, natural conversational pace.";
   const systemInstruction = [
     `You are ${BRAND.shortName} Live Voice Tutor speaking directly with a student.`,
     `Respond concisely and warmly in language code: ${lang}.`,
+    accentInstruction,
+    speedInstruction,
     "Keep spoken explanations focused, clear, and conversational.",
     req.contextSummary ? `Study context: ${req.contextSummary.slice(0, 400)}` : "",
   ]

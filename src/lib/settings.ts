@@ -20,6 +20,65 @@ export type ThemeMode = "dark" | "light" | "system";
 
 export type BtcVisualTheme = "btc_original" | "btc_alternative";
 export type BtcNavLayout = "classic" | "modern";
+export type MenuStylePref =
+  "classic_rail" | "glass_pills" | "minimal_underline" | "editorial_tab" | "floating_cards";
+
+export const MENU_STYLES: ReadonlyArray<{
+  id: MenuStylePref;
+  nameEn: string;
+  nameAr: string;
+  descEn: string;
+  descAr: string;
+}> = [
+  {
+    id: "classic_rail",
+    nameEn: "Classic Balanced",
+    nameAr: "كلاسيكي متوازن",
+    descEn: "Clean rounded items with subtle active highlight",
+    descAr: "عناصر ناعمة الحواف مع إبراز أنيق للقسم النشط",
+  },
+  {
+    id: "glass_pills",
+    nameEn: "Soft Capsules",
+    nameAr: "كبسولات زجاجية ناعمة",
+    descEn: "Pill-shaped links with luminous frosted backdrop",
+    descAr: "أزرار دائرية ناعمة بخلفية زجاجية شفافة ومريحة للعين",
+  },
+  {
+    id: "minimal_underline",
+    nameEn: "Minimal Hairline",
+    nameAr: "خط سفلي بسيط",
+    descEn: "Crisp low-chrome typography with hairline bottom accent",
+    descAr: "تصميم هادئ بسيط يبرز الاختيار بخط رفيع أنيق",
+  },
+  {
+    id: "editorial_tab",
+    nameEn: "Editorial Framing",
+    nameAr: "إطار تحريري أنيق",
+    descEn: "Structured bordered tabs inspired by academic journals",
+    descAr: "تبويبات مؤطّرة بدقة مستوحاة من المجلات العلمية",
+  },
+  {
+    id: "floating_cards",
+    nameEn: "Elevated Cards",
+    nameAr: "بطاقات بارزة",
+    descEn: "Distinct tactile menu tiles with crisp depth & spacing",
+    descAr: "أزرار بارزة على هيئة بطاقات منفصلة بتباعد واضح",
+  },
+];
+
+export function normalizeMenuStyle(value: unknown): MenuStylePref {
+  if (
+    value === "classic_rail" ||
+    value === "glass_pills" ||
+    value === "minimal_underline" ||
+    value === "editorial_tab" ||
+    value === "floating_cards"
+  ) {
+    return value;
+  }
+  return "classic_rail";
+}
 
 export type InterfaceTheme =
   | "classic"
@@ -344,6 +403,7 @@ export const TTS_VOICE_CATALOG: readonly TtsVoicePresetSpec[] = [
 
 export const TTS_SPEED_MIN = 0.65;
 export const TTS_SPEED_MAX = 1.5;
+export type EnglishAccent = "en-US" | "en-GB";
 
 export interface EcosystemPrefs {
   aiModelTier: EcosystemModelTier;
@@ -352,6 +412,7 @@ export interface EcosystemPrefs {
   ttsEngine: TtsEngineMode;
   ttsVoice: TtsVoicePresetId;
   ttsSpeed: number;
+  englishAccent: EnglishAccent;
   mapsLocationConsent: boolean;
   scene3dReducedMotion: boolean;
   lowBandwidth: boolean;
@@ -826,6 +887,7 @@ export const defaultEcosystemPrefs: EcosystemPrefs = {
   ttsEngine: "auto",
   ttsVoice: "Zephyr",
   ttsSpeed: 1,
+  englishAccent: "en-US",
   mapsLocationConsent: false,
   scene3dReducedMotion: false,
   lowBandwidth: false,
@@ -870,6 +932,16 @@ export function clampTtsSpeed(n: number): number {
 export function normalizeTtsEngine(value: unknown): TtsEngineMode {
   if (value === "auto" || value === "gemini" || value === "browser") return value;
   return "auto";
+}
+
+export function normalizeEnglishAccent(value: unknown): EnglishAccent {
+  const lower = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  if (lower === "en-gb" || lower === "gb" || lower === "uk" || lower === "british") {
+    return "en-GB";
+  }
+  return "en-US";
 }
 
 export function normalizeTtsVoice(value: unknown): TtsVoicePresetId {

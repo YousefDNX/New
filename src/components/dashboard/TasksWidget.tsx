@@ -21,6 +21,7 @@ import { formatDate } from "@/lib/locale-format";
 import { usePrefs } from "@/lib/preferences";
 import { isTaskClosed, isTaskOpen } from "@/lib/recommendations";
 import { useExperienceMode } from "@/lib/experience-mode";
+import { playTaskCompleteSound } from "@/lib/sound-effects";
 import { AdaptiveDataView, type AdaptiveDataItem } from "@/components/adaptive/AdaptiveDataView";
 import { AdaptiveFormView, type AdaptiveFormStep } from "@/components/adaptive/AdaptiveFormView";
 import { Button } from "@/components/ui/button";
@@ -88,6 +89,7 @@ export function TasksWidget({
       const willBeDone = task.status !== "done";
       await completeTask(task, 25);
       if (willBeDone) {
+        playTaskCompleteSound();
         toast.success(t("dash.tasks.toastDone"), { icon: "⚡" });
       } else {
         toast.info(t("dash.tasks.toastUndo"));

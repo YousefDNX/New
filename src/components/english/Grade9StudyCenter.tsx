@@ -19,7 +19,6 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Unit9VocabQuiz } from "@/components/study/Unit9VocabQuiz";
 import { VocabTestCenter } from "@/components/study/VocabTestCenter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +28,6 @@ import {
   type Grade9VocabUnitMeta,
   type Grade9VocabWord,
 } from "@/data/grade9-vocab-units";
-import { ACADEMIC_STUDENT_VOCABULARY, CONFUSING_WORDS_DECKS } from "@/data/grade9-expanded-vocab";
 import { speakEnglishText } from "@/lib/english-speech";
 import { useOptionalAuth } from "@/lib/auth";
 import { usePrefs } from "@/lib/preferences";
@@ -37,7 +35,9 @@ import { QUIZ_COLOR_PALETTES, getQuizButtonRadiusClass } from "@/lib/settings";
 import { playCorrectSound, playIncorrectSound } from "@/lib/sound-effects";
 import { speakArabicText } from "@/lib/speech-service";
 
-type StudyTopView = "units" | "unit9_quiz" | "vocabulary_cards" | "test_center" | "summaries";
+const GRADE_9_UNITS = ALL_STUDY_VOCAB_UNITS.filter((u) => u.unit >= 1 && u.unit <= 4);
+
+type StudyTopView = "units" | "vocabulary_cards" | "test_center" | "summaries";
 type UnitViewMode = "flashcards" | "quiz";
 
 export interface UnitSummaryGuide {
@@ -368,16 +368,15 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
     if (typeof window === "undefined") return "units";
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get("subtab");
-    if (tabParam === "unit9_quiz") return "unit9_quiz";
     if (tabParam === "test_center" || tabParam === "tests" || tabParam === "quiz")
       return "test_center";
-    if (tabParam === "vocabulary" || tabParam === "essential") return "vocabulary_cards";
+    if (tabParam === "vocabulary") return "vocabulary_cards";
     if (tabParam === "summaries") return "summaries";
     return "units";
   });
 
   const [selectedUnitNumber, setSelectedUnitNumber] = useState<number | null>(() => {
-    if (initialUnit && ALL_STUDY_VOCAB_UNITS.some((u) => u.unit === initialUnit)) {
+    if (initialUnit && GRADE_9_UNITS.some((u) => u.unit === initialUnit)) {
       return initialUnit;
     }
     if (typeof window === "undefined") return null;
@@ -385,7 +384,7 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
     const unitParam = params.get("unit");
     if (unitParam) {
       const parsed = parseInt(unitParam, 10);
-      if (ALL_STUDY_VOCAB_UNITS.some((u) => u.unit === parsed)) return parsed;
+      if (GRADE_9_UNITS.some((u) => u.unit === parsed)) return parsed;
     }
     return null;
   });
@@ -396,11 +395,9 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const [vocabSearch, setVocabSearch] = useState("");
-  const [vocabDeckFilter, setVocabDeckFilter] = useState<
-    "all" | "unit9" | "essential" | "academic" | "confusing"
-  >("all");
+  const [vocabDeckFilter, setVocabDeckFilter] = useState<"all" | "1" | "2" | "3" | "4">("all");
 
-  const selectedUnit: Grade9VocabUnitMeta | undefined = ALL_STUDY_VOCAB_UNITS.find(
+  const selectedUnit: Grade9VocabUnitMeta | undefined = GRADE_9_UNITS.find(
     (u) => u.unit === selectedUnitNumber,
   );
 
@@ -454,11 +451,12 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedUnitNumber, unitViewMode, isAr, handleNextWord, handlePrevWord]);
 
-  const handlePronounce = (wordText: string) => {
+  const handlePronounce = (wordText: string, specificAccent?: "en-US" | "en-GB") => {
     setIsSpeaking(true);
     const ok = speakEnglishText(wordText, {
       rate: 0.9,
-      lang: "en-GB",
+      accent: specificAccent,
+      lang: specificAccent,
       onEnd: () => setIsSpeaking(false),
     });
     setTimeout(() => setIsSpeaking(false), 1200);
@@ -477,50 +475,11 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
   };
 
   const explorerWords = useMemo(() => {
-    const unit9 = ALL_STUDY_VOCAB_UNITS.find((u) => u.unit === 9)?.words ?? [];
-    const essential = ALL_STUDY_VOCAB_UNITS.find((u) => u.unit === 10)?.words ?? [];
-    const allUnitsWords = ALL_STUDY_VOCAB_UNITS.flatMap((u) => u.words);
-
-    const academicWords: Grade9VocabWord[] = ACADEMIC_STUDENT_VOCABULARY.map((item) => ({
-      id: item.id,
-      word: item.word,
-      partOfSpeech: item.partOfSpeech,
-      phonetic: item.phonetic,
-      definitionEn: item.definitionEn,
-      meaningAr: item.meaningAr,
-      exampleEn: item.exampleEn,
-      exampleAr: item.exampleAr,
-      collocations: item.collocations ?? [],
-      synonyms: item.synonyms ?? [],
-      unit: 11,
-      grade: 9,
-    }));
-
-    const confusingWords: Grade9VocabWord[] = CONFUSING_WORDS_DECKS.map((item) => ({
-      id: item.id,
-      word: item.word,
-      partOfSpeech: item.partOfSpeech,
-      phonetic: item.phonetic,
-      definitionEn: item.definitionEn,
-      meaningAr: item.meaningAr,
-      exampleEn: item.exampleEn,
-      exampleAr: item.exampleAr,
-      collocations: [],
-      synonyms: [],
-      unit: 12,
-      grade: 9,
-    }));
-
+    const allUnitsWords = GRADE_9_UNITS.flatMap((u) => u.words);
     const pool =
-      vocabDeckFilter === "unit9"
-        ? unit9
-        : vocabDeckFilter === "essential"
-          ? essential
-          : vocabDeckFilter === "academic"
-            ? academicWords
-            : vocabDeckFilter === "confusing"
-              ? confusingWords
-              : allUnitsWords;
+      vocabDeckFilter === "all"
+        ? allUnitsWords
+        : (GRADE_9_UNITS.find((u) => String(u.unit) === vocabDeckFilter)?.words ?? allUnitsWords);
 
     const q = vocabSearch.trim().toLowerCase();
     if (!q) return pool;
@@ -649,41 +608,6 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
     );
   }
 
-  if (topView === "unit9_quiz" && !selectedUnitNumber) {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 pb-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setTopView("units")}
-            className="min-h-[44px] gap-2 text-xs font-semibold cursor-pointer"
-          >
-            <ArrowLeft className="size-4 rtl-flip" />
-            <span>{isAr ? "العودة لجميع الوحدات" : "Back to Study Units"}</span>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => handleSelectUnit(9, "flashcards")}
-            className="min-h-[44px] gap-2 text-xs font-semibold cursor-pointer"
-          >
-            <Layers className="size-4 text-primary" />
-            <span>
-              {isAr
-                ? "بطاقات المفردات المهمة (٢٤ كلمة)"
-                : "Important Vocabulary Flashcards (24 Words)"}
-            </span>
-          </Button>
-        </div>
-
-        <Unit9VocabQuiz onBackToFlashcards={() => handleSelectUnit(9, "flashcards")} />
-      </div>
-    );
-  }
-
   if (topView === "vocabulary_cards" && !selectedUnitNumber) {
     return (
       <div className="space-y-6">
@@ -701,67 +625,41 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
             </Button>
             <div>
               <h2 className="font-display text-xl font-bold text-foreground">
-                {isAr
-                  ? "موسوعة المفردات الأساسية والطالب المتفوّق"
-                  : "Expanded Student Vocabulary Cards"}
+                {isAr ? "بطاقات مفردات الصف التاسع (الوحدات ١–٤)" : "Grade 9 Units 1–4 Word Cards"}
               </h2>
               <p className="text-xs text-muted-foreground">
                 {isAr
-                  ? "تعلّم أهم الكلمات الأكاديمية والمفردات المهمة للعلوم والتكنولوجيا مع النطق والأمثلة."
-                  : "Learn essential academic words and important science vocabulary with audio and examples."}
+                  ? "استعرض جميع مفردات وحدات الصف التاسع الأربعة مع النطق والأمثلة."
+                  : "Browse all Grade 9 Units 1–4 vocabulary words with pronunciation and examples."}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="glow"
-              size="sm"
-              onClick={() => setTopView("test_center")}
-              className="min-h-[40px] gap-1.5 text-xs font-bold cursor-pointer"
-            >
-              <Zap className="size-3.5" />
-              <span>{isAr ? "بنك الاختبارات الشامل" : "Test Center"}</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setTopView("unit9_quiz")}
-              className="min-h-[40px] gap-1.5 text-xs font-bold cursor-pointer"
-            >
-              <Trophy className="size-3.5" />
-              <span>{isAr ? "اختبار المفردات المهمة" : "Important Vocabulary Quiz"}</span>
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="glow"
+            size="sm"
+            onClick={() => setTopView("test_center")}
+            className="min-h-[40px] gap-1.5 text-xs font-bold cursor-pointer"
+          >
+            <Zap className="size-3.5" />
+            <span>{isAr ? "بنك الاختبارات الشامل" : "Test Center"}</span>
+          </Button>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-1.5">
             {(
               [
-                { id: "all", labelEn: "All Words (141)", labelAr: "جميع الكلمات (١٤١)" },
                 {
-                  id: "essential",
-                  labelEn: "Essential Mastery (24)",
-                  labelAr: "كلمات التفوق الأساسية (٢٤)",
+                  id: "all",
+                  labelEn: "All Grade 9 Units (1–4)",
+                  labelAr: "جميع وحدات التاسع (١–٤)",
                 },
-                {
-                  id: "unit9",
-                  labelEn: "Important Vocabulary (24)",
-                  labelAr: "المفردات المهمة (٢٤)",
-                },
-                {
-                  id: "academic",
-                  labelEn: "Academic Super-Words (16)",
-                  labelAr: "مفردات أكاديمية متقدمة (١٦)",
-                },
-                {
-                  id: "confusing",
-                  labelEn: "Confusing Words & Traps (5)",
-                  labelAr: "كلمات متشابهة وفروق دقيقة (٥)",
-                },
+                { id: "1", labelEn: "Unit 1", labelAr: "الوحدة ١" },
+                { id: "2", labelEn: "Unit 2", labelAr: "الوحدة ٢" },
+                { id: "3", labelEn: "Unit 3", labelAr: "الوحدة ٣" },
+                { id: "4", labelEn: "Unit 4", labelAr: "الوحدة ٤" },
               ] as const
             ).map((f) => (
               <button
@@ -799,25 +697,32 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className="rounded-md bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-bold text-primary">
-                    {w.unit === 10
-                      ? "ESSENTIAL"
-                      : w.unit === 9
-                        ? "IMPORTANT"
-                        : w.unit === 11
-                          ? "ACADEMIC"
-                          : w.unit === 12
-                            ? "CONFUSING PAIRS"
-                            : `UNIT ${w.unit}`}{" "}
-                    · {w.partOfSpeech}
+                    {`UNIT ${w.unit}`} · {w.partOfSpeech}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => handlePronounce(w.word)}
-                    className="flex size-9 items-center justify-center rounded-full bg-surface-2 text-primary hover:bg-primary/15 cursor-pointer"
-                    aria-label={`Listen to ${w.word}`}
-                  >
-                    <Volume2 className="size-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handlePronounce(w.word, "en-US")}
+                      className="flex h-7 items-center gap-1 rounded-md bg-surface-2 px-2 text-[10px] font-semibold text-foreground hover:bg-primary/15 hover:text-primary cursor-pointer transition-colors"
+                      aria-label={`Listen to ${w.word} in US accent`}
+                      title="US Accent 🇺🇸"
+                    >
+                      <span>🇺🇸</span>
+                      <span>US</span>
+                      <Volume2 className="size-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePronounce(w.word, "en-GB")}
+                      className="flex h-7 items-center gap-1 rounded-md bg-surface-2 px-2 text-[10px] font-semibold text-foreground hover:bg-primary/15 hover:text-primary cursor-pointer transition-colors"
+                      aria-label={`Listen to ${w.word} in UK accent`}
+                      title="UK Accent 🇬🇧"
+                    >
+                      <span>🇬🇧</span>
+                      <span>UK</span>
+                      <Volume2 className="size-3" />
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -853,8 +758,8 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
             <GraduationCap className="size-4 shrink-0" />
             <span>
               {isAr
-                ? "الصف التاسع — المفردات والاختبارات والملخصات"
-                : "Grade 9 — Vocabulary, Quizzes & Summaries"}
+                ? "الصف التاسع — الوحدات ١ إلى ٤ والملخصات"
+                : "Grade 9 — Units 1–4, Quizzes & Summaries"}
             </span>
           </div>
 
@@ -864,8 +769,8 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
 
           <p className="max-w-2xl text-sm text-muted-foreground leading-relaxed">
             {isAr
-              ? "ادرس وحدات الصف التاسع (١–٤ والوحدة ٩ والكلمات الأساسية)، استمع للنطق البريطاني الصحيح، واختبر مستواك بتصحيح فوري."
-              : "Master Grade 9 vocabulary units (1–4, Unit 9 & Essential Pack), listen to verified British English pronunciation, and test yourself with immediate feedback."}
+              ? "ادرس وحدات الصف التاسع (١–٤)، استمع للنطق البريطاني الصحيح، واختبر مستواك بتصحيح فوري."
+              : "Master Grade 9 vocabulary units (1–4), listen to verified British English pronunciation, and test yourself with immediate feedback."}
           </p>
 
           <div className="flex flex-wrap items-center gap-2.5 pt-1">
@@ -888,29 +793,12 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setTopView("unit9_quiz")}
-              className="min-h-[44px] gap-2 font-bold cursor-pointer"
-            >
-              <Trophy className="size-4 text-primary" />
-              <span>
-                {isAr
-                  ? "اختبار المفردات المهمة التفاعلي (تصحيح فوري)"
-                  : "Important Vocabulary Interactive Quiz"}
-              </span>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
               onClick={() => setTopView("vocabulary_cards")}
               className="min-h-[44px] gap-2 font-semibold cursor-pointer"
             >
               <BookOpen className="size-4 text-primary" />
               <span>
-                {isAr
-                  ? "بطاقات المفردات الأساسية والموسّعة (١٤١ كلمة)"
-                  : "Browse All Study Cards & Essential Words (141)"}
+                {isAr ? "تصفّح بطاقات الوحدات ١–٤" : "Browse Grade 9 Word Cards (Units 1–4)"}
               </span>
             </Button>
 
@@ -928,17 +816,13 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
         </div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          {ALL_STUDY_VOCAB_UNITS.map((unitMeta) => {
+          {GRADE_9_UNITS.map((unitMeta) => {
             const wordCount = unitMeta.words.length;
-            const isUnit9 = unitMeta.unit === 9;
-            const isEssential = unitMeta.unit === 10;
 
             return (
               <div
                 key={unitMeta.unit}
-                className={`surface-card group flex flex-col justify-between rounded-2xl border p-5 sm:p-6 transition-all hover:border-primary/50 ${
-                  isUnit9 || isEssential ? "border-primary/40" : "border-border/80"
-                }`}
+                className="surface-card group flex flex-col justify-between rounded-2xl border border-border/80 p-5 sm:p-6 transition-all hover:border-primary/50"
               >
                 <div
                   className="space-y-3 cursor-pointer"
@@ -946,15 +830,7 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-3 py-1 font-mono text-xs font-bold text-primary tracking-wider">
-                      {isEssential
-                        ? isAr
-                          ? "كلمات التفوّق"
-                          : "ESSENTIAL PACK"
-                        : isUnit9
-                          ? isAr
-                            ? "المفردات المهمة"
-                            : "IMPORTANT VOCAB"
-                          : `UNIT ${unitMeta.unit}`}
+                      {`UNIT ${unitMeta.unit}`}
                     </span>
                     <span className="text-xs font-medium text-muted-foreground">
                       {isAr ? `${wordCount} كلمة` : `${wordCount} words`}
@@ -982,27 +858,14 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
                   </button>
 
                   <div className="flex items-center gap-2">
-                    {isUnit9 ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="glow"
-                        onClick={() => handleSelectUnit(9, "quiz")}
-                        className="min-h-[40px] gap-1.5 text-xs font-bold cursor-pointer"
-                      >
-                        <HelpCircle className="size-3.5" />
-                        <span>{isAr ? "اختبار المفردات المهمة" : "Important Vocab Quiz"}</span>
-                      </Button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleSelectUnit(unitMeta.unit, "quiz")}
-                        className="inline-flex min-h-[40px] items-center gap-1 rounded-lg border border-border bg-surface-2 px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary/40 cursor-pointer"
-                      >
-                        <Sparkles className="size-3 text-primary" />
-                        <span>{isAr ? "اختبار سريع" : "Quick Quiz"}</span>
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleSelectUnit(unitMeta.unit, "quiz")}
+                      className="inline-flex min-h-[40px] items-center gap-1 rounded-lg border border-border bg-surface-2 px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary/40 cursor-pointer"
+                    >
+                      <Sparkles className="size-3 text-primary" />
+                      <span>{isAr ? "اختبار سريع" : "Quick Quiz"}</span>
+                    </button>
 
                     <button
                       type="button"
@@ -1038,15 +901,7 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
 
         <div className="min-w-0 flex-1 text-center">
           <div className="text-xs font-bold text-primary font-mono tracking-wider">
-            {selectedUnit.unit === 10
-              ? isAr
-                ? "كلمات التفوّق الأساسية"
-                : "ESSENTIAL VOCABULARY"
-              : selectedUnit.unit === 9
-                ? isAr
-                  ? "المفردات المهمة — العلوم والتكنولوجيا"
-                  : "IMPORTANT VOCABULARY"
-                : `UNIT ${selectedUnit.unit}`}
+            {`UNIT ${selectedUnit.unit}`}
           </div>
           <div className="text-xs text-muted-foreground leading-snug">
             {isAr ? selectedUnit.themeAr : selectedUnit.themeEn}
@@ -1080,15 +935,11 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
       </div>
 
       {unitViewMode === "quiz" ? (
-        selectedUnit.unit === 9 ? (
-          <Unit9VocabQuiz onBackToFlashcards={() => setUnitViewMode("flashcards")} />
-        ) : (
-          <GenericUnitImmediateQuiz
-            unitMeta={selectedUnit}
-            isAr={isAr}
-            onBackToFlashcards={() => setUnitViewMode("flashcards")}
-          />
-        )
+        <GenericUnitImmediateQuiz
+          unitMeta={selectedUnit}
+          isAr={isAr}
+          onBackToFlashcards={() => setUnitViewMode("flashcards")}
+        />
       ) : (
         <div className="mx-auto max-w-2xl space-y-5">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -1129,17 +980,30 @@ export function Grade9StudyCenter({ initialUnit }: { initialUnit?: number | null
                   </h2>
                 </div>
 
-                <div>
+                <div className="flex flex-wrap items-center justify-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePronounce(currentWord.word)}
+                    onClick={() => handlePronounce(currentWord.word, "en-US")}
                     disabled={isSpeaking}
-                    className="min-h-[42px] gap-2 rounded-full px-4 text-xs font-semibold cursor-pointer border-primary/40 hover:bg-primary/10"
+                    className="min-h-[40px] gap-1.5 rounded-full px-4 text-xs font-semibold cursor-pointer border-primary/40 hover:bg-primary/10"
                   >
+                    <span>🇺🇸</span>
                     <Volume2 className="size-4 text-primary" />
-                    <span>{isAr ? "استمع للنطق (British)" : "Listen (British English)"}</span>
+                    <span>{isAr ? "نطق أمريكي (US)" : "American Accent (US)"}</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePronounce(currentWord.word, "en-GB")}
+                    disabled={isSpeaking}
+                    className="min-h-[40px] gap-1.5 rounded-full px-4 text-xs font-semibold cursor-pointer border-primary/40 hover:bg-primary/10"
+                  >
+                    <span>🇬🇧</span>
+                    <Volume2 className="size-4 text-primary" />
+                    <span>{isAr ? "نطق بريطاني (UK)" : "British Accent (UK)"}</span>
                   </Button>
                 </div>
 

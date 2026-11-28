@@ -685,16 +685,42 @@ export function ReadingAcademyPanel({
               </h4>
             </div>
             {isSpeechSynthesisAvailable() && (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => speakEnglishText(passage.paragraphs.join(" "))}
-                className="h-8 gap-1.5 text-xs"
-              >
-                <Volume2 className="size-3.5" />
-                <span>Listen Aloud</span>
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    speakEnglishText(passage.paragraphs.join(" "), {
+                      lang: "en-US",
+                      accent: "en-US",
+                    })
+                  }
+                  className="h-8 gap-1.5 text-xs font-semibold cursor-pointer"
+                  title="Listen passage in American English accent"
+                >
+                  <span>🇺🇸</span>
+                  <Volume2 className="size-3.5 text-primary" />
+                  <span>US Accent</span>
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    speakEnglishText(passage.paragraphs.join(" "), {
+                      lang: "en-GB",
+                      accent: "en-GB",
+                    })
+                  }
+                  className="h-8 gap-1.5 text-xs font-semibold cursor-pointer"
+                  title="Listen passage in British English accent"
+                >
+                  <span>🇬🇧</span>
+                  <Volume2 className="size-3.5 text-primary" />
+                  <span>UK Accent</span>
+                </Button>
+              </div>
             )}
           </div>
 
@@ -724,21 +750,41 @@ export function ReadingAcademyPanel({
                     {v.definition}
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    onSaveNotebookWord({
-                      ...v,
-                      example: passage.paragraphs[0] ?? v.definition,
-                      sourceLabel: `Reading · ${passage.title}`,
-                    })
-                  }
-                  className="h-8 shrink-0 text-[11px]"
-                >
-                  + Save
-                </Button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => speakEnglishText(v.word, { lang: "en-US", accent: "en-US" })}
+                    className="flex h-7 items-center gap-0.5 rounded-md bg-surface-2 px-1.5 text-[10px] font-semibold text-foreground hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors"
+                    title={`Pronounce ${v.word} in US accent`}
+                  >
+                    <span>🇺🇸</span>
+                    <Volume2 className="size-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => speakEnglishText(v.word, { lang: "en-GB", accent: "en-GB" })}
+                    className="flex h-7 items-center gap-0.5 rounded-md bg-surface-2 px-1.5 text-[10px] font-semibold text-foreground hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors"
+                    title={`Pronounce ${v.word} in UK accent`}
+                  >
+                    <span>🇬🇧</span>
+                    <Volume2 className="size-3" />
+                  </button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      onSaveNotebookWord({
+                        ...v,
+                        example: passage.paragraphs[0] ?? v.definition,
+                        sourceLabel: `Reading · ${passage.title}`,
+                      })
+                    }
+                    className="h-7 text-[11px] px-2 cursor-pointer"
+                  >
+                    + Save
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

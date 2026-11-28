@@ -28,7 +28,7 @@ const CATEGORIES: ReadonlyArray<{
   { id: "fiqh", labelAr: "الفقه", labelEn: "Fiqh" },
   { id: "aqeedah", labelAr: "العقيدة", labelEn: "Aqeedah" },
   { id: "seerah", labelAr: "السيرة", labelEn: "Seerah" },
-  { id: "adhkar", labelAr: "الأذكار", labelEn: "Adhkar" },
+  { id: "adhkar", labelAr: "الأذكار", labelEn: "Azkar" },
   { id: "dua", labelAr: "الأدعية", labelEn: "Duas" },
   { id: "names", labelAr: "الأسماء الحسنى", labelEn: "99 Names" },
 ];
@@ -56,7 +56,7 @@ export const UnifiedIslamicSearchPanel: React.FC<UnifiedIslamicSearchPanelProps>
         <p className="text-xs text-stone-500 dark:text-stone-400">
           {isAr
             ? "ابحث في وقت واحد عبر القرّاء، الدول، السور، التفسير، التجويد، الأربعين النووية، السنن، الفقه، العقيدة، السيرة، الأذكار، الأدعية، وأسماء الله الحسنى."
-            : "Search simultaneously across countries, reciters, surahs, Tafsir guides, Tajweed rules, Forty Nawawi, Daily Sunnah, Fiqh, Aqeedah, Seerah, Adhkar, Duas, and Names of Allah."}
+            : "Search simultaneously across countries, reciters, surahs, Tafsir guides, Tajweed rules, Forty Nawawi, Daily Sunnah, Fiqh, Aqeedah, Seerah, Azkar, Duas, and Names of Allah."}
         </p>
       </div>
 

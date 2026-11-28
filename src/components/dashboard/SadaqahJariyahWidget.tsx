@@ -27,6 +27,7 @@ import {
   SADAQAH_QUICK_PRESETS,
   clampGoalTarget,
   computeConsistencyMetrics,
+  createInitialSadaqahState,
   loadSadaqahState,
   logSadaqahDeed,
   removeSadaqahDeed,
@@ -63,18 +64,12 @@ export const SadaqahJariyahWidget: React.FC<SadaqahJariyahWidgetProps> = ({
 }) => {
   const isAr = lang === "ar";
   const localeLang: Lang = lang in LANG_META ? (lang as Lang) : "en";
-  const [tracker, setTracker] = useState<SadaqahTrackerState>(() => loadSadaqahState());
-  const [familyNames, setFamilyNames] = useState<string>(() => {
-    if (typeof window === "undefined") return "";
-    try {
-      return window.localStorage.getItem(SADAQAH_FAMILY_STORAGE_KEY) ?? "";
-    } catch {
-      return "";
-    }
-  });
+  const [tracker, setTracker] = useState<SadaqahTrackerState>(() => createInitialSadaqahState());
+  const [familyNames, setFamilyNames] = useState<string>("");
+  const isMountedRef = React.useRef(false);
 
   const [editingFamily, setEditingFamily] = useState(false);
-  const [familyDraft, setFamilyDraft] = useState(familyNames);
+  const [familyDraft, setFamilyDraft] = useState("");
   const [showGoalEditor, setShowGoalEditor] = useState(false);
 
   const [draftCadence, setDraftCadence] = useState<ConsistencyCadence>(tracker.goalCadence);
@@ -86,6 +81,21 @@ export const SadaqahJariyahWidget: React.FC<SadaqahJariyahWidgetProps> = ({
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    setTracker(loadSadaqahState());
+    try {
+      const saved = window.localStorage.getItem(SADAQAH_FAMILY_STORAGE_KEY) ?? "";
+      setFamilyNames(saved);
+      setFamilyDraft(saved);
+    } catch {
+      // Ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
     saveSadaqahState(tracker);
   }, [tracker]);
 

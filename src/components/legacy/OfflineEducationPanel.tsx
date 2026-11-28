@@ -290,7 +290,7 @@ export function OfflineEducationPanel() {
             <span>Online-Only Features (Clear Transparency)</span>
           </div>
           <ul className="list-disc ps-4 space-y-1 text-[11px] text-muted-foreground">
-            <li>Real-time Gemini Live voice coaching &amp; audio synthesis.</li>
+            <li>Real-time BTC Live voice coaching &amp; audio synthesis.</li>
             <li>Google Maps satellite &amp; place autocomplete lookups.</li>
             <li>Live community moderation submission &amp; peer study chat.</li>
             <li>Multi-device cloud sync via Firebase Firestore.</li>

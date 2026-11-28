@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ModernSelect } from "@/components/ui/modern-select";
 import { Textarea } from "@/components/ui/textarea";
+import { playTaskCompleteSound } from "@/lib/sound-effects";
 import {
   useCareActions,
   useCareEntries,
@@ -29,7 +30,25 @@ import { recordLastVisitedModule } from "@/lib/continue-tracker";
 import type { CareMood, JournalMood } from "@/lib/firestore-data";
 import { usePrefs } from "@/lib/preferences";
 
-type WellbeingTab = "checkin" | "journal" | "habits" | "calm";
+type WellbeingTab = "checkin" | "journal" | "habits" | "calm" | "packing";
+
+const INITIAL_PACKING_ITEMS = [
+  { id: "p1", ar: "٢ بولو", en: "2 Polo shirts" },
+  { id: "p2", ar: "تيشيرتين عاديين", en: "2 Casual T-shirts" },
+  { id: "p3", ar: "قميصين", en: "2 Shirts" },
+  { id: "p4", ar: "قميصين بكم", en: "2 Long-sleeve shirts" },
+  { id: "p5", ar: "طقمين رياضيين", en: "2 Athletic Tracksuits" },
+  { id: "p6", ar: "كلثونات (ملابس داخلية)", en: "Underwear / Briefs" },
+  { id: "p7", ar: "طاقية", en: "Cap / Hat" },
+  { id: "p8", ar: "فلنات", en: "Undershirts" },
+  { id: "p9", ar: "شورتين", en: "2 Shorts" },
+  { id: "p10", ar: "ترينج رياضي", en: "Athletic Tracksuit" },
+  { id: "p11", ar: "تيشيرت رياضي", en: "Athletic T-shirt" },
+  { id: "p12", ar: "شبشبين", en: "2 Pairs of Slippers" },
+  { id: "p13", ar: "حذاء", en: "Shoes" },
+  { id: "p14", ar: "كوتشي", en: "Sneakers / Trainers" },
+  { id: "p15", ar: "بنطلونين", en: "2 Trousers / Pants" },
+];
 
 const HEALTHY_HABITS = [
   { id: "water", en: "Drink enough water today", ar: "شرب كمية كافية من الماء اليوم" },
@@ -109,6 +128,32 @@ export function WellbeingWorkspace() {
       } catch {
         // ignore
       }
+      return next;
+    });
+  };
+
+  const packingStorageKey = `btc_packing_${user?.uid || "guest"}_v1`;
+  const [packingState, setPackingState] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(packingStorageKey);
+      setPackingState(raw ? (JSON.parse(raw) as Record<string, boolean>) : {});
+    } catch {
+      setPackingState({});
+    }
+  }, [packingStorageKey]);
+
+  const togglePackingItem = (id: string) => {
+    setPackingState((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try {
+        window.localStorage.setItem(packingStorageKey, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      playTaskCompleteSound();
       return next;
     });
   };
@@ -207,6 +252,12 @@ export function WellbeingWorkspace() {
             { id: "journal", en: "Reflection Journal", ar: "دفتر التأمل", icon: BookHeart },
             { id: "habits", en: "Healthy Habits", ar: "العادات الصحية", icon: Sparkles },
             { id: "calm", en: "Calm Routines", ar: "تمارين الهدوء", icon: Wind },
+            {
+              id: "packing",
+              en: "Luggage & Packing",
+              ar: "قائمة السفر والملابس",
+              icon: CheckCircle2,
+            },
           ] as const
         ).map((item) => {
           const Icon = item.icon;
@@ -619,6 +670,74 @@ export function WellbeingWorkspace() {
                     <Circle className="size-4 shrink-0 text-muted-foreground" />
                   )}
                   <span>{isAr ? item.ar : item.en}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* LUGGAGE & PACKING CHECKLIST */}
+      {tab === "packing" && (
+        <div className="surface-card space-y-4 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-3">
+            <div>
+              <h3 className="font-display text-base font-bold text-foreground">
+                {isAr ? "قائمة السفر والملابس الذكية" : "Smart Luggage & Packing Checklist"}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                {isAr
+                  ? "قائمة مخصصة لملابسك وأغراضك (٢ بولو، تيشيرتان، قميصين، كوتشي، إلخ)."
+                  : "Organized clothing and gear checklist for trips and camps."}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                {Object.values(packingState).filter(Boolean).length} /{" "}
+                {INITIAL_PACKING_ITEMS.length} {isAr ? "جاهز" : "Packed"}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setPackingState({});
+                  try {
+                    window.localStorage.removeItem(packingStorageKey);
+                  } catch {
+                    /* ignore */
+                  }
+                  toast.info(isAr ? "تم إعادة تعيين القائمة" : "Packing list reset");
+                }}
+                className="text-xs"
+              >
+                {isAr ? "إعادة تعيين" : "Reset"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+            {INITIAL_PACKING_ITEMS.map((item) => {
+              const checked = Boolean(packingState[item.id]);
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => togglePackingItem(item.id)}
+                  className={`flex items-center gap-3 rounded-xl border p-3 text-start text-xs font-medium cursor-pointer transition-all ${
+                    checked
+                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200"
+                      : "border-border/80 bg-surface-2/50 hover:bg-surface-2 text-foreground"
+                  }`}
+                >
+                  {checked ? (
+                    <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  ) : (
+                    <Circle className="size-4 shrink-0 text-muted-foreground" />
+                  )}
+                  <span className={checked ? "line-through opacity-80" : ""}>
+                    {isAr ? item.ar : item.en}
+                  </span>
                 </button>
               );
             })}

@@ -230,7 +230,7 @@ describe("Theme customization (data-ui-theme), density (data-density), and cloud
     expect(clientEntry).toContain("StartClient");
 
     const sw = readFileSync(resolve(process.cwd(), "public/sw.js"), "utf8");
-    expect(sw).toContain("btc-shell-v5");
+    expect(sw).toMatch(/btc-shell-v[5-9]/);
     expect(sw).toContain("/node_modules/");
     expect(sw).toContain("/@vite/");
     expect(sw).toContain("/@id/");

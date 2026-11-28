@@ -33,6 +33,8 @@ import {
   userRequiresEmailVerification,
   waitForAuthReady,
 } from "@/lib/firebase-auth";
+import { setPendingRegistrationGender } from "@/lib/auth-bootstrap";
+import type { StudentGender } from "@/lib/firestore-data";
 import { VerificationPending } from "@/components/auth/VerificationPending";
 import { Button } from "@/components/ui/button";
 import {
@@ -87,6 +89,9 @@ function AuthEntryPage() {
   const [googleBusy, setGoogleBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Guest state
+  const [guestGender, setGuestGender] = useState<StudentGender>("male");
+
   // Sign In state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -116,6 +121,14 @@ function AuthEntryPage() {
     setBusy(true);
     setErrorMsg(null);
     try {
+      setPendingRegistrationGender(guestGender);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          "btc_guest_community_group",
+          guestGender === "male" ? "boys" : "girls",
+        );
+        window.localStorage.setItem("btc_guest_gender", guestGender);
+      }
       await signInAsAnonymousGuest(lang);
       await qc.invalidateQueries();
       void navigate({ to: redirectTo as never, replace: true });
@@ -380,6 +393,43 @@ function AuthEntryPage() {
                         ? "ابدأ فوراً دون الحاجة لبريد أو كلمة مرور. تُحفظ بياناتك محلياً ويمكنك ترقية حسابك لاحقاً في أي وقت."
                         : "Start learning instantly without an email or password. Your session data persists on this device and can be upgraded anytime."}
                     </p>
+                  </div>
+
+                  {/* Gender Selection for Guest Account */}
+                  <div className="space-y-2 text-start">
+                    <label className="block text-xs font-semibold text-foreground">
+                      {isAr
+                        ? "اختر الجنس (لتحديد مجتمع التعلم والمجموعات):"
+                        : "Select Gender (for your learning community):"}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setGuestGender("male")}
+                        className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-semibold transition-all cursor-pointer ${
+                          guestGender === "male"
+                            ? "border-primary bg-primary/10 text-primary shadow-sm ring-2 ring-primary/30"
+                            : "border-border bg-surface-2 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                        }`}
+                        aria-pressed={guestGender === "male"}
+                      >
+                        <span className="text-base">👦</span>
+                        <span>{isAr ? "ذكر (بنين)" : "Male (Boys)"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setGuestGender("female")}
+                        className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-semibold transition-all cursor-pointer ${
+                          guestGender === "female"
+                            ? "border-primary bg-primary/10 text-primary shadow-sm ring-2 ring-primary/30"
+                            : "border-border bg-surface-2 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                        }`}
+                        aria-pressed={guestGender === "female"}
+                      >
+                        <span className="text-base">👧</span>
+                        <span>{isAr ? "أنثى (بنات)" : "Female (Girls)"}</span>
+                      </button>
+                    </div>
                   </div>
 
                   <Button

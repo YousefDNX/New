@@ -30,7 +30,13 @@ import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
 import { AccessibilityQuickDialog } from "@/components/common/AccessibilityQuickDialog";
 import { QuranMiniPlayer } from "@/components/islamic/QuranMiniPlayer";
 import { MobileNav } from "@/components/nav/MobileNav";
+import {
+  ModernFloatingDock,
+  ModernMobileNav,
+  ModernNavHeader,
+} from "@/components/nav/ModernNavigation";
 import { Sidebar } from "@/components/nav/Sidebar";
+import { FocusDeckTopRibbon, SpatialFloatingDock } from "@/components/nav/UxShellChrome";
 import { UserMenu } from "@/components/nav/UserMenu";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import { Button } from "@/components/ui/button";
@@ -108,6 +114,8 @@ function AppLayoutInner() {
     t,
     lang,
     a11y,
+    effectiveLayoutMode,
+    effectiveBtcNavLayout,
     speakText,
     stopSpeaking,
     pauseSpeaking,
@@ -115,6 +123,13 @@ function AppLayoutInner() {
     speechState,
     speechSupported,
   } = usePrefs();
+  const isTopBarShell =
+    effectiveLayoutMode === "top_nav" ||
+    effectiveLayoutMode === "double_header" ||
+    (effectiveBtcNavLayout === "modern" && effectiveLayoutMode === "classic");
+  const isBottomDockShell =
+    effectiveLayoutMode === "bottom_dock" || effectiveLayoutMode === "zen_focus";
+  const showDesktopSidebar = !isTopBarShell && !isBottomDockShell;
   const [retryingBootstrap, setRetryingBootstrap] = useState(false);
   const [dismissedBootstrapError, setDismissedBootstrapError] = useState(false);
   const { isOnline } = usePWA();
@@ -156,7 +171,8 @@ function AppLayoutInner() {
     }
   };
 
-  const isNestedRoute = pathname !== "/app" && pathname !== "/app/";
+  const isAiAppRoute = pathname.startsWith("/app/ai");
+  const isNestedRoute = pathname !== "/app" && pathname !== "/app/" && !isAiAppRoute;
   const resolvedMeta = isNestedRoute ? resolveRouteMeta(pathname) : null;
   const routeSegmentLabel = resolvedMeta
     ? lang === "ar"
@@ -176,46 +192,63 @@ function AppLayoutInner() {
         {t("skip.content")}
       </a>
       <AccountPrefsSync />
-      <Sidebar />
+      {showDesktopSidebar && <Sidebar />}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Desktop Header */}
-        <header className="sticky top-0 z-30 hidden h-14 items-center justify-between gap-4 border-b border-border/80 bg-surface/90 px-6 backdrop-blur-md md:flex">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent("nexora:open-command-palette"))}
-              className="flex h-8.5 items-center gap-2 rounded-lg border border-border/80 bg-surface-2/70 px-3 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-              title="Search & Quick Navigation (Cmd+K)"
-            >
-              <Search className="size-3.5 text-primary" />
-              <span className="hidden lg:inline">{t("dash.search.placeholder")}</span>
-              <kbd className="hidden rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px] sm:inline">
-                ⌘K
-              </kbd>
-            </button>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <AccessibilityQuickDialog />
-            {a11y.readAloud && speechSupported && (
-              <Button
+        {/* Desktop Header tailored to the active layout architecture */}
+        {isTopBarShell ? (
+          <ModernNavHeader
+            secondaryStrip={effectiveLayoutMode === "double_header"}
+            onReadAloud={readCurrentPage}
+            showReadAloud={Boolean(a11y.readAloud && speechSupported)}
+            speechActive={speechState !== "idle"}
+          />
+        ) : isBottomDockShell ? (
+          <FocusDeckTopRibbon
+            allModulesTrigger={null}
+            routeLabel={routeSegmentLabel ?? null}
+            onReadAloud={readCurrentPage}
+            showReadAloud={Boolean(a11y.readAloud && speechSupported)}
+            speechActive={speechState !== "idle"}
+          />
+        ) : (
+          <header className="sticky top-0 z-30 hidden h-14 items-center justify-between gap-4 border-b border-border/80 bg-surface/90 px-6 backdrop-blur-md md:flex">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <button
                 type="button"
-                variant={speechState !== "idle" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={readCurrentPage}
-                className="h-8 gap-1.5 px-2.5 text-xs"
-                aria-label={t("a11y.readAloud.page")}
-                title={t("a11y.readAloud.page")}
+                onClick={() => window.dispatchEvent(new CustomEvent("nexora:open-command-palette"))}
+                className="flex h-8.5 items-center gap-2 rounded-lg border border-border/80 bg-surface-2/70 px-3 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                title="Search & Quick Navigation (Cmd+K)"
               >
-                <Volume2 className="size-3.5 text-primary" />
-                <span className="hidden lg:inline">{t("a11y.readAloud.page")}</span>
-              </Button>
-            )}
-            <LanguageSwitcher compact />
-            <UserMenu compact />
-          </div>
-        </header>
+                <Search className="size-3.5 text-primary" />
+                <span className="hidden lg:inline">{t("dash.search.placeholder")}</span>
+                <kbd className="hidden rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px] sm:inline">
+                  ⌘K
+                </kbd>
+              </button>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <AccessibilityQuickDialog />
+              {a11y.readAloud && speechSupported && (
+                <Button
+                  type="button"
+                  variant={speechState !== "idle" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={readCurrentPage}
+                  className="h-8 gap-1.5 px-2.5 text-xs"
+                  aria-label={t("a11y.readAloud.page")}
+                  title={t("a11y.readAloud.page")}
+                >
+                  <Volume2 className="size-3.5 text-primary" />
+                  <span className="hidden lg:inline">{t("a11y.readAloud.page")}</span>
+                </Button>
+              )}
+              <LanguageSwitcher compact />
+              <UserMenu compact />
+            </div>
+          </header>
+        )}
 
         {/* Mobile Header */}
         <header className="sticky top-0 z-30 flex h-14 w-full max-w-full items-center justify-between gap-2 border-b border-border/80 bg-surface/95 px-3 backdrop-blur-md md:hidden">
@@ -285,7 +318,11 @@ function AppLayoutInner() {
         <main
           id="main-content"
           tabIndex={-1}
-          className="mx-auto w-full max-w-7xl flex-1 px-4 pb-28 pt-6 focus:outline-none md:px-8 md:pb-12 md:pt-8"
+          className={
+            isAiAppRoute
+              ? "mx-auto w-full max-w-[1440px] flex-1 px-2 pb-20 pt-2 focus:outline-none sm:px-4 md:px-6 md:pb-4 md:pt-3"
+              : "mx-auto w-full max-w-7xl flex-1 px-4 pb-28 pt-6 focus:outline-none md:px-8 md:pb-12 md:pt-8"
+          }
         >
           {isNestedRoute && routeSegmentLabel && (
             <nav
@@ -323,14 +360,26 @@ function AppLayoutInner() {
           </AppErrorBoundary>
         </main>
 
-        <AppFooter />
+        {!isAiAppRoute && <AppFooter />}
       </div>
 
       <QuranMiniPlayer
         lang={lang}
         onOpenQuranPage={() => void router.navigate({ to: "/app/quran" })}
       />
-      <MobileNav />
+      {isBottomDockShell ? (
+        <>
+          <SpatialFloatingDock />
+          <ModernMobileNav />
+        </>
+      ) : isTopBarShell ? (
+        <>
+          <ModernFloatingDock />
+          <ModernMobileNav />
+        </>
+      ) : (
+        <MobileNav />
+      )}
 
       {showBackToTop && (
         <Button

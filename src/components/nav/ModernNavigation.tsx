@@ -41,13 +41,15 @@ export function ModernNavHeader({
   showReadAloud,
   speechActive,
   onOpenShortcuts,
+  secondaryStrip = false,
 }: {
   onReadAloud?: () => void;
   showReadAloud?: boolean;
   speechActive?: boolean;
   onOpenShortcuts?: () => void;
+  secondaryStrip?: boolean;
 }) {
-  const { t, lang } = usePrefs();
+  const { t, lang, effectiveMenuStyle } = usePrefs();
   const rbac = useRbac();
   const [megaOpen, setMegaOpen] = useState(false);
 
@@ -55,12 +57,23 @@ export function ModernNavHeader({
     Boolean(item && item.id && item.to),
   );
 
+  const navLinkShape =
+    effectiveMenuStyle === "glass_pills"
+      ? "rounded-full data-[status=active]:bg-primary/18 data-[status=active]:ring-1 data-[status=active]:ring-primary/35"
+      : effectiveMenuStyle === "minimal_underline"
+        ? "rounded-none border-b-2 border-transparent data-[status=active]:border-primary data-[status=active]:bg-transparent"
+        : effectiveMenuStyle === "editorial_tab"
+          ? "rounded-lg border border-transparent data-[status=active]:border-primary/45 data-[status=active]:bg-primary/10"
+          : effectiveMenuStyle === "floating_cards"
+            ? "rounded-xl border border-border/60 bg-surface-2/50 data-[status=active]:border-primary/50 data-[status=active]:bg-primary/15 data-[status=active]:shadow-xs"
+            : "rounded-xl data-[status=active]:bg-nav-active data-[status=active]:text-nav-active-foreground";
+
   return (
     <header
       data-testid="modern-nav-header"
       className="sticky top-0 z-30 hidden w-full px-4 pt-3 md:block"
     >
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-6 rounded-2xl border border-border/85 bg-surface/90 px-4 shadow-[var(--shadow-card)] backdrop-blur-xl">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 rounded-2xl border border-border/85 bg-surface/92 px-4 shadow-[var(--shadow-card)] backdrop-blur-xl">
         {/* Zone 1: Brand wordmark */}
         <div className="flex shrink-0 items-center">
           <Logo size="sm" showSubtitle={false} />
@@ -73,20 +86,25 @@ export function ModernNavHeader({
         >
           {primaryItems.map((item) => {
             const Icon = item.icon;
+            const itemLabel =
+              lang === "ar" ? item.labelAr : lang === "en" ? item.labelEn : t(item.label);
             return (
               <Link
                 key={item.id}
                 to={item.to}
                 activeOptions={{ exact: item.exact ?? false }}
                 className={cn(
-                  "group relative flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold text-muted-foreground transition-colors whitespace-nowrap",
+                  "group relative flex h-9 shrink-0 items-center gap-1.5 px-3 text-xs font-semibold text-muted-foreground transition-all whitespace-nowrap",
                   "hover:bg-surface-2/80 hover:text-foreground",
-                  "data-[status=active]:bg-nav-active data-[status=active]:text-nav-active-foreground",
+                  "data-[status=active]:text-nav-active-foreground",
+                  navLinkShape,
                 )}
               >
                 <Icon className="size-3.5 shrink-0 transition-transform group-hover:scale-105" />
-                <span>{t(item.label)}</span>
-                <span className="pointer-events-none absolute inset-x-3 -bottom-px h-0.5 scale-x-0 rounded-full bg-primary transition-transform group-data-[status=active]:scale-x-100" />
+                <span>{itemLabel}</span>
+                {effectiveMenuStyle !== "minimal_underline" && (
+                  <span className="pointer-events-none absolute inset-x-3 -bottom-px h-0.5 scale-x-0 rounded-full bg-primary transition-transform group-data-[status=active]:scale-x-100" />
+                )}
               </Link>
             );
           })}
@@ -136,6 +154,12 @@ export function ModernNavHeader({
                       <div className="space-y-0.5">
                         {items.map((item) => {
                           const Icon = item.icon;
+                          const itemLabel =
+                            lang === "ar"
+                              ? item.labelAr
+                              : lang === "en"
+                                ? item.labelEn
+                                : t(item.label);
                           return (
                             <Link
                               key={`modern-mega-${item.id}`}
@@ -145,7 +169,7 @@ export function ModernNavHeader({
                               className="flex min-h-[36px] items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium leading-snug text-foreground transition-colors hover:bg-surface-2 hover:text-primary data-[status=active]:bg-nav-active data-[status=active]:text-nav-active-foreground"
                             >
                               <Icon className="size-3.5 shrink-0 text-primary" />
-                              <span className="min-w-0 flex-1 break-words">{t(item.label)}</span>
+                              <span className="min-w-0 flex-1 break-words">{itemLabel}</span>
                             </Link>
                           );
                         })}
@@ -240,6 +264,32 @@ export function ModernNavHeader({
           <UserMenu compact />
         </div>
       </div>
+
+      {secondaryStrip && (
+        <div
+          data-testid="double-header-strip"
+          className="mx-auto mt-2 flex max-w-7xl items-center gap-1.5 overflow-x-auto rounded-xl border border-border/75 bg-surface-2/85 px-3 py-1.5 shadow-xs backdrop-blur-md no-scrollbar"
+        >
+          {["skills", "care", "future", "opportunities", "help", "settings"]
+            .map(getNavItemById)
+            .filter((item): item is NavItem => Boolean(item && item.id && item.to))
+            .map((item) => {
+              const Icon = item.icon;
+              const itemLabel =
+                lang === "ar" ? item.labelAr : lang === "en" ? item.labelEn : t(item.label);
+              return (
+                <Link
+                  key={`strip-${item.id}`}
+                  to={item.to}
+                  className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-surface hover:text-foreground data-[status=active]:bg-primary/15 data-[status=active]:text-primary whitespace-nowrap"
+                >
+                  <Icon className="size-3.5 text-primary" />
+                  <span>{itemLabel}</span>
+                </Link>
+              );
+            })}
+        </div>
+      )}
     </header>
   );
 }
@@ -277,7 +327,7 @@ export function ModernFloatingDock() {
     {
       to: "/app/quran" as const,
       icon: BookOpenCheck,
-      label: lang === "ar" ? "القرآن" : "Quran",
+      label: lang === "ar" ? "المركز الإسلامي" : "Islamic Center",
     },
   ];
 

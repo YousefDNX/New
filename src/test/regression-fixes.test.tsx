@@ -153,7 +153,7 @@ describe("Regression fixes: AI UI sanitization & Unit 3 Context Scenario Mode 8"
 
     const adhkarHits = searchUnifiedIslamicCenter("morning", "adhkar");
     expect(adhkarHits.length).toBeGreaterThan(0);
-    expect(adhkarHits[0]?.titleEn).toContain("Morning Adhkar");
+    expect(adhkarHits[0]?.titleEn).toContain("Morning Azkar");
 
     const duaHits = searchUnifiedIslamicCenter("parents", "dua");
     expect(duaHits.length).toBeGreaterThan(0);

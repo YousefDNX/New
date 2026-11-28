@@ -21,6 +21,7 @@ import { BRAND } from "@/config/brand";
 import { useProfile, useTasks, useUser } from "@/hooks/use-nexora";
 import { getLastVisitedModule } from "@/lib/continue-tracker";
 import { usePrefs } from "@/lib/preferences";
+import { MotionCard } from "@/components/ui/motion-card";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({
@@ -112,9 +113,9 @@ const MODULES = [
   {
     to: "/app/quran" as const,
     icon: BookOpenCheck,
-    enTitle: "Quran & Islamic Center",
-    arTitle: "القرآن الكريم والمركز الإسلامي",
-    enDesc: "Holy Quran reading, verified reciters, tafsir, and daily adhkar.",
+    enTitle: "Islamic Center",
+    arTitle: "المركز الإسلامي",
+    enDesc: "Holy Quran reading, verified reciters, prayer times, tafsir, and daily azkar.",
     arDesc: "المصحف الشريف، تلاوات معتمدة، التفسير، والأذكار اليومية.",
     tone: "text-teal-500 bg-teal-500/10",
   },
@@ -154,176 +155,184 @@ function StudentHomePage() {
   return (
     <div className="space-y-8 pb-12">
       {/* Calm Personalized Greeting & Continue Card */}
-      <section className="surface-card p-6 sm:p-7">
-        <div className="grid gap-6 lg:grid-cols-12 lg:items-stretch">
-          <div className="flex flex-col justify-center space-y-2 lg:col-span-7">
-            <p className="text-xs font-semibold text-primary">{workspaceModeLabel}</p>
-            <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl [text-wrap:balance]">
-              {isAr ? `أهلاً بك، ${nickname}` : `Welcome back, ${nickname}`}
-            </h1>
-            <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
-              {isAr
-                ? "بيئة تعلم هادئة وبسيطة. اختر المساحة التي تريد العمل عليها الآن."
-                : "A calm, clear space to learn, focus, and plan your day."}
-            </p>
-          </div>
+      <MotionCard delay={0.05}>
+        <section className="surface-card p-6 sm:p-7">
+          <div className="grid gap-6 lg:grid-cols-12 lg:items-stretch">
+            <div className="flex flex-col justify-center space-y-2 lg:col-span-7">
+              <p className="text-xs font-semibold text-primary">{workspaceModeLabel}</p>
+              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl [text-wrap:balance]">
+                {isAr ? `أهلاً بك، ${nickname}` : `Welcome back, ${nickname}`}
+              </h1>
+              <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
+                {isAr
+                  ? "بيئة تعلم هادئة وبسيطة. اختر المساحة التي تريد العمل عليها الآن."
+                  : "A calm, clear space to learn, focus, and plan your day."}
+              </p>
+            </div>
 
-          <div className="flex flex-col justify-between rounded-xl border border-primary/25 bg-primary/5 p-5 lg:col-span-5">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-                <Clock className="size-3.5" />
-                <span>{isAr ? "أكمل من حيث توقفت" : "Continue where you left off"}</span>
+            <div className="flex flex-col justify-between rounded-xl border border-primary/25 bg-primary/5 p-5 lg:col-span-5">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+                  <Clock className="size-3.5" />
+                  <span>{isAr ? "أكمل من حيث توقفت" : "Continue where you left off"}</span>
+                </div>
+                <div className="mt-1.5 font-display text-base font-bold text-foreground">
+                  {isAr ? continueTarget.labelAr : continueTarget.labelEn}
+                </div>
+                {(continueTarget.detailAr || continueTarget.detailEn) && (
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                    {isAr ? continueTarget.detailAr : continueTarget.detailEn}
+                  </p>
+                )}
               </div>
-              <div className="mt-1.5 font-display text-base font-bold text-foreground">
-                {isAr ? continueTarget.labelAr : continueTarget.labelEn}
+              <div className="pt-3">
+                <Button asChild size="sm" className="min-h-[40px] w-full gap-1.5 px-4 sm:w-auto">
+                  <Link to={continueTarget.path as never}>
+                    <span>{isAr ? "متابعة الآن" : "Resume"}</span>
+                    <ArrowRight className="size-3.5 rtl-flip" />
+                  </Link>
+                </Button>
               </div>
-              {(continueTarget.detailAr || continueTarget.detailEn) && (
-                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                  {isAr ? continueTarget.detailAr : continueTarget.detailEn}
-                </p>
-              )}
-            </div>
-            <div className="pt-3">
-              <Button asChild size="sm" className="min-h-[40px] w-full gap-1.5 px-4 sm:w-auto">
-                <Link to={continueTarget.path as never}>
-                  <span>{isAr ? "متابعة الآن" : "Resume"}</span>
-                  <ArrowRight className="size-3.5 rtl-flip" />
-                </Link>
-              </Button>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </MotionCard>
 
       {/* Quick Access Strip */}
-      <section
-        aria-label={isAr ? "الوصول السريع" : "Quick Access"}
-        className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4 items-stretch"
-      >
-        <Link
-          to="/app/tasks"
-          className="surface-card flex h-full items-center gap-3.5 p-4 transition-colors hover:border-primary/40"
+      <MotionCard delay={0.08}>
+        <section
+          aria-label={isAr ? "الوصول السريع" : "Quick Access"}
+          className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4 items-stretch"
         >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
-            <CheckSquare className="size-4.5" />
-          </span>
-          <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">
-              {isAr ? "المهام المفتوحة" : "Open Tasks"}
+          <Link
+            to="/app/tasks"
+            className="surface-card group flex h-full items-center gap-3.5 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-surface-2/40"
+          >
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-500">
+              <CheckSquare className="size-4.5" />
+            </span>
+            <div className="min-w-0">
+              <div className="text-xs text-muted-foreground">
+                {isAr ? "المهام المفتوحة" : "Open Tasks"}
+              </div>
+              <div className="font-display text-lg font-bold text-foreground tabular-nums">
+                {openTasks.length}
+              </div>
             </div>
-            <div className="font-display text-lg font-bold text-foreground tabular-nums">
-              {openTasks.length}
-            </div>
-          </div>
-        </Link>
+          </Link>
 
-        <Link
-          to="/app/english"
-          className="surface-card flex h-full items-center gap-3.5 p-4 transition-colors hover:border-primary/40"
-        >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-500">
-            <Languages className="size-4.5" />
-          </span>
-          <div className="min-w-0">
-            <div className="truncate text-xs font-semibold text-foreground leading-snug">
-              {isAr ? "عالم الإنجليزية" : "English World"}
+          <Link
+            to="/app/english"
+            className="surface-card group flex h-full items-center gap-3.5 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-surface-2/40"
+          >
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/10 text-cyan-500">
+              <Languages className="size-4.5" />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate text-xs font-semibold text-foreground leading-snug group-hover:text-primary transition-colors">
+                {isAr ? "عالم الإنجليزية" : "English World"}
+              </div>
+              <div className="truncate text-[11px] text-muted-foreground leading-snug">
+                {isAr ? "مفردات الصف ٩ والأكاديميات" : "Grade 9 & 6 Skill Studios"}
+              </div>
             </div>
-            <div className="truncate text-[11px] text-muted-foreground leading-snug">
-              {isAr ? "مفردات الصف ٩ والأكاديميات" : "Grade 9 & 6 Skill Studios"}
-            </div>
-          </div>
-        </Link>
+          </Link>
 
-        <Link
-          to="/app/ai"
-          className="surface-card flex h-full items-center gap-3.5 p-4 transition-colors hover:border-primary/40"
-        >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-500">
-            <Sparkles className="size-4.5" />
-          </span>
-          <div className="min-w-0">
-            <div className="truncate text-xs font-semibold text-foreground leading-snug">
-              {isAr ? "مساعد BTC الذكي" : "BTC AI"}
+          <Link
+            to="/app/ai"
+            className="surface-card group flex h-full items-center gap-3.5 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-surface-2/40"
+          >
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-purple-500/20 bg-purple-500/10 text-purple-500">
+              <Sparkles className="size-4.5" />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate text-xs font-semibold text-foreground leading-snug group-hover:text-primary transition-colors">
+                {isAr ? "مساعد BTC الذكي" : "BTC AI"}
+              </div>
+              <div className="truncate text-[11px] text-muted-foreground leading-snug">
+                {isAr ? "اسأل عن أي موضوع أو سؤال" : "General AI & study help"}
+              </div>
             </div>
-            <div className="truncate text-[11px] text-muted-foreground leading-snug">
-              {isAr ? "اسأل عن أي موضوع أو سؤال" : "General AI & study help"}
-            </div>
-          </div>
-        </Link>
+          </Link>
 
-        <Link
-          to="/app/help"
-          className="surface-card flex h-full items-center gap-3.5 p-4 transition-colors hover:border-primary/40"
-        >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-500">
-            <HelpCircle className="size-4.5" />
-          </span>
-          <div className="min-w-0">
-            <div className="truncate text-xs font-semibold text-foreground leading-snug">
-              {isAr ? "مركز المساعدة" : "Help Center"}
+          <Link
+            to="/app/help"
+            className="surface-card group flex h-full items-center gap-3.5 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-surface-2/40"
+          >
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-sky-500/20 bg-sky-500/10 text-sky-500">
+              <HelpCircle className="size-4.5" />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate text-xs font-semibold text-foreground leading-snug group-hover:text-primary transition-colors">
+                {isAr ? "مركز المساعدة" : "Help Center"}
+              </div>
+              <div className="truncate text-[11px] text-muted-foreground leading-snug">
+                {isAr ? "دليل استخدام المنصة" : "Guides & answers"}
+              </div>
             </div>
-            <div className="truncate text-[11px] text-muted-foreground leading-snug">
-              {isAr ? "دليل استخدام المنصة" : "Guides & answers"}
-            </div>
-          </div>
-        </Link>
-      </section>
+          </Link>
+        </section>
+      </MotionCard>
 
       {/* Daily Dua & Sadaqah Jariyah Paired Row */}
-      <section
-        aria-label={isAr ? "الدعاء والصدقة الجارية" : "Daily Dua & Sadaqah Jariyah"}
-        className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch"
-      >
-        <div className="lg:col-span-6">
-          <DailyDuaWidget lang={lang} className="h-full" />
-        </div>
-        <div className="lg:col-span-6">
-          <SadaqahJariyahWidget lang={lang} className="h-full" />
-        </div>
-      </section>
+      <MotionCard delay={0.11}>
+        <section
+          aria-label={isAr ? "الدعاء والصدقة الجارية" : "Daily Dua & Sadaqah Jariyah"}
+          className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch"
+        >
+          <div className="lg:col-span-6">
+            <DailyDuaWidget lang={lang} className="h-full" />
+          </div>
+          <div className="lg:col-span-6">
+            <SadaqahJariyahWidget lang={lang} className="h-full" />
+          </div>
+        </section>
+      </MotionCard>
 
       {/* All Modules Grid */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="font-display text-base font-bold text-foreground">
-            {isAr ? "جميع الوحدات التعليمية" : "Learning Modules"}
-          </h2>
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {completedTasks.length > 0
-              ? isAr
-                ? `${completedTasks.length} مهمة منجزة`
-                : `${completedTasks.length} completed tasks`
-              : null}
-          </span>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
-          {MODULES.map((card) => {
-            const Icon = card.icon;
-            return (
-              <Link
-                key={card.to}
-                to={card.to}
-                className="surface-card group flex h-full items-start gap-3.5 p-5 transition-colors hover:border-primary/45 hover:bg-surface-2/50"
-              >
-                <span
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${card.tone}`}
+      <MotionCard delay={0.14}>
+        <section className="space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-display text-base font-bold text-foreground">
+              {isAr ? "جميع الوحدات التعليمية" : "Learning Modules"}
+            </h2>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {completedTasks.length > 0
+                ? isAr
+                  ? `${completedTasks.length} مهمة منجزة`
+                  : `${completedTasks.length} completed tasks`
+                : null}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
+            {MODULES.map((card) => {
+              const Icon = card.icon;
+              return (
+                <Link
+                  key={card.to}
+                  to={card.to}
+                  className="surface-card group flex h-full items-start gap-3.5 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-surface-2/50"
                 >
-                  <Icon className="size-5" />
-                </span>
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="break-words font-display text-sm font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
-                    {isAr ? card.arTitle : card.enTitle}
+                  <span
+                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl border border-current/15 ${card.tone}`}
+                  >
+                    <Icon className="size-5" />
+                  </span>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="break-words font-display text-sm font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
+                      {isAr ? card.arTitle : card.enTitle}
+                    </div>
+                    <div className="break-words text-xs leading-relaxed text-muted-foreground">
+                      {isAr ? card.arDesc : card.enDesc}
+                    </div>
                   </div>
-                  <div className="break-words text-xs leading-relaxed text-muted-foreground">
-                    {isAr ? card.arDesc : card.enDesc}
-                  </div>
-                </div>
-                <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground rtl-flip group-hover:text-primary" />
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+                  <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground rtl-flip transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      </MotionCard>
     </div>
   );
 }

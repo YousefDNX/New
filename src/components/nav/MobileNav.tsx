@@ -35,7 +35,7 @@ function Tab({ item }: { item: NavItem }) {
 }
 
 export function MobileNav() {
-  const { t, lang } = usePrefs();
+  const { t, lang, effectiveMenuStyle } = usePrefs();
   const rbac = useRbac();
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -51,13 +51,14 @@ export function MobileNav() {
     <>
       {moreOpen && (
         <div
-          className="fixed inset-0 z-50 flex flex-col justify-end bg-black/50 backdrop-blur-xs md:hidden"
+          className="fixed inset-0 z-50 flex flex-col justify-end bg-black/55 backdrop-blur-xs md:hidden"
           onClick={() => setMoreOpen(false)}
         >
           <div
-            className="max-h-[75dvh] overflow-y-auto rounded-t-2xl border-t border-border bg-surface p-4 pb-8 shadow-2xl"
+            className="max-h-[78dvh] overflow-y-auto rounded-t-3xl border-t border-border bg-surface p-4 pb-8 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
             <div className="mb-3 flex items-center justify-between border-b border-border/70 pb-2.5">
               <span className="font-display text-sm font-bold text-foreground">
                 {lang === "ar" ? "جميع الأقسام" : "All Modules"}
@@ -106,7 +107,11 @@ export function MobileNav() {
       )}
 
       <nav
-        className="glass fixed inset-x-0 bottom-0 z-40 flex items-center border-t border-border bg-surface/95 px-1 md:hidden"
+        className={`glass fixed z-40 flex items-center border-border bg-surface/95 px-1.5 backdrop-blur-xl md:hidden ${
+          effectiveMenuStyle === "floating_cards" || effectiveMenuStyle === "glass_pills"
+            ? "inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.45rem)] rounded-2xl border shadow-2xl"
+            : "inset-x-0 bottom-0 border-t"
+        }`}
         style={{ height: "var(--nav-mobile-height)", paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label={t("nav.home")}
       >

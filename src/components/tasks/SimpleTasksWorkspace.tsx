@@ -7,6 +7,7 @@ import { useUser } from "@/hooks/use-nexora";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { playTaskCompleteSound } from "@/lib/sound-effects";
 
 const GUEST_TASKS_KEY = "btc_guest_simple_tasks_v1";
 
@@ -116,6 +117,7 @@ export function SimpleTasksWorkspace() {
         prev.map((t) => (t.id === task.id ? { ...t, completed: nextCompleted } : t)),
       );
       if (nextCompleted) {
+        playTaskCompleteSound();
         toast.success(isAr ? "تم إكمال المهمة" : "Task marked as completed");
       } else {
         toast.info(isAr ? "تمت إعادة فتح المهمة" : "Task reopened");
@@ -126,6 +128,7 @@ export function SimpleTasksWorkspace() {
         try {
           await toggleRemoteTask(match);
           if (nextCompleted) {
+            playTaskCompleteSound();
             toast.success(isAr ? "تم إكمال المهمة" : "Task marked as completed");
           } else {
             toast.info(isAr ? "تمت إعادة فتح المهمة" : "Task reopened");

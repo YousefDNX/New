@@ -439,12 +439,22 @@ describe("Complete Digital Quran Mushaf UI integration", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders all 114 surahs, RTL Uthmani verses, source attribution, and lazy audio", async () => {
+  function renderQuranInteractive() {
     render(
       <PreferencesProvider>
         <QuranWorkspace />
       </PreferencesProvider>,
     );
+    const interactiveBtn = screen.queryByRole("button", {
+      name: /Interactive Surah & Audio Reader/i,
+    });
+    if (interactiveBtn) {
+      fireEvent.click(interactiveBtn);
+    }
+  }
+
+  it("renders all 114 surahs, RTL Uthmani verses, source attribution, and lazy audio", async () => {
+    renderQuranInteractive();
 
     expect(await screen.findByText(/ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ/)).toBeInTheDocument();
     expect(screen.getByText(/Authentic Sources & Integrity/i)).toBeInTheDocument();
@@ -465,11 +475,7 @@ describe("Complete Digital Quran Mushaf UI integration", () => {
   });
 
   it("navigates 30 Juz' and paginates long surahs with ayah selection", async () => {
-    render(
-      <PreferencesProvider>
-        <QuranWorkspace />
-      </PreferencesProvider>,
-    );
+    renderQuranInteractive();
 
     await screen.findByText(/ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ/);
 
@@ -488,11 +494,7 @@ describe("Complete Digital Quran Mushaf UI integration", () => {
   }, 15000);
 
   it("displays contextual ayah actions, copies exact Arabic text, bookmarks with labels, and manages reading history", async () => {
-    render(
-      <PreferencesProvider>
-        <QuranWorkspace />
-      </PreferencesProvider>,
-    );
+    renderQuranInteractive();
 
     await screen.findByText(/ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ/);
 
@@ -549,11 +551,7 @@ describe("Complete Digital Quran Mushaf UI integration", () => {
   }, 35000);
 
   it("switches Light & Dark reading themes and toggles display settings + verified translations", async () => {
-    render(
-      <PreferencesProvider>
-        <QuranWorkspace />
-      </PreferencesProvider>,
-    );
+    renderQuranInteractive();
 
     await screen.findByText(/ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ/);
 
@@ -596,11 +594,7 @@ describe("Complete Digital Quran Mushaf UI integration", () => {
   });
 
   it("plays, pauses, syncs active ayah, navigates surahs, and handles unavailable audio honestly", async () => {
-    render(
-      <PreferencesProvider>
-        <QuranWorkspace />
-      </PreferencesProvider>,
-    );
+    renderQuranInteractive();
 
     await screen.findByText(/ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ/);
 
@@ -640,11 +634,7 @@ describe("Complete Digital Quran Mushaf UI integration", () => {
       updatedAt: new Date().toISOString(),
     });
 
-    render(
-      <PreferencesProvider>
-        <QuranWorkspace />
-      </PreferencesProvider>,
-    );
+    renderQuranInteractive();
 
     const resumeBanner = await screen.findByTestId("quran-resume-banner");
     expect(resumeBanner).toHaveTextContent(/Resume from your last reading & listening position/i);

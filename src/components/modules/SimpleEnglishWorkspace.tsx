@@ -9,12 +9,18 @@ import {
   Mic,
   PenTool,
   Shapes,
+  Sparkles,
+  Volume2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/Page";
 import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
 import { Grade9StudyCenter } from "@/components/english/Grade9StudyCenter";
+import { ImportantAndEssentialVocabHub } from "@/components/english/ImportantAndEssentialVocabHub";
 import { ModernSelect, type ModernSelectOption } from "@/components/ui/modern-select";
+import { getActiveTtsAccent, setActiveTtsConfig } from "@/lib/speech-service";
+import type { EnglishAccent } from "@/lib/settings";
+import { speakEnglishText } from "@/lib/english-speech";
 import {
   ListeningAcademyPanel,
   ReadingAcademyPanel,
@@ -34,6 +40,7 @@ import { useStudentEcosystem } from "@/lib/student-ecosystem";
 type EnglishTab =
   | "dashboard"
   | "grade9"
+  | "important_vocab"
   | "vocabulary"
   | "listening"
   | "reading"
@@ -44,6 +51,7 @@ type EnglishTab =
 const VALID_TABS = new Set<EnglishTab>([
   "dashboard",
   "grade9",
+  "important_vocab",
   "vocabulary",
   "listening",
   "reading",
@@ -86,8 +94,32 @@ export function SimpleEnglishWorkspace() {
   }, [user?.uid]);
 
   const [tab, setTab] = useState<EnglishTab>(readInitialEnglishTab);
+  const [accent, setAccent] = useState<EnglishAccent>(() => getActiveTtsAccent());
   const initialUnit = readInitialUnit();
   const englishState = state.englishWorld;
+
+  const handleAccentChange = (nextAccent: EnglishAccent) => {
+    setAccent(nextAccent);
+    setActiveTtsConfig({ accent: nextAccent });
+    update((prev) => ({
+      ...prev,
+      englishAccent: nextAccent,
+    }));
+    toast.success(
+      isAr
+        ? `تم تفعيل لكنة النطق: ${nextAccent === "en-US" ? "الإنجليزية الأمريكية 🇺🇸" : "الإنجليزية البريطانية 🇬🇧"}`
+        : `Accent set to ${nextAccent === "en-US" ? "American English (US) 🇺🇸" : "British English (UK) 🇬🇧"}`,
+    );
+  };
+
+  const handleTestAccent = (targetAccent: EnglishAccent) => {
+    speakEnglishText(
+      targetAccent === "en-US"
+        ? "This is American English pronunciation. Clear and natural."
+        : "This is British English pronunciation. Clear and natural.",
+      { accent: targetAccent },
+    );
+  };
 
   const handleSaveNotebookWord = (entry: {
     word: string;
@@ -215,7 +247,18 @@ export function SimpleEnglishWorkspace() {
     icon: typeof Layers;
   }> = [
     { id: "dashboard", en: "Learning Dashboard", ar: "لوحة التعلم", icon: LayoutDashboard },
-    { id: "grade9", en: "Grade 9 — Vocabulary", ar: "الصف التاسع — المفردات", icon: GraduationCap },
+    {
+      id: "grade9",
+      en: "Grade 9 — Units 1–4",
+      ar: "الصف التاسع — الوحدات ١–٤",
+      icon: GraduationCap,
+    },
+    {
+      id: "important_vocab",
+      en: "Important & Essential Vocab",
+      ar: "المفردات المهمة والأساسية",
+      icon: Sparkles,
+    },
     { id: "vocabulary", en: "Vocabulary", ar: "المفردات", icon: Layers },
     { id: "listening", en: "Listening", ar: "الاستماع", icon: Headphones },
     { id: "reading", en: "Reading", ar: "القراءة", icon: BookOpen },
@@ -287,6 +330,65 @@ export function SimpleEnglishWorkspace() {
           </div>
         </nav>
 
+        {/* Accent Preference Toolbar */}
+        <div className="surface-card flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border p-3.5 sm:px-5">
+          <div className="flex items-center gap-2.5 text-xs">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Volume2 className="size-4" />
+            </div>
+            <div>
+              <span className="font-bold text-foreground">
+                {isAr ? "لكنة النطق في عالم الإنجليزية:" : "Active English Accent:"}
+              </span>
+              <span className="ms-1.5 text-muted-foreground hidden sm:inline">
+                {isAr
+                  ? "اختر اللكنة المفضلة لنطق الكلمات وفقرات القراءة والاستماع"
+                  : "Choose your preferred accent for vocabulary pronunciation and reading passages"}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleAccentChange("en-US")}
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                accent === "en-US"
+                  ? "bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30"
+                  : "border border-border bg-surface-2 text-muted-foreground hover:text-foreground"
+              }`}
+              title="Switch to American English"
+            >
+              <span>🇺🇸</span>
+              <span>{isAr ? "أمريكي (US)" : "American (US)"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleAccentChange("en-GB")}
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                accent === "en-GB"
+                  ? "bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30"
+                  : "border border-border bg-surface-2 text-muted-foreground hover:text-foreground"
+              }`}
+              title="Switch to British English"
+            >
+              <span>🇬🇧</span>
+              <span>{isAr ? "بريطاني (UK)" : "British (UK)"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTestAccent(accent)}
+              className="flex items-center gap-1 rounded-xl border border-border/80 bg-surface-2 px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-primary/10 cursor-pointer"
+              title="Test current accent"
+            >
+              <Volume2 className="size-3.5" />
+              <span>{isAr ? "تجربة الصوت" : "Test Voice"}</span>
+            </button>
+          </div>
+        </div>
+
         {/* Main Content Panel — Full Width */}
         <div className="min-w-0 w-full">
           {tab === "dashboard" && (
@@ -300,7 +402,7 @@ export function SimpleEnglishWorkspace() {
                     ? "اختر القسم المناسب من القائمة الجانبية: وحدات الصف التاسع، الاستماع، القراءة، القواعد التفاعلية (بما فيها Both...and و Neither...nor)، التحدث، والكتابة."
                     : "Pick any skill from the menu: Grade 9 Vocabulary & Quizzes, Listening, Reading, Interactive Grammar (including Both ... and / Neither ... nor), Speaking, and Writing."}
                 </p>
-                <div className="grid gap-3 pt-2 sm:grid-cols-2">
+                <div className="grid gap-3 pt-2 sm:grid-cols-3">
                   <button
                     type="button"
                     onClick={() => setTab("grade9")}
@@ -308,13 +410,29 @@ export function SimpleEnglishWorkspace() {
                   >
                     <div>
                       <div className="text-sm font-bold text-primary">
-                        {isAr ? "الصف التاسع — المفردات" : "Grade 9 — Vocabulary"}
+                        {isAr ? "الصف التاسع — الوحدات ١–٤" : "Grade 9 — Units 1–4"}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {isAr ? "١٤١ كلمة واختبارات فورية" : "141 words & instant quizzes"}
+                        {isAr ? "مفردات الوحدات ١–٤ واختباراتها" : "Units 1–4 words & tests"}
                       </div>
                     </div>
                     <ArrowRight className="size-4 text-primary rtl-flip shrink-0" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTab("important_vocab")}
+                    className="flex min-h-[56px] items-center justify-between rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-4 py-3 text-start transition-colors hover:bg-emerald-500/15"
+                  >
+                    <div>
+                      <div className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                        {isAr ? "المفردات المهمة والأساسية" : "Important & Essential Vocab"}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {isAr ? "قسم مستقل + اختبارات فورية" : "Standalone pack & quiz"}
+                      </div>
+                    </div>
+                    <ArrowRight className="size-4 text-emerald-600 rtl-flip shrink-0" />
                   </button>
 
                   <button
@@ -340,6 +458,8 @@ export function SimpleEnglishWorkspace() {
           )}
 
           {tab === "grade9" && <Grade9StudyCenter initialUnit={initialUnit} />}
+
+          {tab === "important_vocab" && <ImportantAndEssentialVocabHub />}
 
           {tab === "vocabulary" && (
             <VocabularyAcademyPanel

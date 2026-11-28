@@ -15,23 +15,33 @@ import type { Duplex } from "node:stream";
 import type { Plugin } from "vite";
 import { BRAND } from "./src/config/brand";
 
+function isPlaceholderGeminiKey(val: string | undefined): boolean {
+  const trimmed = val?.trim();
+  if (!trimmed || trimmed.length < 16) return true;
+  return /^(my_|my-|your_|placeholder|replace_|changeme|test_|demo_|dummy_|fake_|gemini_api_key|<)/i.test(
+    trimmed,
+  );
+}
+
 function applyLocalEnvSecretsToServerProcess(): void {
   try {
-    const envLocalPath = path.resolve(process.cwd(), ".env.local");
-    if (!fs.existsSync(envLocalPath)) return;
-    const raw = fs.readFileSync(envLocalPath, "utf8");
-    for (const line of raw.split(/\r?\n/)) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq <= 0) continue;
-      const key = trimmed.slice(0, eq).trim();
-      const val = trimmed
-        .slice(eq + 1)
-        .trim()
-        .replace(/^['"]|['"]$/g, "");
-      if (key === "GEMINI_API_KEY" && val) {
-        process.env["GEMINI_API_KEY"] = val;
+    for (const fileName of [".env", ".env.local"]) {
+      const envPath = path.resolve(process.cwd(), fileName);
+      if (!fs.existsSync(envPath)) continue;
+      const raw = fs.readFileSync(envPath, "utf8");
+      for (const line of raw.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const eq = trimmed.indexOf("=");
+        if (eq <= 0) continue;
+        const key = trimmed.slice(0, eq).trim();
+        const val = trimmed
+          .slice(eq + 1)
+          .trim()
+          .replace(/^['"]|['"]$/g, "");
+        if (key === "GEMINI_API_KEY" && !isPlaceholderGeminiKey(val)) {
+          process.env["GEMINI_API_KEY"] = val;
+        }
       }
     }
   } catch {
@@ -84,6 +94,10 @@ function createLiveVoiceProxyPlugin(): Plugin {
             ...(bodyBuffer ? { body: bodyBuffer as unknown as BodyInit } : {}),
           } as RequestInit);
 
+          if (!process.env["GEMINI_API_KEY"]) {
+            applyLocalEnvSecretsToServerProcess();
+          }
+
           const serverHandlerObj = serverHandler as {
             fetch: (req: Request, env: unknown, ctx: unknown) => Promise<Response>;
           };
@@ -92,8 +106,22 @@ function createLiveVoiceProxyPlugin(): Plugin {
           webRes.headers.forEach((val: string, key: string) => {
             res.setHeader(key, val);
           });
-          const buf = Buffer.from(await webRes.arrayBuffer());
-          res.end(buf);
+          const contentType = webRes.headers.get("content-type") ?? "";
+          if (contentType.includes("text/event-stream") && webRes.body) {
+            const reader = webRes.body.getReader();
+            try {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                if (value) res.write(Buffer.from(value));
+              }
+            } finally {
+              res.end();
+            }
+          } else {
+            const buf = Buffer.from(await webRes.arrayBuffer());
+            res.end(buf);
+          }
         } catch (err) {
           next(err);
         }
@@ -112,18 +140,14 @@ function createLiveVoiceProxyPlugin(): Plugin {
 
             wss.handleUpgrade(req, socket, head, async (clientWs) => {
               const rawKey = process.env["GEMINI_API_KEY"]?.trim();
-              const isPlaceholder =
-                !rawKey ||
-                rawKey.length < 16 ||
-                /^(my_|your_|placeholder|replace_|changeme|test_|demo_|dummy_|fake_|<)/i.test(
-                  rawKey,
-                );
-              const apiKey = isPlaceholder ? undefined : rawKey;
+              const apiKey = isPlaceholderGeminiKey(rawKey) ? undefined : rawKey;
               if (!apiKey) {
                 clientWs.send(
                   JSON.stringify({
                     type: "error",
-                    message: "GEMINI_API_KEY is not configured on the server.",
+                    code: "NOT_CONFIGURED",
+                    message:
+                      "Cloud live voice stream is unavailable; switched to local voice mode.",
                   }),
                 );
                 clientWs.close();
@@ -131,6 +155,8 @@ function createLiveVoiceProxyPlugin(): Plugin {
               }
 
               const lang = url.searchParams.get("lang") || "en";
+              const accentParam = (url.searchParams.get("accent") || "en-US").trim().toLowerCase();
+              const speedNum = Number(url.searchParams.get("speed") || "1") || 1;
               const context = url.searchParams.get("context")?.slice(0, 400) || "";
               const rawVoice = (url.searchParams.get("voice") || "Zephyr").trim().toLowerCase();
               const voiceName =
@@ -143,6 +169,17 @@ function createLiveVoiceProxyPlugin(): Plugin {
                       : rawVoice === "kore" || rawVoice === "classic"
                         ? "Kore"
                         : "Zephyr";
+
+              const accentInstruction =
+                accentParam === "en-gb" || accentParam === "gb" || accentParam === "uk"
+                  ? "When speaking English, use authentic Standard British English (en-GB / Received Pronunciation) pronunciation and natural UK cadence."
+                  : "When speaking English, use authentic General American English (en-US) pronunciation and natural US cadence.";
+              const speedInstruction =
+                speedNum < 0.9
+                  ? "Speak at a slower, unhurried pace with clear pauses for accessibility and clarity."
+                  : speedNum > 1.15
+                    ? "Speak at a brisk, fluent pace while keeping articulation clear."
+                    : "Speak at a clear, comfortable pace.";
 
               const ai = new GoogleGenAI({
                 apiKey,
@@ -182,6 +219,8 @@ function createLiveVoiceProxyPlugin(): Plugin {
                     systemInstruction: [
                       `You are ${BRAND.shortName} Live Voice Tutor speaking directly with a student.`,
                       `Respond concisely and warmly in language code: ${lang}.`,
+                      accentInstruction,
+                      speedInstruction,
                       "Keep spoken explanations focused, encouraging, and clear.",
                       context ? `Study context: ${context}` : "",
                     ]
@@ -312,6 +351,55 @@ export default defineConfig({
   },
   vite: {
     plugins: [createLiveVoiceProxyPlugin()],
+    optimizeDeps: {
+      include: [
+        "react",
+        "react-dom",
+        "react-dom/client",
+        "react/jsx-runtime",
+        "react/jsx-dev-runtime",
+        "@tanstack/react-router",
+        "@tanstack/react-query",
+        "lucide-react",
+        "sonner",
+        "clsx",
+        "tailwind-merge",
+        "class-variance-authority",
+        "cmdk",
+        "date-fns",
+        "zod",
+        "framer-motion",
+        "recharts",
+        "three",
+        "@vis.gl/react-google-maps",
+        "react-helmet-async",
+        "firebase/app",
+        "firebase/auth",
+        "firebase/firestore",
+        "firebase/analytics",
+        "firebase/performance",
+        "firebase/storage",
+        "@radix-ui/react-accordion",
+        "@radix-ui/react-alert-dialog",
+        "@radix-ui/react-avatar",
+        "@radix-ui/react-checkbox",
+        "@radix-ui/react-collapsible",
+        "@radix-ui/react-dialog",
+        "@radix-ui/react-dropdown-menu",
+        "@radix-ui/react-label",
+        "@radix-ui/react-popover",
+        "@radix-ui/react-progress",
+        "@radix-ui/react-radio-group",
+        "@radix-ui/react-scroll-area",
+        "@radix-ui/react-select",
+        "@radix-ui/react-separator",
+        "@radix-ui/react-slider",
+        "@radix-ui/react-slot",
+        "@radix-ui/react-switch",
+        "@radix-ui/react-tabs",
+        "@radix-ui/react-tooltip",
+      ],
+    },
     server: {
       host: "0.0.0.0",
       port: 3000,

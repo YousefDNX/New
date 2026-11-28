@@ -1,7 +1,7 @@
 export const quranEn = {
   "nav.quran": "Islamic Center",
   "mod.quran.name": "Islamic Center",
-  "mod.quran.hub": "Complete Digital Mushaf, verified recitations, prayer times & adhkar",
+  "mod.quran.hub": "Complete Digital Mushaf, verified recitations, prayer times & azkar",
   "quran.title": "Digital Quran Mushaf",
   "quran.subtitle":
     "Read the complete authentic Arabic Uthmani Mushaf across all 114 surahs and 30 juz', save bookmarks, and listen to verified human recitations.",
@@ -112,7 +112,7 @@ export type QuranKey = keyof typeof quranEn;
 
 export const quranAr: Record<QuranKey, string> = {
   "nav.quran": "المركز الإسلامي",
-  "mod.quran.name": "المركز الإسلامي الشامل",
+  "mod.quran.name": "المركز الإسلامي",
   "mod.quran.hub": "المصحف الشريف، التلاوات الموثوقة، مواقيت الصلاة، والأذكار والأدعية",
   "quran.title": "المصحف الرقمي الكامل",
   "quran.subtitle":
@@ -223,8 +223,8 @@ export const quranAr: Record<QuranKey, string> = {
 
 export const quranFr: Record<QuranKey, string> = {
   ...quranEn,
-  "nav.quran": "Saint Coran",
-  "mod.quran.name": "Saint Coran",
+  "nav.quran": "Centre Islamique",
+  "mod.quran.name": "Centre Islamique",
   "mod.quran.hub": "Mushaf numérique complet et récitations vérifiées",
   "quran.title": "Mushaf numérique du Saint Coran",
   "quran.surah": "Sourate",
@@ -247,8 +247,8 @@ export const quranFr: Record<QuranKey, string> = {
 
 export const quranDe: Record<QuranKey, string> = {
   ...quranEn,
-  "nav.quran": "Heiliger Koran",
-  "mod.quran.name": "Heiliger Koran",
+  "nav.quran": "Islamisches Zentrum",
+  "mod.quran.name": "Islamisches Zentrum",
   "mod.quran.hub": "Vollständiger digitaler Mushaf & geprüfte Rezitationen",
   "quran.title": "Digitaler Koran-Mushaf",
   "quran.surah": "Sure",
@@ -271,8 +271,8 @@ export const quranDe: Record<QuranKey, string> = {
 
 export const quranJa: Record<QuranKey, string> = {
   ...quranEn,
-  "nav.quran": "聖クルアーン",
-  "mod.quran.name": "聖クルアーン",
+  "nav.quran": "イスラムセンター",
+  "mod.quran.name": "イスラムセンター",
   "mod.quran.hub": "完全デジタル・ムスハフと正規朗誦",
   "quran.title": "デジタル・ムスハフ",
   "quran.surah": "スーラ",
@@ -289,8 +289,8 @@ export const quranJa: Record<QuranKey, string> = {
 
 export const quranZhCN: Record<QuranKey, string> = {
   ...quranEn,
-  "nav.quran": "古兰经",
-  "mod.quran.name": "古兰经",
+  "nav.quran": "伊斯兰中心",
+  "mod.quran.name": "伊斯兰中心",
   "mod.quran.hub": "完整数字穆斯哈夫与权威诵读",
   "quran.title": "数字古兰经穆斯哈夫",
   "quran.surah": "章",
@@ -307,8 +307,8 @@ export const quranZhCN: Record<QuranKey, string> = {
 
 export const quranKo: Record<QuranKey, string> = {
   ...quranEn,
-  "nav.quran": "성 꾸란",
-  "mod.quran.name": "성 꾸란",
+  "nav.quran": "이슬람 센터",
+  "mod.quran.name": "이슬람 센터",
   "mod.quran.hub": "전체 디지털 무스하프와 검증된 낭송",
   "quran.title": "디지털 꾸란 무스하프",
   "quran.surah": "수라",
@@ -325,8 +325,8 @@ export const quranKo: Record<QuranKey, string> = {
 
 export const quranEs: Record<QuranKey, string> = {
   ...quranEn,
-  "nav.quran": "Sagrado Corán",
-  "mod.quran.name": "Sagrado Corán",
+  "nav.quran": "Centro Islámico",
+  "mod.quran.name": "Centro Islámico",
   "mod.quran.hub": "Mushaf digital completo y recitaciones verificadas",
   "quran.title": "Mushaf Digital del Corán",
   "quran.surah": "Sura",

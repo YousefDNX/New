@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { LANG_META, SUPPORTED_LANGS, type Lang } from "@/lib/i18n-dict";
 import { usePrefs } from "@/lib/preferences";
 import type { AiPrefs } from "@/lib/settings";
+import { TTS_SPEED_MAX, TTS_SPEED_MIN, clampTtsSpeed } from "@/lib/settings";
 import type { UserSettingsRow } from "@/lib/firestore-data";
 import { FeatureGuideTrigger } from "@/components/common/FeatureGuideModal";
 import { SegmentedChoice, SettingsRow, SettingsSectionCard } from "./SettingsPrimitives";
@@ -18,7 +19,8 @@ export function AiPreferencesSection({
 }: {
   runSave: (apply: () => void, undo: () => void, patch: SettingsPatch) => void;
 }) {
-  const { t, ai, setAi, ecosystem, setEcosystem, buildAiContextSummary } = usePrefs();
+  const { lang, t, ai, setAi, ecosystem, setEcosystem, buildAiContextSummary } = usePrefs();
+  const isAr = lang === "ar";
 
   function updateAi(patch: Partial<AiPrefs>, dbPatch: SettingsPatch) {
     const prev = ai;
@@ -189,21 +191,47 @@ export function AiPreferencesSection({
         />
       </SettingsRow>
 
+      <SettingsRow
+        id="ai-english-accent"
+        label={isAr ? "لكنة المحادثة الصوتية (إنجليزي)" : "AI English Accent"}
+        desc={
+          isAr
+            ? "اختر بين اللكنة الأمريكية (US) والبريطانية (UK) للمحادثة الصوتية وقراءة الردود."
+            : "Toggle between US English (en-US) and UK English (en-GB) for AI voice conversations."
+        }
+      >
+        <SegmentedChoice
+          label={isAr ? "لكنة المحادثة الصوتية" : "AI English Accent"}
+          value={ecosystem.englishAccent ?? "en-US"}
+          onChange={(v) => {
+            setEcosystem({ englishAccent: v });
+            toast.success(t("common.save"));
+          }}
+          options={[
+            { v: "en-US", l: isAr ? "أمريكي (US)" : "US English" },
+            { v: "en-GB", l: isAr ? "بريطاني (UK)" : "UK English" },
+          ]}
+        />
+      </SettingsRow>
+
       <SettingsRow id="ai-voice-speed" label={t("p5.set.voiceSpeed")}>
         <div className="flex w-44 items-center gap-3">
           <Slider
             id="ai-voice-speed"
             aria-label={t("p5.set.voiceSpeed")}
-            min={0.85}
-            max={1.25}
+            min={TTS_SPEED_MIN}
+            max={TTS_SPEED_MAX}
             step={0.05}
-            value={[ecosystem.voiceSpeed]}
+            value={[clampTtsSpeed(ecosystem.ttsSpeed || ecosystem.voiceSpeed || 1)]}
             onValueChange={([v]) => {
-              if (v !== undefined) setEcosystem({ voiceSpeed: v });
+              if (v !== undefined) {
+                const clamped = clampTtsSpeed(v);
+                setEcosystem({ ttsSpeed: clamped, voiceSpeed: clamped });
+              }
             }}
           />
           <span className="font-mono text-xs tabular-nums text-muted-foreground">
-            {ecosystem.voiceSpeed.toFixed(2)}×
+            {clampTtsSpeed(ecosystem.ttsSpeed || ecosystem.voiceSpeed || 1).toFixed(2)}×
           </span>
         </div>
       </SettingsRow>

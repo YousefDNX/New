@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { NAV_ADMIN, NAV_FOOTER, NAV_PRIMARY_ITEMS, NAV_UTILITIES } from "@/config/navigation";
@@ -10,19 +10,27 @@ import { useRbac } from "@/hooks/use-rbac";
 import { cn } from "@/lib/utils";
 
 export function Sidebar() {
-  const { t, lang } = usePrefs();
+  const { t, lang, effectiveLayout, effectiveMenuStyle } = usePrefs();
   const rbac = useRbac();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => effectiveLayout.sidebarMode === "compact");
+
+  useEffect(() => {
+    setCollapsed(effectiveLayout.sidebarMode === "compact");
+  }, [effectiveLayout.sidebarMode]);
 
   return (
     <aside
       data-app-sidebar="true"
-      className="sticky top-0 hidden h-dvh shrink-0 flex-col border-e border-border/80 bg-surface/95 backdrop-blur-md transition-[width] duration-200 md:flex"
+      data-menu-style={effectiveMenuStyle}
+      className={cn(
+        "sticky top-0 hidden h-dvh shrink-0 flex-col border-e border-border/80 bg-surface/95 backdrop-blur-md transition-[width] duration-200 md:flex",
+        effectiveMenuStyle === "floating_cards" && "bg-surface/90",
+      )}
       style={{ width: collapsed ? "var(--nav-sidebar-collapsed)" : "var(--nav-sidebar-width)" }}
     >
       <div
         className={cn(
-          "flex h-14 items-center px-4",
+          "flex h-14 items-center border-b border-border/60 px-4",
           collapsed ? "justify-center" : "justify-between",
         )}
       >
@@ -42,7 +50,7 @@ export function Sidebar() {
         <button
           type="button"
           onClick={() => setCollapsed(false)}
-          className="mx-auto mb-2 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+          className="mx-auto my-2 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
           aria-label={t("common.expand")}
         >
           <PanelLeftOpen className="size-4 rtl-flip" />
@@ -51,7 +59,10 @@ export function Sidebar() {
 
       <nav
         aria-label={t("nav.home")}
-        className="flex flex-1 flex-col gap-1 overflow-y-auto px-2.5 pb-3 pt-1"
+        className={cn(
+          "flex flex-1 flex-col overflow-y-auto px-2.5 pb-3 pt-2.5",
+          effectiveMenuStyle === "floating_cards" ? "gap-1.5" : "gap-1",
+        )}
       >
         {NAV_PRIMARY_ITEMS.map((item) => (
           <NavItemLink key={item.id} item={item} collapsed={collapsed} />

@@ -165,7 +165,7 @@ const PRIVATE_WORSHIP_PROMPTS = [
   {
     key: "adhkar_daily",
     ar: "حافظتُ على أذكار الصباح أو المساء",
-    en: "Recited morning / evening Adhkar",
+    en: "Recited morning / evening Azkar",
   },
   {
     key: "parents_kindness",

@@ -17,6 +17,7 @@ import { usePrefs } from "@/lib/preferences";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { playMilestoneSound, playTaskCompleteSound } from "@/lib/sound-effects";
 
 export function getIsoWeekKey(date: Date = new Date()): string {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -128,8 +129,15 @@ export function ThisWeekGoalsCard() {
 
   const handleToggle = async (goal: GoalRow) => {
     try {
+      const willBeDone = goal.status !== "completed";
       await toggleGoal(goal);
-      if (goal.status !== "completed") {
+      if (willBeDone) {
+        const nextDone = completedCount + 1;
+        if (weeklyGoals.length > 0 && nextDone >= weeklyGoals.length) {
+          playMilestoneSound();
+        } else {
+          playTaskCompleteSound();
+        }
         toast.success(
           isAr
             ? `أحسنت! أنجزت: ${goal.title} (+20 XP)`

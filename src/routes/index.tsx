@@ -113,9 +113,9 @@ const CORE_WORKSPACES = [
   {
     icon: BookOpenCheck,
     to: "/app/quran" as const,
-    enTitle: "Quran & Islamic Center",
-    arTitle: "القرآن الكريم والمركز الإسلامي",
-    enDesc: "Clear Arabic Quran text, verified reciters, tafsir, and adhkar.",
+    enTitle: "Islamic Center",
+    arTitle: "المركز الإسلامي",
+    enDesc: "Clear Arabic Quran text, verified reciters, prayer times, tafsir, and azkar.",
     arDesc: "المصحف الشريف، تلاوات لقراء معتمدين، تفسير، وأذكار.",
   },
 ];
@@ -168,9 +168,9 @@ function Landing() {
 
       <main className="flex-1">
         <section className="mx-auto max-w-6xl px-5 pb-14 pt-10 md:pb-20 md:pt-16">
-          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12">
+          <div className="grid grid-cols-1 items-stretch gap-10 lg:grid-cols-12">
             <div className="flex flex-col justify-center lg:col-span-6">
-              <div className="inline-flex w-fit items-center gap-2 text-xs font-semibold text-primary">
+              <div className="inline-flex w-fit items-center gap-2 text-xs font-semibold tracking-wide text-primary">
                 <Sparkles className="size-3.5 shrink-0" />
                 <span>{isAr ? BRAND.competitionBadgeAr : BRAND.competitionBadge}</span>
               </div>
@@ -189,7 +189,7 @@ function Landing() {
               </p>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
-                <Button asChild size="lg" className="whitespace-nowrap">
+                <Button asChild size="lg" className="whitespace-nowrap shadow-sm">
                   <Link to="/app">
                     <span>{isAr ? "المتابعة كضيف" : "Continue as Guest"}</span>
                     <ArrowRight className="size-4 rtl-flip" />
@@ -213,7 +213,7 @@ function Landing() {
               </div>
             </div>
 
-            <div className="lg:col-span-6">
+            <div className="flex flex-col justify-center lg:col-span-6">
               <div className="surface-card overflow-hidden p-2">
                 <div className="relative aspect-[16/10] overflow-hidden rounded-[calc(var(--radius)-2px)] bg-surface-2">
                   {!heroImgError ? (
@@ -222,7 +222,7 @@ function Landing() {
                       alt={`${BRAND.name} — ${BRAND.fullName}`}
                       referrerPolicy="no-referrer"
                       onError={() => setHeroImgError(true)}
-                      className="h-full w-full object-cover object-center"
+                      className="h-full w-full object-cover object-center transition-transform duration-500 hover:scale-[1.015]"
                     />
                   ) : (
                     <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
@@ -277,10 +277,10 @@ function Landing() {
               <Link
                 key={m.to}
                 to={m.to}
-                className="surface-card group flex flex-col justify-between p-5 transition-colors hover:border-primary/40"
+                className="surface-card group flex flex-col justify-between p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-surface-2/40"
               >
                 <div>
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+                  <div className="flex size-10 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
                     <m.icon className="size-5" />
                   </div>
                   <div className="mt-4 font-display text-base font-semibold text-foreground group-hover:text-primary transition-colors">
@@ -290,7 +290,7 @@ function Landing() {
                     {isAr ? m.arDesc : m.enDesc}
                   </p>
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-primary opacity-85 group-hover:opacity-100">
+                <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-primary opacity-90 group-hover:opacity-100">
                   <span>{isAr ? "فتح الوحدة" : "Open Module"}</span>
                   <ArrowRight className="size-3.5 rtl-flip transition-transform group-hover:translate-x-0.5" />
                 </div>

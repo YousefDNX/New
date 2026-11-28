@@ -102,8 +102,8 @@ export function VocabTestCenter({ onBackToStudy, initialSuiteId }: VocabTestCent
     setIsCompleted(false);
   };
 
-  const handlePronounce = (word: string) => {
-    speakEnglishText(word, { rate: 0.88, lang: "en-GB" });
+  const handlePronounce = (word: string, accent?: "en-US" | "en-GB") => {
+    speakEnglishText(word, { rate: 0.88, accent, lang: accent });
   };
 
   // Score statistics

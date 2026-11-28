@@ -119,7 +119,7 @@ describe("BTC Restored & Simplified Educational Modules", () => {
   it("StudyWorkspace focuses on Notes/Flashcards/Mistakes & links Grade 9 to English World, while Grade9StudyCenter preserves Units 1-4", () => {
     renderModule(<StudyWorkspace />);
     expect(getLastVisitedModule("student-guest-1")?.path).toBe("/app/study");
-    expect(screen.getByRole("link", { name: /Open Grade 9 — Vocabulary/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Open Grade 9 — Units 1–4/i })).toHaveAttribute(
       "href",
       "/app/english?tab=grade9",
     );
@@ -205,7 +205,10 @@ describe("BTC Restored & Simplified Educational Modules", () => {
     renderModule(<SimpleEnglishWorkspace />);
     expect(getLastVisitedModule("student-guest-1")?.path).toBe("/app/english");
 
-    expect(screen.getByRole("button", { name: /Grade 9 — Vocabulary/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Grade 9 — Units 1–4/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Important & Essential Vocab/i }),
+    ).toBeInTheDocument();
     for (const label of ["Vocabulary", "Listening", "Reading", "Grammar", "Speaking", "Writing"]) {
       expect(
         screen.getByRole("button", { name: new RegExp(`^${label}$`, "i") }),

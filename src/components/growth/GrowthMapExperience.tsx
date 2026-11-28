@@ -1180,16 +1180,16 @@ export function GrowthMapExperience() {
                     <HeartPulse className="size-4" />
                   </div>
                   <h4 className="mt-3 font-display text-sm font-semibold text-foreground transition-colors group-hover:text-xp">
-                    {isAr ? "القرآن الكريم والسكينة" : "Quran & Islamic Center"}
+                    {isAr ? "المركز الإسلامي" : "Islamic Center"}
                   </h4>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {isAr
-                      ? "اقرأ وردك اليومي واستمع لتلاوات هادئة تعزز التركيز."
-                      : "Read daily verses and reflect in the Islamic Learning Center."}
+                      ? "اقرأ وردك اليومي واستمع لتلاوات هادئة تعزز التركيز والسكينة."
+                      : "Read daily verses, prayer times, and reflect in the Islamic Center."}
                   </p>
                 </div>
                 <div className="mt-4 flex items-center justify-between text-xs font-medium text-xp">
-                  <span>{isAr ? "افتح القرآن الكريم" : "Open Quran Center"}</span>
+                  <span>{isAr ? "افتح المركز الإسلامي" : "Open Islamic Center"}</span>
                   <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1 rtl-flip" />
                 </div>
               </Link>

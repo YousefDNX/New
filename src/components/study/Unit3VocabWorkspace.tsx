@@ -250,9 +250,9 @@ export function Unit3VocabWorkspace() {
 
   const currentWord = activeWords[selectedWordIndex % activeWords.length];
 
-  // Audio pronunciation via unified bilingual speech service (en-GB for English, ar-SA for Arabic)
-  const speakWord = (text: string) => {
-    const ok = speakEnglishText(text, { rate: 0.9, lang: "en-GB" });
+  // Audio pronunciation via unified bilingual speech service (dynamic accent, or explicit en-US / en-GB)
+  const speakWord = (text: string, accent?: "en-US" | "en-GB") => {
+    const ok = speakEnglishText(text, { rate: 0.9, accent, lang: accent });
     if (!ok) {
       toast.info(`Pronunciation: ${text}`);
     }

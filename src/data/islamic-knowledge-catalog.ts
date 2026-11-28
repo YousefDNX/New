@@ -1150,7 +1150,7 @@ export const ISLAMIC_LEARNING_PATHS: readonly IslamicLearningPath[] = [
       {
         id: "pf-2",
         titleAr: "قراءة الفاتحة وأذكار الصباح والمساء",
-        titleEn: "Explore Al-Fatihah & Daily Adhkar",
+        titleEn: "Explore Al-Fatihah & Daily Azkar",
         recommendedTab: "adhkar",
       },
       {

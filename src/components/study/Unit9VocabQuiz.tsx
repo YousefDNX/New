@@ -147,8 +147,8 @@ export function Unit9VocabQuiz({ onBackToFlashcards }: { onBackToFlashcards?: ()
     }
   };
 
-  const handlePronounceWord = (word: string) => {
-    const ok = speakEnglishText(word, { rate: 0.9, lang: "en-GB" });
+  const handlePronounceWord = (word: string, accent?: "en-US" | "en-GB") => {
+    const ok = speakEnglishText(word, { rate: 0.9, accent, lang: accent });
     if (!ok) {
       toast.info(`Pronunciation: ${word}`);
     }

@@ -47,9 +47,7 @@ export function AlternativeAiWorkspace() {
         </div>
       </header>
 
-      <div className="rounded-2xl border border-border bg-surface/65 p-3 sm:p-5 shadow-[var(--shadow-card)]">
-        <AiWorkspace />
-      </div>
+      <AiWorkspace />
     </div>
   );
 }

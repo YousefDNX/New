@@ -15,6 +15,9 @@ import { TafsirPanel } from "./TafsirPanel";
 import { TajweedAcademyPanel } from "./TajweedAcademyPanel";
 import { IslamicKnowledgeHub, type KnowledgeHubSubSection } from "./IslamicKnowledgeHub";
 import { UnifiedIslamicSearchPanel } from "./UnifiedIslamicSearchPanel";
+import { SpiritualDevotionPanel } from "./SpiritualDevotionPanel";
+import { ZakatCalculatorPanel } from "./ZakatCalculatorPanel";
+import { FastingTrackerPanel } from "./FastingTrackerPanel";
 import { SadaqahJariyahWidget } from "@/components/dashboard/SadaqahJariyahWidget";
 import type { GlobalCountryCode } from "@/lib/quran-reciters-directory";
 import type { UnifiedIslamicSearchResult } from "@/lib/islamic-search";
@@ -35,6 +38,8 @@ import {
   ScrollText,
   Scale,
   Search,
+  Coins,
+  Moon,
 } from "lucide-react";
 
 export type IslamicSubSection =
@@ -45,6 +50,8 @@ export type IslamicSubSection =
   | "adhkar"
   | "duas"
   | "calendar"
+  | "fasting"
+  | "zakat"
   | "names"
   | "hadith"
   | "memorization"
@@ -52,6 +59,7 @@ export type IslamicSubSection =
   | "knowledge"
   | "reminders"
   | "charity"
+  | "devotion"
   | "search";
 
 interface IslamicCenterWorkspaceProps {
@@ -73,7 +81,8 @@ export const IslamicCenterWorkspace: React.FC<IslamicCenterWorkspaceProps> = ({
   });
 
   const [targetMushafPage, setTargetMushafPage] = useState<number>(1);
-  const [mushafViewMode, setMushafViewMode] = useState<"interactive" | "pages">("interactive");
+  const [mushafJumpSignal, setMushafJumpSignal] = useState<number>(0);
+  const [mushafViewMode, setMushafViewMode] = useState<"interactive" | "pages">("pages");
   const [targetAudioSurah, setTargetAudioSurah] = useState<number>(1);
   const [targetAudioReciterId, setTargetAudioReciterId] = useState<string>("al-luhaidan");
   const [targetAudioRecordingId, setTargetAudioRecordingId] = useState<string | undefined>(
@@ -96,6 +105,7 @@ export const IslamicCenterWorkspace: React.FC<IslamicCenterWorkspaceProps> = ({
 
   const handleOpenMushafPage = (page: number) => {
     setTargetMushafPage(page);
+    setMushafJumpSignal((n) => n + 1);
     setMushafViewMode("pages");
     setActiveTab("mushaf");
   };
@@ -179,6 +189,7 @@ export const IslamicCenterWorkspace: React.FC<IslamicCenterWorkspaceProps> = ({
         { id: "learning", nameAr: "أكاديمية التجويد", nameEn: "Tajweed Academy", icon: HelpCircle },
         { id: "hadith", nameAr: "رياض الحديث", nameEn: "Hadith Library", icon: Layers },
         { id: "knowledge", nameAr: "الفقه والسنن والعقيدة", nameEn: "Knowledge Hub", icon: Scale },
+        { id: "zakat", nameAr: "حاسبة الزكاة والمصارف", nameEn: "Zakat Calculator", icon: Coins },
         { id: "names", nameAr: "أسماء الله الحسنى", nameEn: "Names of Allah", icon: Award },
       ],
     },
@@ -188,9 +199,10 @@ export const IslamicCenterWorkspace: React.FC<IslamicCenterWorkspaceProps> = ({
       titleEn: "Daily Worship",
       items: [
         { id: "prayer", nameAr: "مواقيت الصلاة", nameEn: "Prayer Times", icon: Clock },
-        { id: "adhkar", nameAr: "الأذكار اليومية", nameEn: "Daily Adhkar", icon: Sparkles },
+        { id: "adhkar", nameAr: "الأذكار اليومية", nameEn: "Daily Azkar", icon: Sparkles },
         { id: "duas", nameAr: "موسوعة الأدعية", nameEn: "Duas Library", icon: Heart },
         { id: "calendar", nameAr: "التقويم الهجري", nameEn: "Islamic Calendar", icon: Calendar },
+        { id: "fasting", nameAr: "صيام التطوع والسنن", nameEn: "Sunnah Fasting", icon: Moon },
       ],
     },
     {
@@ -199,6 +211,12 @@ export const IslamicCenterWorkspace: React.FC<IslamicCenterWorkspaceProps> = ({
       titleEn: "Reflection & Search",
       items: [
         { id: "reminders", nameAr: "تذكرة اليوم", nameEn: "Daily Reminders", icon: Bell },
+        {
+          id: "devotion",
+          nameAr: "طريق محبة الله والفردوس",
+          nameEn: "Allah's Love & Al-Firdaus",
+          icon: Heart,
+        },
         {
           id: "charity",
           nameAr: "الصدقة الجارية وأبواب الخير",
@@ -302,7 +320,56 @@ export const IslamicCenterWorkspace: React.FC<IslamicCenterWorkspaceProps> = ({
       <div className="w-full">
         {activeTab === "mushaf" && (
           <div className="space-y-4">
-            <DigitalQuranReader />
+            <div
+              data-testid="mushaf-view-mode-switch"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50/80 dark:bg-stone-900/70 p-2"
+            >
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setMushafViewMode("pages")}
+                  className={`min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                    mushafViewMode === "pages"
+                      ? "bg-emerald-700 text-white shadow-xs"
+                      : "text-stone-700 dark:text-stone-300 hover:bg-stone-200/60 dark:hover:bg-stone-800"
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>
+                    {isAr
+                      ? "المصحف الحقيقي (صفحتان / تقليب باللمس)"
+                      : "Real Page Mushaf (2-Page / Mobile Swipe)"}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMushafViewMode("interactive")}
+                  className={`min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                    mushafViewMode === "interactive"
+                      ? "bg-emerald-700 text-white shadow-xs"
+                      : "text-stone-700 dark:text-stone-300 hover:bg-stone-200/60 dark:hover:bg-stone-800"
+                  }`}
+                >
+                  <Headphones className="w-3.5 h-3.5" />
+                  <span>
+                    {isAr ? "القارئ الصوتي بالسور والترجمة" : "Interactive Surah & Audio Reader"}
+                  </span>
+                </button>
+              </div>
+              <span className="text-[11px] text-stone-500 dark:text-stone-400 px-2">
+                {isAr ? "مصحف المدينة المنورة — ٦٠٤ صفحات" : "Madinah Mushaf — 604 Pages"}
+              </span>
+            </div>
+
+            {mushafViewMode === "pages" ? (
+              <QuranMushafReader
+                initialPage={targetMushafPage}
+                jumpSignal={mushafJumpSignal}
+                lang={lang}
+              />
+            ) : (
+              <DigitalQuranReader />
+            )}
           </div>
         )}
 
@@ -503,6 +570,24 @@ export const IslamicCenterWorkspace: React.FC<IslamicCenterWorkspaceProps> = ({
         {activeTab === "reminders" && (
           <div className="space-y-4">
             <DailyRemindersPanel lang={lang} />
+          </div>
+        )}
+
+        {activeTab === "zakat" && (
+          <div className="space-y-4">
+            <ZakatCalculatorPanel lang={lang} />
+          </div>
+        )}
+
+        {activeTab === "fasting" && (
+          <div className="space-y-4">
+            <FastingTrackerPanel lang={lang} />
+          </div>
+        )}
+
+        {activeTab === "devotion" && (
+          <div className="space-y-6">
+            <SpiritualDevotionPanel lang={lang} />
           </div>
         )}
 

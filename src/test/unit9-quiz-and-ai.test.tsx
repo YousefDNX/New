@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ToastProvider } from "@/components/common/ToastProvider";
 import { Unit9VocabQuiz } from "@/components/study/Unit9VocabQuiz";
 import { Grade9StudyCenter } from "@/components/english/Grade9StudyCenter";
+import { ImportantAndEssentialVocabHub } from "@/components/english/ImportantAndEssentialVocabHub";
 import { AiWorkspace } from "@/components/modules/AiWorkspace";
 import { GRADE_9_UNIT_9_WORDS, UNIT_9_INTERACTIVE_QUIZ_QUESTIONS } from "@/data/grade9-unit9-vocab";
 import { ALL_STUDY_VOCAB_UNITS, GRADE_9_ESSENTIAL_WORDS } from "@/data/grade9-vocab-units";
@@ -75,22 +76,28 @@ describe("Important Vocabulary Interactive Quiz, Expanded Study Vocabulary & Gem
     expect(summary.textContent).toContain("7 out of 8");
   });
 
-  it("Grade9StudyCenter exposes Important Vocabulary Interactive Quiz and Expanded 141-word Vocabulary Cards", () => {
+  it("Grade9StudyCenter focuses strictly on Units 1-4 while ImportantAndEssentialVocabHub exposes Important Vocabulary Quiz and Essential Cards", () => {
     renderWithUiProviders(<Grade9StudyCenter />);
 
     expect(screen.getByText(/Grade 9 Study & Vocabulary/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Browse All Study Cards & Essential Words \(141\)/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/UNIT 1/i)).toBeInTheDocument();
+    expect(screen.queryByText(/IMPORTANT VOCAB/i)).toBeNull();
+    expect(screen.queryByText(/ESSENTIAL PACK/i)).toBeNull();
+
+    cleanup();
+    renderWithUiProviders(<ImportantAndEssentialVocabHub />);
+    expect(screen.getByTestId("important-essential-vocab-hub")).toBeInTheDocument();
 
     // Open Important Vocabulary Interactive Quiz directly
     fireEvent.click(screen.getByRole("button", { name: /Important Vocabulary Interactive Quiz/i }));
     expect(screen.getByTestId("unit9-interactive-quiz")).toBeInTheDocument();
 
     // Go back and browse expanded study cards including Essential Mastery words
-    fireEvent.click(screen.getByRole("button", { name: /Back to Study Units/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Browse All Study Cards/i }));
-    expect(screen.getByText("Expanded Student Vocabulary Cards")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Back to Important & Essential/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Browse Important & Essential Cards/i }));
+    expect(
+      screen.getByText(/Expanded Important & Essential Vocabulary Cards/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("perseverance")).toBeInTheDocument();
   });
 
@@ -161,7 +168,7 @@ describe("Important Vocabulary Interactive Quiz, Expanded Study Vocabulary & Gem
     ]);
   });
 
-  it("generateStudyAssistantReply returns honest NOT_CONFIGURED when GEMINI_API_KEY is absent instead of faking responses", async () => {
+  it("generateStudyAssistantReply provides curriculum aware fallback when GEMINI_API_KEY is absent", async () => {
     const res = await generateStudyAssistantReply(
       {
         message: "اهلا إزيك؟ اشرح لي خوارزمية سريعة",
@@ -170,11 +177,10 @@ describe("Important Vocabulary Interactive Quiz, Expanded Study Vocabulary & Gem
       },
       { GEMINI_API_KEY: "" },
     );
-    expect(res.ok).toBe(false);
-    if (!res.ok) {
-      expect(res.status).toBe(503);
-      expect(res.code).toBe("NOT_CONFIGURED");
-      expect(res.message).toContain("GEMINI_API_KEY");
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.text).toBeDefined();
+      expect(res.modelUsed).toBe("btc-smart-fallback");
     }
 
     const emptyRes = await generateStudyAssistantReply({ message: "   " });

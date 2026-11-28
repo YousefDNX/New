@@ -421,8 +421,8 @@ export function CurriculumAndOfflinePanel() {
           <div>
             <strong>What Works Offline vs. Online:</strong> Downloaded vocabulary packs, Curriculum
             lessons, local Flashcards, Gap Detector, Exam Simulator, Smart Material Transformer, and
-            Question Generator run 100% locally offline. Live Gemini AI Tutor chat, Web Search
-            Grounding, Voice Live, and Cloud Firestore sync require an active internet connection.
+            Question Generator run 100% locally offline. Live BTC AI chat, Web Search Grounding,
+            Voice Live, and Cloud Firestore sync require an active internet connection.
           </div>
         </div>
 

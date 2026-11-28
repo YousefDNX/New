@@ -472,7 +472,7 @@ export function searchUnifiedIslamicCenter(
     for (const d of VERIFIED_DAILY_ADHKAR) {
       if (
         matchesAllSearchTokens(
-          `${d.categoryLabelAr} ${d.categoryLabelEn} ${d.textAr} ${d.translationEn} ${d.virtueExplanationAr} ${d.virtueExplanationEn}`,
+          `azkar adhkar أذكار اذكار ${d.categoryLabelAr} ${d.categoryLabelEn} ${d.textAr} ${d.translationEn} ${d.virtueExplanationAr} ${d.virtueExplanationEn}`,
           q,
         )
       ) {

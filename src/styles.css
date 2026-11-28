@@ -2150,6 +2150,7 @@ html.light.a11y-contrast,
 [data-layout-mode="zen_focus"] main#main-content {
   max-width: 48rem;
   padding-top: 2.25rem;
+  padding-bottom: 6.5rem;
 }
 
 [data-layout-mode="split_study"] main#main-content > div > .grid,
@@ -2163,6 +2164,11 @@ html.light.a11y-contrast,
   box-shadow: var(--shadow-card);
 }
 
+[data-layout-mode="top_nav"] main#main-content,
+[data-layout-mode="double_header"] main#main-content {
+  padding-bottom: 6.25rem;
+}
+
 [data-layout-mode="executive_kpi"] {
   --density-space: 0.85rem;
   --density-pad: 0.95rem;
@@ -2174,6 +2180,24 @@ html.light.a11y-contrast,
 
 [data-layout-mode="bottom_dock"] main#main-content {
   padding-bottom: 6.5rem;
+}
+
+/* ===== Menu Shape & Navigation Style Modifiers ===== */
+[data-menu-style="glass_pills"] {
+  --nav-item-radius: 9999px;
+}
+
+[data-menu-style="minimal_underline"] {
+  --nav-item-radius: 0.25rem;
+}
+
+[data-menu-style="editorial_tab"] {
+  --nav-item-radius: 0.5rem;
+}
+
+[data-menu-style="floating_cards"] {
+  --nav-item-radius: 0.85rem;
+  --nav-item-height: 2.45rem;
 }
 
 /* ===== Low-Bandwidth Mode ===== */
